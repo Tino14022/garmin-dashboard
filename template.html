@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wizz Air Half Marathon — Training Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0a0d13; --panel:#12161f; --panel-2:#171c27; --border:#232936;
+    --text:#e8ebf1; --text-dim:#8b93a3; --text-faint:#5b6472;
+    --blue:#5b8cff; --orange:#ff9f5a; --green:#3ddc97; --red:#ff6b7a;
+    --purple:#b98bff; --cyan:#4fd6e8; --yellow:#ffd166;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:16px; max-width:1280px; margin:0 auto;
+  }
+  a{color:var(--blue);}
+  .top{
+    display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline;
+    gap:8px; margin-bottom:18px;
+  }
+  .top h1{font-size:1.3rem; margin:0; font-weight:600;}
+  .top .updated{color:var(--text-faint); font-size:0.8rem;}
+
+  .countdown-card{
+    background:linear-gradient(135deg, var(--panel-2), var(--panel));
+    border:1px solid var(--border); border-radius:16px; padding:22px 24px;
+    display:flex; flex-wrap:wrap; gap:24px; align-items:center; justify-content:space-between;
+    margin-bottom:20px;
+  }
+  .countdown-num{font-size:3rem; font-weight:700; line-height:1;}
+  .countdown-sub{color:var(--text-dim); font-size:0.9rem; margin-top:4px;}
+  .countdown-meta{color:var(--text-dim); font-size:0.85rem; line-height:1.6;}
+  .countdown-meta b{color:var(--text);}
+  .predictions{display:flex; gap:18px; flex-wrap:wrap;}
+  .pred-item{text-align:center;}
+  .pred-item .v{font-size:1.15rem; font-weight:600;}
+  .pred-item .k{font-size:0.72rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.04em;}
+
+  .tiles{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr));
+    gap:12px; margin-bottom:20px;
+  }
+  .tile{
+    background:var(--panel); border:1px solid var(--border); border-radius:14px;
+    padding:14px 16px; position:relative; overflow:hidden;
+  }
+  .tile .label{font-size:0.72rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.05em;}
+  .tile .value{font-size:1.6rem; font-weight:700; margin-top:2px;}
+  .tile .sub{font-size:0.72rem; color:var(--text-dim); margin-top:2px;}
+  .tile canvas{margin-top:6px; height:34px !important;}
+
+  .section{
+    background:var(--panel); border:1px solid var(--border); border-radius:14px;
+    padding:18px 20px; margin-bottom:16px;
+  }
+  .section h2{font-size:0.95rem; margin:0 0 4px; font-weight:600;}
+  .section .desc{color:var(--text-faint); font-size:0.78rem; margin-bottom:14px;}
+  .chart-wrap{position:relative; height:260px;}
+  .chart-wrap.short{height:200px;}
+
+  .recovery-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+  @media (max-width:800px){ .recovery-grid{grid-template-columns:1fr;} }
+  .recovery-card h3{font-size:0.8rem; margin:0 0 8px; color:var(--text-dim); font-weight:600;}
+
+  table{width:100%; border-collapse:collapse; font-size:0.85rem;}
+  th{text-align:left; color:var(--text-faint); font-weight:500; font-size:0.72rem;
+     text-transform:uppercase; letter-spacing:0.04em; padding:6px 8px; border-bottom:1px solid var(--border);}
+  td{padding:8px; border-bottom:1px solid var(--border);}
+  tr:last-child td{border-bottom:none;}
+  .badge{
+    display:inline-block; padding:2px 8px; border-radius:999px; font-size:0.7rem;
+    font-weight:600; letter-spacing:0.02em;
+  }
+  .badge.easy{background:rgba(61,220,151,0.15); color:var(--green);}
+  .badge.workout{background:rgba(255,159,90,0.15); color:var(--orange);}
+
+  .pace-compare{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;}
+  @media (max-width:600px){ .pace-compare{grid-template-columns:1fr;} }
+  .pace-box{background:var(--panel-2); border:1px solid var(--border); border-radius:12px; padding:16px;}
+  .pace-box h3{margin:0 0 6px; font-size:0.85rem;}
+  .pace-box .big{font-size:1.6rem; font-weight:700;}
+  .pace-box .meta{color:var(--text-dim); font-size:0.78rem; margin-top:4px;}
+  .pace-box.easy{border-color:rgba(61,220,151,0.3);}
+  .pace-box.workout{border-color:rgba(255,159,90,0.3);}
+
+  .pr-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;}
+  .pr-chip{background:var(--panel-2); border:1px solid var(--border); border-radius:10px;
+    padding:8px 12px; font-size:0.8rem;}
+  .pr-chip b{display:block; font-size:1rem;}
+
+  .empty{color:var(--text-faint); font-size:0.85rem; padding:20px 0; text-align:center;}
+  footer{color:var(--text-faint); font-size:0.75rem; text-align:center; padding:20px 0 10px;}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <h1 id="athleteHeading">Training Dashboard</h1>
+  <div class="updated" id="updatedLabel"></div>
+</div>
+
+<div class="countdown-card">
+  <div>
+    <div class="countdown-num" id="daysNum">-</div>
+    <div class="countdown-sub" id="daysSub">days to go</div>
+  </div>
+  <div class="countdown-meta">
+    <div id="raceNameLine"><b>-</b></div>
+    <div id="raceDateLine">-</div>
+    <div id="raceDistLine">-</div>
+  </div>
+  <div class="predictions" id="predictionsBox"></div>
+</div>
+
+<div class="tiles" id="tiles"></div>
+
+<div class="section">
+  <h2>Training Load — Fitness / Fatigue / Form</h2>
+  <div class="desc">CTL (chronic load, ~fitness), ATL (acute load, ~fatigue) and TSB (form = CTL − ATL), in Garmin's own training-load units — last 12 weeks.</div>
+  <div class="chart-wrap"><canvas id="loadChart"></canvas></div>
+</div>
+
+<div class="section">
+  <h2>Weekly Mileage</h2>
+  <div class="desc">Running distance per week, last 12 weeks.</div>
+  <div class="chart-wrap"><canvas id="mileageChart"></canvas></div>
+</div>
+
+<div class="section">
+  <h2>Recovery</h2>
+  <div class="desc">HRV, resting heart rate and sleep — last 4 weeks.</div>
+  <div class="recovery-grid">
+    <div class="recovery-card">
+      <h3>HRV (ms)</h3>
+      <div class="chart-wrap short"><canvas id="hrvChart"></canvas></div>
+    </div>
+    <div class="recovery-card">
+      <h3>Resting HR (bpm)</h3>
+      <div class="chart-wrap short"><canvas id="rhrChart"></canvas></div>
+    </div>
+    <div class="recovery-card">
+      <h3>Sleep (hours)</h3>
+      <div class="chart-wrap short"><canvas id="sleepChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>VO2 Max Trend</h2>
+  <div class="desc">Running VO2 max estimate — last 12 weeks.</div>
+  <div class="chart-wrap short"><canvas id="vo2Chart"></canvas></div>
+</div>
+
+<div class="section">
+  <h2>Easy vs. Workout Pace</h2>
+  <div class="desc">Splits runs from the last 4 weeks by Garmin's training-effect label, so you can see if easy days are actually easy.</div>
+  <div class="pace-compare">
+    <div class="pace-box easy">
+      <h3>Easy runs</h3>
+      <div class="big" id="easyPace">-</div>
+      <div class="meta" id="easyMeta">-</div>
+    </div>
+    <div class="pace-box workout">
+      <h3>Workouts (tempo / threshold / etc.)</h3>
+      <div class="big" id="workoutPace">-</div>
+      <div class="meta" id="workoutMeta">-</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Recent Runs</h2>
+  <div class="desc">Last 4 weeks.</div>
+  <div id="runsTableWrap"></div>
+</div>
+
+<div class="section">
+  <h2>Personal Records</h2>
+  <div class="pr-row" id="prRow"></div>
+</div>
+
+<footer id="footer"></footer>
+
+<script>
+const DATA = __DASHBOARD_DATA__;
+
+Chart.defaults.color = '#8b93a3';
+Chart.defaults.borderColor = '#232936';
+Chart.defaults.font.family = "-apple-system,Segoe UI,Roboto,sans-serif";
+
+function el(id){ return document.getElementById(id); }
+function fmtDate(iso){
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString(undefined, {month:'short', day:'numeric'});
+}
+
+// ---- Header ----
+el('athleteHeading').textContent = (DATA.athlete_name || 'Training') + ' — Training Dashboard';
+el('updatedLabel').textContent = 'Updated ' + DATA.generated_at_time;
+el('daysNum').textContent = DATA.race.days_remaining;
+el('daysSub').textContent = 'days to go · ' + DATA.race.weeks_remaining + ' weeks';
+el('raceNameLine').innerHTML = '<b>' + DATA.race.name + '</b>';
+el('raceDateLine').textContent = new Date(DATA.race.date + 'T00:00:00').toLocaleDateString(undefined, {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+el('raceDistLine').textContent = DATA.race.distance_km + ' km';
+
+const predBox = el('predictionsBox');
+Object.entries(DATA.race_predictions || {}).forEach(([k,v]) => {
+  const div = document.createElement('div');
+  div.className = 'pred-item';
+  div.innerHTML = '<div class="v">' + v + '</div><div class="k">' + k + '</div>';
+  predBox.appendChild(div);
+});
+
+// ---- Stat tiles ----
+function sparkline(canvasId, series, color){
+  const ctx = el(canvasId);
+  if(!ctx) return;
+  new Chart(ctx, {
+    type:'line',
+    data:{ labels:series.map((_,i)=>i), datasets:[{ data:series, borderColor:color, borderWidth:2,
+      pointRadius:0, tension:0.35, fill:false }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{enabled:false}},
+      scales:{ x:{display:false}, y:{display:false} },
+      elements:{line:{borderJoinStyle:'round'}}
+    }
+  });
+}
+
+function tile(id, label, value, sub, color){
+  return {id, label, value, sub, color};
+}
+
+const loadTrend = DATA.load_trend || [];
+const lastLoad = loadTrend.length ? loadTrend[loadTrend.length-1] : null;
+const vo2Trend = DATA.vo2max_trend || [];
+const lastVo2 = vo2Trend.length ? vo2Trend[vo2Trend.length-1] : null;
+const rhrTrend = DATA.rhr_trend || [];
+const lastRhr = rhrTrend.length ? rhrTrend[rhrTrend.length-1] : null;
+const hrvTrend = DATA.hrv_trend || [];
+const lastHrv = hrvTrend.length ? hrvTrend[hrvTrend.length-1] : null;
+
+const tiles = [
+  tile('fitness', 'Fitness (CTL)', lastLoad ? lastLoad.ctl : '-', '42-day chronic load', 'var(--blue)'),
+  tile('fatigue', 'Fatigue (ATL)', lastLoad ? lastLoad.atl : '-', '7-day acute load', 'var(--orange)'),
+  tile('form', 'Form (TSB)', lastLoad ? lastLoad.tsb : '-', lastLoad ? lastLoad.acwr_status : '', 'var(--green)'),
+  tile('vo2', 'VO2 Max', lastVo2 ? lastVo2.vo2max : '-', 'running estimate', 'var(--purple)'),
+  tile('rhr', 'Resting HR', lastRhr ? lastRhr.rhr + ' bpm' : '-', 'most recent', 'var(--red)'),
+  tile('hrv', 'HRV', lastHrv ? (lastHrv.last_night_avg || lastHrv.weekly_avg) + ' ms' : '-', lastHrv ? lastHrv.status : '', 'var(--cyan)'),
+];
+
+const tilesWrap = el('tiles');
+tiles.forEach(t => {
+  const div = document.createElement('div');
+  div.className = 'tile';
+  div.innerHTML = '<div class="label">' + t.label + '</div>' +
+    '<div class="value">' + t.value + '</div>' +
+    '<div class="sub">' + (t.sub || '') + '</div>' +
+    '<canvas id="spark_' + t.id + '"></canvas>';
+  tilesWrap.appendChild(div);
+});
+
+sparkline('spark_fitness', loadTrend.map(d=>d.ctl), '#5b8cff');
+sparkline('spark_fatigue', loadTrend.map(d=>d.atl), '#ff9f5a');
+sparkline('spark_form', loadTrend.map(d=>d.tsb), '#3ddc97');
+sparkline('spark_vo2', vo2Trend.map(d=>d.vo2max), '#b98bff');
+sparkline('spark_rhr', rhrTrend.map(d=>d.rhr), '#ff6b7a');
+sparkline('spark_hrv', hrvTrend.map(d=>d.last_night_avg ?? d.weekly_avg), '#4fd6e8');
+
+// ---- Training load chart ----
+if(loadTrend.length){
+  new Chart(el('loadChart'), {
+    type:'line',
+    data:{
+      labels: loadTrend.map(d=>fmtDate(d.date)),
+      datasets:[
+        {label:'Fitness (CTL)', data:loadTrend.map(d=>d.ctl), borderColor:'#5b8cff', backgroundColor:'transparent', borderWidth:2, pointRadius:0, tension:0.25},
+        {label:'Fatigue (ATL)', data:loadTrend.map(d=>d.atl), borderColor:'#ff9f5a', backgroundColor:'transparent', borderWidth:2, pointRadius:0, tension:0.25},
+        {label:'Form (TSB)', data:loadTrend.map(d=>d.tsb), borderColor:'#3ddc97', backgroundColor:'transparent', borderWidth:2, pointRadius:0, tension:0.25},
+      ]
+    },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{position:'top', labels:{boxWidth:10,usePointStyle:true}} },
+      scales:{ x:{grid:{display:false}}, y:{grid:{color:'#1b212c'}} }
+    }
+  });
+} else {
+  el('loadChart').parentElement.innerHTML = '<div class="empty">No training-load data yet.</div>';
+}
+
+// ---- Weekly mileage ----
+const wk = DATA.weekly_mileage || [];
+if(wk.length){
+  new Chart(el('mileageChart'), {
+    data:{
+      labels: wk.map(d=>fmtDate(d.week_start)),
+      datasets:[
+        {type:'bar', label:'km', data:wk.map(d=>d.km), backgroundColor:'#5b8cff88', borderRadius:4},
+        {type:'line', label:'trend', data:wk.map(d=>d.km), borderColor:'#ffd166', borderWidth:2, pointRadius:0, tension:0.35, fill:false}
+      ]
+    },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ x:{grid:{display:false}}, y:{grid:{color:'#1b212c'}, title:{display:true,text:'km'}} }
+    }
+  });
+} else {
+  el('mileageChart').parentElement.innerHTML = '<div class="empty">No runs logged yet.</div>';
+}
+
+// ---- Recovery mini charts ----
+function miniLine(canvasId, series, labels, color, suffix){
+  if(!series.length){ el(canvasId).parentElement.innerHTML = '<div class="empty">No data.</div>'; return; }
+  new Chart(el(canvasId), {
+    type:'line',
+    data:{ labels, datasets:[{ data:series, borderColor:color, backgroundColor:color+'22', borderWidth:2,
+      pointRadius:2, tension:0.3, fill:true }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:(c)=>c.parsed.y+suffix}} },
+      scales:{ x:{grid:{display:false}}, y:{grid:{color:'#1b212c'}} }
+    }
+  });
+}
+miniLine('hrvChart', hrvTrend.map(d=>d.last_night_avg ?? d.weekly_avg), hrvTrend.map(d=>fmtDate(d.date)), '#4fd6e8', ' ms');
+miniLine('rhrChart', rhrTrend.map(d=>d.rhr), rhrTrend.map(d=>fmtDate(d.date)), '#ff6b7a', ' bpm');
+const sleepTrend = DATA.sleep_trend || [];
+miniLine('sleepChart', sleepTrend.map(d=>d.hours), sleepTrend.map(d=>fmtDate(d.date)), '#ffd166', ' h');
+
+// ---- VO2 max ----
+if(vo2Trend.length){
+  new Chart(el('vo2Chart'), {
+    type:'line',
+    data:{ labels:vo2Trend.map(d=>fmtDate(d.date)), datasets:[{ data:vo2Trend.map(d=>d.vo2max),
+      borderColor:'#b98bff', backgroundColor:'#b98bff22', borderWidth:2, pointRadius:3, tension:0.3, fill:true }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{ x:{grid:{display:false}}, y:{grid:{color:'#1b212c'}} }
+    }
+  });
+} else {
+  el('vo2Chart').parentElement.innerHTML = '<div class="empty">No VO2 max data yet.</div>';
+}
+
+// ---- Pace panel ----
+const pp = DATA.pace_panel || {easy:{count:0}, workout:{count:0}, runs:[]};
+el('easyPace').textContent = pp.easy.count ? pp.easy.avg_pace : '—';
+el('easyMeta').textContent = pp.easy.count ? (pp.easy.count + ' run(s) · avg HR ' + (pp.easy.avg_hr ?? '-') + ' bpm') : 'No easy-labeled runs in this window.';
+el('workoutPace').textContent = pp.workout.count ? pp.workout.avg_pace : '—';
+el('workoutMeta').textContent = pp.workout.count ? (pp.workout.count + ' run(s) · avg HR ' + (pp.workout.avg_hr ?? '-') + ' bpm') : 'No workout runs in this window.';
+
+// ---- Recent runs table ----
+const runs = DATA.recent_runs || [];
+const tableWrap = el('runsTableWrap');
+if(runs.length){
+  let rows = runs.map(r => {
+    const bucket = (DATA.pace_panel && DATA.pace_panel.runs || []).find(x=>x.id===r.id);
+    const isEasy = bucket ? bucket.bucket === 'easy' : false;
+    return '<tr>' +
+      '<td>' + fmtDate(r.date) + '</td>' +
+      '<td>' + r.distance_km + ' km</td>' +
+      '<td>' + r.pace_label + '</td>' +
+      '<td>' + (r.avg_hr ?? '-') + ' bpm</td>' +
+      '<td><span class="badge ' + (isEasy?'easy':'workout') + '">' + r.label.replaceAll('_',' ') + '</span></td>' +
+    '</tr>';
+  }).join('');
+  tableWrap.innerHTML = '<table><thead><tr><th>Date</th><th>Distance</th><th>Pace</th><th>Avg HR</th><th>Type</th></tr></thead><tbody>' + rows + '</tbody></table>';
+} else {
+  tableWrap.innerHTML = '<div class="empty">No runs in the last 4 weeks.</div>';
+}
+
+// ---- Personal records ----
+const prRow = el('prRow');
+const prs = DATA.personal_records || [];
+if(prs.length){
+  prs.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'pr-chip';
+    div.innerHTML = '<b>' + p.value + '</b>' + p.label;
+    prRow.appendChild(div);
+  });
+} else {
+  prRow.innerHTML = '<div class="empty">No personal records yet.</div>';
+}
+
+el('footer').textContent = 'Height ' + DATA.athlete.height_cm + ' cm · Weight ' + DATA.athlete.weight_kg + ' kg · Generated by dashboard.py';
+</script>
+</body>
+</html>

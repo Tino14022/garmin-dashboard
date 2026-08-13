@@ -1,0 +1,5 @@
+index.html
+.mcp.json
+.venv/
+__pycache__/
+_site/
