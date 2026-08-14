@@ -63,8 +63,11 @@
   .chart-wrap{position:relative; height:260px;}
   .chart-wrap.short{height:200px;}
 
-  .recovery-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
-  @media (max-width:800px){ .recovery-grid{grid-template-columns:1fr;} }
+  /* minmax(0,1fr), not 1fr: a bare 1fr track has min-width:auto, so the canvases'
+     300px default min-content width widens the columns and scrolls the whole page
+     sideways — on every tab, since panels stay laid out rather than display:none. */
+  .recovery-grid{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px;}
+  @media (max-width:800px){ .recovery-grid{grid-template-columns:minmax(0,1fr);} }
   .recovery-card h3{font-size:0.8rem; margin:0 0 8px; color:var(--text-dim); font-weight:600;}
 
   table{width:100%; border-collapse:collapse; font-size:0.85rem;}

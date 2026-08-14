@@ -106,13 +106,19 @@ __RUNNING_TAB_STYLE__
     padding:8px 18px; border-radius:999px; font-size:0.82rem; font-weight:600; cursor:pointer;
   }
   .period-btn.active{ background:var(--neon); color:#06170d; border-color:var(--neon); }
-  .analysis-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:14px; }
+  /* Fixed column counts rather than auto-fit: with exactly four cards, auto-fit
+     lands on three columns at common widths and orphans the fourth on its own row.
+     align-items:start keeps each card the height of its own content — otherwise a
+     one-row card stretches to match a five-row neighbour and shows dead space. */
+  .analysis-grid{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px; align-items:start; }
+  @media (max-width:560px){ .analysis-grid{ grid-template-columns:minmax(0,1fr); } }
+  @media (min-width:1000px){ .analysis-grid{ grid-template-columns:repeat(4, minmax(0,1fr)); } }
   .analysis-card{ background:var(--panel-2); border:1px solid var(--border); border-radius:14px; padding:16px 18px; }
   .analysis-card h3{ margin:0 0 10px; font-size:0.82rem; color:var(--text-dim); display:flex; align-items:center; gap:6px; }
-  .analysis-row{ display:flex; justify-content:space-between; font-size:0.82rem; padding:4px 0; border-bottom:1px solid var(--border); }
+  .analysis-row{ display:flex; justify-content:space-between; gap:10px; font-size:0.82rem; padding:4px 0; border-bottom:1px solid var(--border); }
   .analysis-row:last-child{ border-bottom:none; }
   .analysis-row .k{ color:var(--text-faint); }
-  .analysis-row .v{ font-weight:600; }
+  .analysis-row .v{ font-weight:600; white-space:nowrap; }
   .trend-up{ color:var(--green); }
   .trend-down{ color:var(--red); }
   .neglect-tag{
