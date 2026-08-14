@@ -235,6 +235,7 @@ __RUNNING_TAB_STYLE__
 
 <div class="tabbar" id="tabbar">
   <button class="tabbtn" data-tab="analysis">📊 Analysis</button>
+  <button class="tabbtn" data-tab="workout">📋 Workout</button>
   <button class="tabbtn" data-tab="training">💪 Training</button>
   <button class="tabbtn" data-tab="running">🏃 Running</button>
   <button class="tabbtn" data-tab="sleep">😴 Sleep</button>
@@ -252,10 +253,13 @@ __RUNNING_TAB_STYLE__
   <div id="analysisContent"></div>
 </div>
 
+<!-- ===================== WORKOUT TAB ===================== -->
+<div class="tab-panel" id="tab-workout">
+  <div id="workoutPlanWrap"></div>
+</div>
+
 <!-- ===================== TRAINING TAB ===================== -->
 <div class="tab-panel" id="tab-training">
-  <div id="workoutPlanWrap"></div>
-
   <div class="streak-card">
     <div class="level-badge" id="levelBadge"><span class="lvl" id="levelNum">-</span></div>
     <div class="xp-block">
@@ -418,7 +422,7 @@ tabButtons.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)
 
 const ICONS = {gym:'🏋️', run:'🏃', padel:'🏓', football:'⚽', hike:'🥾', tennis:'🎾', basketball:'🏀', bike:'🚴', swim:'🏊', walk:'🚶', yoga:'🧘', other:'✳️'};
 
-showTab(['analysis','training','running','sleep','nutrition','body'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'analysis');
+showTab(['analysis','workout','training','running','sleep','nutrition','body'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'analysis');
 
 // ===================== ANALYSIS TAB =====================
 function daysAgo(n){
