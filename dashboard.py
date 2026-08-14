@@ -246,7 +246,19 @@ def fetch_sleep_trend(api, start: date, end: date) -> list[dict]:
             "date": e.get("calendarDate"),
             "hours": round(total_s / 3600, 2),
             "score": v.get("sleepScore"),
+            "quality": v.get("sleepScoreQuality"),
+            "deep_min": round((v.get("deepTime") or 0) / 60),
+            "light_min": round((v.get("lightTime") or 0) / 60),
+            "rem_min": round((v.get("remTime") or 0) / 60),
+            "awake_min": round((v.get("awakeTime") or 0) / 60),
+            "resting_hr": v.get("restingHeartRate"),
+            "avg_hr": v.get("avgHeartRate"),
+            "respiration": v.get("respiration"),
+            "spo2": v.get("spO2"),
             "avg_overnight_hrv": v.get("avgOvernightHrv"),
+            "hrv_7d_avg": v.get("hrv7dAverage"),
+            "sleep_need_min": v.get("sleepNeed"),
+            "body_battery_change": v.get("bodyBatteryChange"),
         })
     out.sort(key=lambda x: x["date"])
     return out
@@ -672,8 +684,8 @@ def main() -> None:
     print("Fetching resting HR trend...")
     rhr_trend = fetch_rhr_trend(api, recovery_start, today)
 
-    print("Fetching sleep trend...")
-    sleep_trend = fetch_sleep_trend(api, recovery_start, today)
+    print("Fetching sleep trend (12 weeks, for the Sleep tab)...")
+    sleep_trend = fetch_sleep_trend(api, trend_start, today)
 
     print("Fetching personal records + race predictions...")
     personal_records = fetch_personal_records(api)

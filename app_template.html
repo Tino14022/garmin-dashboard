@@ -188,6 +188,7 @@ __RUNNING_TAB_STYLE__
   <button class="tabbtn" data-tab="analysis">📊 Analysis</button>
   <button class="tabbtn" data-tab="training">💪 Training</button>
   <button class="tabbtn" data-tab="running">🏃 Running</button>
+  <button class="tabbtn" data-tab="sleep">😴 Sleep</button>
   <button class="tabbtn" data-tab="nutrition">🍽️ Nutrition</button>
   <button class="tabbtn" data-tab="body">⚖️ Body</button>
 </div>
@@ -315,6 +316,11 @@ __RUNNING_TAB_STYLE__
 __RUNNING_TAB_CONTENT__
 </div>
 
+<!-- ===================== SLEEP TAB ===================== -->
+<div class="tab-panel" id="tab-sleep">
+  <div id="sleepContent"></div>
+</div>
+
 <!-- ===================== NUTRITION TAB ===================== -->
 <div class="tab-panel" id="tab-nutrition">
   <div id="nutritionContent"></div>
@@ -361,7 +367,7 @@ tabButtons.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)
 
 const ICONS = {gym:'🏋️', run:'🏃', padel:'🏓', football:'⚽', hike:'🥾', tennis:'🎾', basketball:'🏀', bike:'🚴', swim:'🏊', walk:'🚶', yoga:'🧘', other:'✳️'};
 
-showTab(['analysis','training','running','nutrition','body'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'analysis');
+showTab(['analysis','training','running','sleep','nutrition','body'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'analysis');
 
 // ===================== ANALYSIS TAB =====================
 function daysAgo(n){
@@ -766,6 +772,138 @@ if(training.sessions.length){
 } else {
   sessWrap.innerHTML = '<div class="empty">No manually-logged sessions yet.</div>';
 }
+
+// ===================== SLEEP TAB =====================
+(function(){
+  const sleep = (DATA.sleep_trend || []).slice(); // sorted ascending by date already
+  if(!sleep.length){
+    el('sleepContent').innerHTML = '<div class="placeholder"><div class="big">😴</div><p><b>No sleep data yet.</b></p><p>This fills in automatically from your watch — nothing to log manually.</p></div>';
+    return;
+  }
+
+  const avg = arr => { const v = arr.filter(x => x != null); return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null; };
+  const last = (n) => sleep.slice(-n);
+  const fmt1 = x => x == null ? '-' : Math.round(x*10)/10;
+
+  const avg7 = {
+    hours: avg(last(7).map(s=>s.hours)), score: avg(last(7).map(s=>s.score)),
+    rhr: avg(last(7).map(s=>s.resting_hr)), resp: avg(last(7).map(s=>s.respiration)),
+    spo2: avg(last(7).map(s=>s.spo2)), hrv: avg(last(7).map(s=>s.avg_overnight_hrv)),
+  };
+  const prev7 = sleep.length > 7 ? sleep.slice(-14, -7) : [];
+  const avgPrev7 = {
+    score: avg(prev7.map(s=>s.score)), rhr: avg(prev7.map(s=>s.resting_hr)),
+  };
+  const avg30 = {
+    hours: avg(last(30).map(s=>s.hours)), score: avg(last(30).map(s=>s.score)),
+  };
+
+  let html = '';
+  html += '<div class="tiles">' + [
+    ['Sleep Score', avg7.score != null ? Math.round(avg7.score) : '-', '7-day avg', sleep.map(s=>s.score), '#5b8cff'],
+    ['Sleep Hours', fmt1(avg7.hours), '7-day avg', sleep.map(s=>s.hours), '#3ddc97'],
+    ['Resting HR', avg7.rhr != null ? Math.round(avg7.rhr)+' bpm' : '-', 'overnight avg', sleep.map(s=>s.resting_hr), '#ff6b7a'],
+    ['Respiration', fmt1(avg7.resp), 'breaths/min avg', sleep.map(s=>s.respiration), '#ffd166'],
+    ['SpO2', avg7.spo2 != null ? fmt1(avg7.spo2)+'%' : '-', 'overnight avg', sleep.map(s=>s.spo2), '#4fd6e8'],
+    ['Overnight HRV', avg7.hrv != null ? Math.round(avg7.hrv)+' ms' : '-', '7-day avg', sleep.map(s=>s.avg_overnight_hrv), '#b98bff'],
+  ].map(([label,value,sub,series,color],i) =>
+    '<div class="tile"><div class="label">' + label + '</div><div class="value">' + value + '</div>' +
+    '<div class="sub">' + sub + '</div><div class="spark-wrap"><canvas id="sleepSpark' + i + '"></canvas></div></div>'
+  ).join('') + '</div>';
+
+  html += '<div class="my-take" id="sleepTake"><span class="tag">Sleep analysis</span></div>';
+
+  html += '<div class="section"><h2>Sleep Hours & Score</h2><div class="desc">Bars = hours slept. Line = Garmin\'s sleep score (0-100, quality of the sleep itself, not just duration).</div><div class="chart-wrap"><canvas id="sleepHoursChart"></canvas></div></div>';
+  html += '<div class="section"><h2>Sleep Stages</h2><div class="desc">Deep sleep is where most physical recovery happens; REM is more cognitive/nervous-system recovery. Last 21 nights.</div><div class="chart-wrap"><canvas id="sleepStagesChart"></canvas></div></div>';
+  html += '<div class="section"><h2>Overnight Vitals</h2><div class="desc">Resting HR trending up, or respiration/SpO2 moving away from your baseline, are early signals of fatigue, stress, or getting sick.</div><div class="recovery-grid">' +
+    '<div class="recovery-card"><h3>Resting HR (bpm)</h3><div class="chart-wrap short"><canvas id="sleepRhrChart"></canvas></div></div>' +
+    '<div class="recovery-card"><h3>Respiration (br/min)</h3><div class="chart-wrap short"><canvas id="sleepRespChart"></canvas></div></div>' +
+    '<div class="recovery-card"><h3>SpO2 (%)</h3><div class="chart-wrap short"><canvas id="sleepSpo2Chart"></canvas></div></div>' +
+    '</div></div>';
+  html += '<div class="section"><h2>Recent Nights</h2><div id="sleepTableWrap"></div></div>';
+
+  el('sleepContent').innerHTML = html;
+
+  // Stat tile sparklines
+  const sparkSeries = [sleep.map(s=>s.score), sleep.map(s=>s.hours), sleep.map(s=>s.resting_hr), sleep.map(s=>s.respiration), sleep.map(s=>s.spo2), sleep.map(s=>s.avg_overnight_hrv)];
+  const sparkColors = ['#5b8cff','#3ddc97','#ff6b7a','#ffd166','#4fd6e8','#b98bff'];
+  sparkSeries.forEach((series, i) => sparkline('sleepSpark' + i, series.filter(x=>x!=null), sparkColors[i]));
+
+  // Hours + Score chart
+  new Chart(el('sleepHoursChart'), {
+    data: {
+      labels: sleep.map(s => fmtDate(s.date)),
+      datasets: [
+        {type:'bar', label:'Hours', data: sleep.map(s=>s.hours), backgroundColor:'#3ddc9788', borderRadius:3, yAxisID:'y'},
+        {type:'line', label:'Score', data: sleep.map(s=>s.score), borderColor:'#5b8cff', pointRadius:0, tension:0.3, yAxisID:'y1'},
+      ]
+    },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'top', labels:{boxWidth:10,usePointStyle:true}}},
+      scales:{ x:{grid:{display:false}}, y:{position:'left', grid:{color:'#1b212c'}, title:{display:true,text:'hours'}},
+        y1:{position:'right', grid:{display:false}, min:0, max:100, title:{display:true,text:'score'}} }
+    }
+  });
+
+  // Sleep stages stacked bar (last 21 nights)
+  const stageNights = last(21);
+  new Chart(el('sleepStagesChart'), {
+    type:'bar',
+    data: {
+      labels: stageNights.map(s => fmtDate(s.date)),
+      datasets: [
+        {label:'Deep', data: stageNights.map(s=>s.deep_min), backgroundColor:'#5b8cff'},
+        {label:'Light', data: stageNights.map(s=>s.light_min), backgroundColor:'#4fd6e8'},
+        {label:'REM', data: stageNights.map(s=>s.rem_min), backgroundColor:'#b98bff'},
+        {label:'Awake', data: stageNights.map(s=>s.awake_min), backgroundColor:'#ff6b7a'},
+      ]
+    },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'top', labels:{boxWidth:10,usePointStyle:true}}},
+      scales:{ x:{stacked:true, grid:{display:false}}, y:{stacked:true, grid:{color:'#1b212c'}, title:{display:true,text:'minutes'}} }
+    }
+  });
+
+  miniLine('sleepRhrChart', sleep.map(s=>s.resting_hr), sleep.map(s=>fmtDate(s.date)), '#ff6b7a', ' bpm');
+  miniLine('sleepRespChart', sleep.map(s=>s.respiration), sleep.map(s=>fmtDate(s.date)), '#ffd166', ' br/min');
+  miniLine('sleepSpo2Chart', sleep.map(s=>s.spo2), sleep.map(s=>fmtDate(s.date)), '#4fd6e8', '%');
+
+  // Recent nights table
+  const rows = sleep.slice().reverse().slice(0, 21).map(s =>
+    '<tr><td>' + fmtDate(s.date) + '</td><td>' + fmt1(s.hours) + 'h</td><td>' + (s.score ?? '-') + ' (' + (s.quality||'-').toLowerCase() + ')</td>' +
+    '<td>' + (s.resting_hr ?? '-') + ' bpm</td><td>' + fmt1(s.respiration) + '</td><td>' + fmt1(s.spo2) + '%</td></tr>'
+  ).join('');
+  el('sleepTableWrap').innerHTML = '<table><thead><tr><th>Date</th><th>Duration</th><th>Score</th><th>Resting HR</th><th>Respiration</th><th>SpO2</th></tr></thead><tbody>' + rows + '</tbody></table>';
+
+  // ---- Ongoing sleep analysis (recomputed every rebuild as new nights land) ----
+  const sentences = [];
+  if(avgPrev7.score != null && avg7.score != null){
+    const diff = Math.round(avg7.score - avgPrev7.score);
+    if(diff >= 8) sentences.push('Sleep score is up ' + diff + ' points over the last week vs. the week before — recovery is trending in the right direction.');
+    else if(diff <= -8) sentences.push('Sleep score dropped ' + Math.abs(diff) + ' points over the last week vs. the week before — worth figuring out why (training load, stress, schedule) before it compounds.');
+  }
+  const deepPct = avg(last(7).map(s => s.hours ? (s.deep_min / (s.hours*60)) * 100 : null));
+  if(deepPct != null){
+    if(deepPct < 10) sentences.push('Deep sleep is only averaging ' + Math.round(deepPct) + '% of total sleep this week (healthy range is roughly 13-23%) — that\'s the stage most responsible for physical recovery, so this is worth watching, especially with hard training in the mix.');
+    else if(deepPct > 13) sentences.push('Deep sleep is averaging a solid ' + Math.round(deepPct) + '% of total sleep this week.');
+  }
+  if(avgPrev7.rhr != null && avg7.rhr != null){
+    const rhrDiff = Math.round((avg7.rhr - avgPrev7.rhr) * 10) / 10;
+    if(rhrDiff >= 2) sentences.push('Overnight resting HR is up ' + rhrDiff + ' bpm vs. last week — often an early sign of accumulated fatigue or fighting something off.');
+  }
+  const lowSpo2Nights = last(7).filter(s => s.spo2 != null && s.spo2 < 92).length;
+  if(lowSpo2Nights >= 2) sentences.push(lowSpo2Nights + ' of the last 7 nights had SpO2 dip below 92% — occasional dips are normal, but if this keeps showing up it\'s worth mentioning to a doctor.');
+  // Correlate worst night with training the day before
+  const worstNight = last(7).slice().sort((a,b) => (a.score||100) - (b.score||100))[0];
+  if(worstNight && worstNight.score != null && worstNight.score < 65){
+    const dayBefore = new Date(worstNight.date + 'T00:00:00'); dayBefore.setDate(dayBefore.getDate()-1);
+    const dayBeforeStr = localIso(dayBefore);
+    const hardSessionBefore = (DATA.training.sessions||[]).find(s => s.date === dayBeforeStr && s.duration_min > 45);
+    if(hardSessionBefore) sentences.push('Your worst night this week (' + fmtDate(worstNight.date) + ', score ' + worstNight.score + ') followed a ' + hardSessionBefore.duration_min + '-minute ' + hardSessionBefore.type + ' session the day before — a pattern worth watching if it repeats.');
+  }
+  if(!sentences.length) sentences.push('Nothing alarming in the last week of sleep data — scores, resting HR, and overnight vitals are holding steady.');
+  el('sleepTake').innerHTML += sentences.join(' ');
+})();
 
 // ===================== NUTRITION TAB =====================
 const nutrition = DATA.nutrition || [];
