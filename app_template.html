@@ -143,6 +143,14 @@ __RUNNING_TAB_STYLE__
   .cal-cell .daynum{ position:absolute; top:3px; left:5px; font-size:0.6rem; color:var(--text-faint); }
   .cal-cell .icons{ font-size:1.1rem; line-height:1; margin-top:6px; }
   .cal-cell.today{ border-color:var(--neon); box-shadow:0 0 0 1px var(--neon); }
+  .cal-cell.active{ background:rgba(61,220,151,0.16); border-color:rgba(61,220,151,0.55); }
+  .cal-cell.active.today{ box-shadow:0 0 0 1px var(--neon); }
+  .cal-cell.active.connect-right{ border-right-color:transparent; border-top-right-radius:0; border-bottom-right-radius:0; }
+  .cal-cell.active.connect-left{ border-left-color:transparent; border-top-left-radius:0; border-bottom-left-radius:0; }
+  .cal-cell.active.connect-right::after{
+    content:''; position:absolute; top:-1px; bottom:-1px; right:-5px; width:5px;
+    background:rgba(61,220,151,0.16); border-top:1px solid rgba(61,220,151,0.55); border-bottom:1px solid rgba(61,220,151,0.55);
+  }
 
   .nutrition-grid{ max-width:520px; }
   .nutrition-grid .cal-cell{ aspect-ratio:auto; min-height:64px; padding:2px; }
@@ -864,14 +872,13 @@ function buildCalendar(sessions, nutritionByDate){
   start.setDate(start.getDate() - 34);
   while(start.getDay() !== 0) start.setDate(start.getDate() - 1);
 
-  let html = '<div class="cal-grid' + (isNutrition ? ' nutrition-grid' : '') + '">';
-  ['S','M','T','W','T','F','S'].forEach(d => html += '<div class="cal-dow">' + d + '</div>');
+  // First pass: collect each cell's data (including whether it's an active training day).
+  const cells = [];
   const cur = new Date(start);
   const todayStr = DATA.generated_at;
   while(cur <= today || cur.getDay() !== 0){
     const iso = localIso(cur);
-    const isToday = iso === todayStr;
-    let inner;
+    let inner, active = false;
     if(isNutrition){
       const d = nutritionByDate[iso];
       inner = d
@@ -880,12 +887,32 @@ function buildCalendar(sessions, nutritionByDate){
     } else {
       const types = byDate[iso] || [];
       inner = '<span class="icons">' + types.map(t => ICONS[t] || '✳️').join('') + '</span>';
+      active = types.length > 0;
     }
-    html += '<div class="cal-cell' + (isToday?' today':'') + '">' +
-      '<span class="daynum">' + cur.getDate() + '</span>' + inner + '</div>';
+    cells.push({ day: cur.getDate(), dow: cur.getDay(), isToday: iso === todayStr, inner, active });
     cur.setDate(cur.getDate() + 1);
     if(cur > today && cur.getDay() === 0) break;
   }
+
+  // Second pass: flag horizontal runs of active days so adjacent cells in the same
+  // calendar row can be rendered as one connected green block instead of separate tiles.
+  cells.forEach((c, i) => {
+    c.connectLeft = c.active && c.dow !== 0 && i > 0 && cells[i - 1].active;
+  });
+  cells.forEach((c, i) => {
+    c.connectRight = i < cells.length - 1 && cells[i + 1].connectLeft;
+  });
+
+  let html = '<div class="cal-grid' + (isNutrition ? ' nutrition-grid' : '') + '">';
+  ['S','M','T','W','T','F','S'].forEach(d => html += '<div class="cal-dow">' + d + '</div>');
+  cells.forEach(c => {
+    let cls = 'cal-cell';
+    if(c.isToday) cls += ' today';
+    if(c.active) cls += ' active';
+    if(c.connectLeft) cls += ' connect-left';
+    if(c.connectRight) cls += ' connect-right';
+    html += '<div class="' + cls + '"><span class="daynum">' + c.day + '</span>' + c.inner + '</div>';
+  });
   html += '</div>';
   return html;
 }
