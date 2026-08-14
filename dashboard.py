@@ -34,6 +34,9 @@ WEIGHT_KG = 95
 TREND_WEEKS = 12
 RECOVERY_WEEKS = 4
 RECENT_RUNS_WEEKS = 4
+CALORIE_WEEKS = 5  # Garmin daily-summary calls are one-per-day; keep this modest
+
+PROTEIN_G_PER_KG = 1.8  # reasonable target for concurrent endurance + strength training
 
 OUTPUT_PATH = Path(__file__).parent / "index.html"
 
@@ -273,6 +276,82 @@ def fetch_sleep_trend(api, start: date, end: date) -> list[dict]:
             "body_battery_change": v.get("bodyBatteryChange"),
         })
     out.sort(key=lambda x: x["date"])
+    return out
+
+
+def build_nutrition_view(nutrition: list[dict], calorie_trend: list[dict], body_comp: list[dict], today: date) -> dict:
+    latest_weight = WEIGHT_KG
+    if body_comp:
+        sorted_bc = sorted(body_comp, key=lambda b: b.get("date") or "")
+        if sorted_bc and sorted_bc[-1].get("weight_kg"):
+            latest_weight = sorted_bc[-1]["weight_kg"]
+    protein_target_g = round(latest_weight * PROTEIN_G_PER_KG)
+
+    week_ago = today - timedelta(days=6)
+    intake_by_date: dict[str, float] = {}
+    protein_by_date: dict[str, float] = {}
+    for n in nutrition:
+        d = n.get("date")
+        if not d:
+            continue
+        try:
+            if date.fromisoformat(d) < week_ago:
+                continue
+        except ValueError:
+            continue
+        intake_by_date[d] = intake_by_date.get(d, 0) + (n.get("calories") or 0)
+        protein_by_date[d] = protein_by_date.get(d, 0) + (n.get("protein_g") or 0)
+
+    burn_by_date = {
+        c["date"]: c["total_kcal"] for c in calorie_trend
+        if c.get("date") and date.fromisoformat(c["date"]) >= week_ago
+    }
+
+    # Only compare days where we actually know both sides of the equation.
+    common_dates = sorted(set(intake_by_date) & set(burn_by_date))
+    avg_intake = round(sum(intake_by_date[d] for d in common_dates) / len(common_dates)) if common_dates else None
+    avg_burn = round(sum(burn_by_date[d] for d in common_dates) / len(common_dates)) if common_dates else None
+    avg_protein = round(sum(protein_by_date.get(d, 0) for d in common_dates) / len(common_dates)) if common_dates else None
+    balance = (avg_intake - avg_burn) if (avg_intake is not None and avg_burn is not None) else None
+
+    classification = None
+    if balance is not None:
+        protein_adequate = avg_protein is not None and avg_protein >= protein_target_g * 0.85
+        if balance >= 200:
+            classification = "surplus_adequate_protein" if protein_adequate else "surplus_low_protein"
+        elif balance <= -200:
+            classification = "deficit_adequate_protein" if protein_adequate else "deficit_low_protein"
+        else:
+            classification = "maintenance"
+
+    return {
+        "protein_target_g": protein_target_g,
+        "protein_g_per_kg": PROTEIN_G_PER_KG,
+        "latest_weight_kg": latest_weight,
+        "week_avg_intake_kcal": avg_intake,
+        "week_avg_burn_kcal": avg_burn,
+        "week_avg_protein_g": avg_protein,
+        "week_balance_kcal": round(balance) if balance is not None else None,
+        "week_days_compared": len(common_dates),
+        "classification": classification,
+    }
+
+
+def fetch_calorie_trend(api, start: date, end: date) -> list[dict]:
+    """Garmin's device-measured daily energy expenditure (HR-based), not a self-estimated BMR formula."""
+    out = []
+    d = start
+    while d <= end:
+        s = safe_call(api.get_user_summary, iso(d), retries=2, delay=0.5)
+        if s and s.get("totalKilocalories"):
+            out.append({
+                "date": iso(d),
+                "total_kcal": s.get("totalKilocalories"),
+                "active_kcal": s.get("activeKilocalories"),
+                "bmr_kcal": s.get("bmrKilocalories"),
+            })
+        time.sleep(0.15)
+        d += timedelta(days=1)
     return out
 
 
@@ -718,6 +797,10 @@ def main() -> None:
     body_comp = load_json(Path(__file__).parent / "data" / "body_comp.json", [])
     muscle_group_list = load_json(Path(__file__).parent / "data" / "muscle_presets.json", {}).get("muscle_groups", [])
 
+    print(f"Fetching {CALORIE_WEEKS} weeks of Garmin daily calorie burn (one call per day)...")
+    calorie_trend = fetch_calorie_trend(api, today - timedelta(weeks=CALORIE_WEEKS), today)
+    nutrition_view = build_nutrition_view(nutrition, calorie_trend, body_comp, today)
+
     days_remaining = (RACE_DATE - today).days
     weeks_remaining = round(days_remaining / 7, 1)
 
@@ -750,6 +833,8 @@ def main() -> None:
         "nutrition": nutrition,
         "body_comp": body_comp,
         "muscle_group_list": muscle_group_list,
+        "calorie_trend": calorie_trend,
+        "nutrition_view": nutrition_view,
     }
 
     html = build_html(data)
