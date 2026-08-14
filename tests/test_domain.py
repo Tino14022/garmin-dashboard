@@ -221,6 +221,21 @@ def test_plan_tapers_rather_than_peaking_at_the_race():
     assert tapers == sorted(tapers, reverse=True)
 
 
+def test_taper_never_asks_for_more_than_the_biggest_build_week():
+    """A taper scaled off the theoretical peak rather than the distance actually
+    reached produces 'taper' weeks longer than any build week."""
+    for longest in (5.0, 7.05, 12.0, 18.0):
+        plan = build_race_plan(
+            [{"date": ANCHOR.isoformat(), "distance_km": longest}],
+            ANCHOR,
+            race_date=date(2026, 10, 4),
+            race_distance_km=21.1,
+        )
+        builds = [w["long_run_km"] for w in plan["weeks"] if w["kind"] in ("build", "cutback")]
+        tapers = [w["long_run_km"] for w in plan["weeks"] if w["kind"] == "taper"]
+        assert max(tapers) <= max(builds), f"taper exceeds peak build for {longest}km"
+
+
 def test_plan_reports_when_there_is_not_enough_runway():
     plan = build_race_plan(
         [{"date": ANCHOR.isoformat(), "distance_km": 5.0}],

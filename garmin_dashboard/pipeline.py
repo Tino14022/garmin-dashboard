@@ -6,7 +6,7 @@ including HTML generation, runs offline against a fake source.
 from __future__ import annotations
 
 import time
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from .config import Settings
 from .domain.formatting import iso
@@ -28,6 +28,7 @@ def build_payload(
     *,
     today: date | None = None,
     generated_at_time: str | None = None,
+    generated_at_iso: str | None = None,
 ) -> dict:
     today = today or settings.today()
     weeks = settings.windows
@@ -91,6 +92,10 @@ def build_payload(
         "generated_at": today.isoformat(),
         "generated_at_time": generated_at_time
         or time.strftime("%Y-%m-%d %H:%M %Z"),
+        # Machine-readable build time so the page can work out for itself how
+        # stale it is; the display string above is not reliably parseable.
+        "generated_at_iso": generated_at_iso
+        or datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "athlete_name": source.athlete_name(),
         "race": {
             "name": settings.race.name,

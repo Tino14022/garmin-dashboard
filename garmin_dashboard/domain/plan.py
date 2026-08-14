@@ -84,11 +84,15 @@ def build_race_plan(
             }
         )
 
+    # Taper off the distance actually reached, not the theoretical peak. When
+    # there isn't enough runway to reach peak, scaling the taper off it produces
+    # "taper" weeks longer than any build week — a taper that is really a jump.
+    achieved_peak = max((w["long_run_km"] for w in weeks), default=current)
     for j, fraction in enumerate(TAPER[len(TAPER) - taper_weeks :]):
         weeks.append(
             {
                 "week_start": iso(first_week + timedelta(weeks=build_weeks + j)),
-                "long_run_km": round(peak * fraction, 1),
+                "long_run_km": round(achieved_peak * fraction, 1),
                 "kind": "taper",
             }
         )

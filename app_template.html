@@ -255,6 +255,32 @@ __RUNNING_TAB_STYLE__
   .placeholder .big{ font-size:2rem; margin-bottom:10px; }
   .placeholder p{ font-size:0.85rem; max-width:420px; margin:6px auto; color:var(--text-faint); }
 
+  /* ---- Build health ---- */
+  .health-banner{
+    display:none; border-radius:12px; padding:12px 16px; margin-bottom:16px;
+    font-size:0.82rem; line-height:1.5; border:1px solid;
+  }
+  .health-banner.show{ display:block; }
+  .health-banner.warn{ background:rgba(255,209,102,0.1); border-color:rgba(255,209,102,0.45); color:var(--yellow); }
+  .health-banner.bad{ background:rgba(255,107,122,0.1); border-color:rgba(255,107,122,0.5); color:var(--red); }
+  .health-banner b{ display:block; margin-bottom:3px; }
+  .health-banner .detail{ color:var(--text-dim); font-size:0.76rem; }
+
+  /* ---- Race plan ---- */
+  .plan-verdict{ font-size:0.85rem; line-height:1.55; margin-bottom:14px; }
+  .plan-weeks{ display:flex; gap:5px; align-items:flex-end; margin:16px 0 8px; overflow-x:auto; padding-bottom:4px; }
+  .plan-week{ flex:1 0 42px; text-align:center; }
+  .plan-bar{ border-radius:4px 4px 0 0; margin:0 auto 5px; width:100%; min-height:3px; }
+  .plan-bar.build{ background:var(--neon); }
+  .plan-bar.cutback{ background:var(--blue); }
+  .plan-bar.taper{ background:var(--yellow); }
+  .plan-bar.race{ background:var(--red); }
+  .plan-week .km{ font-size:0.68rem; font-weight:700; }
+  .plan-week .wk{ font-size:0.58rem; color:var(--text-faint); }
+  .plan-legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:0.7rem; color:var(--text-faint); }
+  .plan-legend span{ display:flex; align-items:center; gap:5px; }
+  .plan-legend i{ width:9px; height:9px; border-radius:2px; display:block; }
+
   footer{color:var(--text-faint); font-size:0.75rem; text-align:center; padding:20px 0 10px;}
 </style>
 </head>
@@ -269,6 +295,8 @@ __RUNNING_TAB_STYLE__
   <button class="tabbtn" data-tab="nutrition">🍽️ Nutrition</button>
   <button class="tabbtn" data-tab="body">⚖️ Body</button>
 </div>
+
+<div class="health-banner" id="healthBanner"></div>
 
 <!-- ===================== ANALYSIS TAB ===================== -->
 <div class="tab-panel" id="tab-analysis">
@@ -400,6 +428,7 @@ __RUNNING_TAB_STYLE__
 
 <!-- ===================== RUNNING TAB ===================== -->
 <div class="tab-panel" id="tab-running">
+<div id="racePlanWrap"></div>
 __RUNNING_TAB_CONTENT__
 </div>
 
@@ -455,6 +484,38 @@ tabButtons.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)
 const ICONS = {gym:'🏋️', run:'🏃', padel:'🏓', football:'⚽', hike:'🥾', tennis:'🎾', basketball:'🏀', bike:'🚴', swim:'🏊', walk:'🚶', yoga:'🧘', other:'✳️'};
 
 showTab(['analysis','workout','training','running','sleep','nutrition','body'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'analysis');
+
+// ===================== BUILD HEALTH =====================
+// A build that lost some of its Garmin data still deploys — silently, before
+// this. Missing charts and a stale page now say so instead of just looking calm.
+(function(){
+  const banner = el('healthBanner');
+  const health = DATA.build_health || {healthy:true, failures:[]};
+  const problems = [];
+  let severity = 'warn';
+
+  if(!health.healthy && (health.failures||[]).length){
+    const names = health.failures.map(f => f.name.replace(/_/g,' ')).join(', ');
+    problems.push('Garmin data missing for: ' + names + '. Those charts are incomplete, not empty because you did nothing.');
+    if(health.failed >= 3) severity = 'bad';
+  }
+
+  // Rebuilds run at least every 2 hours, so a page much older than that means
+  // the pipeline is failing or the Garmin token has expired.
+  if(DATA.generated_at_iso){
+    const builtAt = new Date(DATA.generated_at_iso);
+    const hours = (Date.now() - builtAt.getTime()) / 36e5;
+    if(hours > 6){
+      problems.push('This page was last rebuilt ' + Math.floor(hours) + ' hours ago — the deploy is probably failing.');
+      if(hours > 24) severity = 'bad';
+    }
+  }
+
+  if(!problems.length) return;
+  banner.className = 'health-banner show ' + severity;
+  banner.innerHTML = '<b>' + (severity === 'bad' ? 'Data problem' : 'Heads up') + '</b>' +
+    problems.map(p => '<div class="detail">' + p + '</div>').join('');
+})();
 
 // ===================== ANALYSIS TAB =====================
 function daysAgo(n){
@@ -760,6 +821,51 @@ function renderAnalysis(period){
 
 document.querySelectorAll('.period-btn').forEach(b => b.addEventListener('click', () => renderAnalysis(b.dataset.period)));
 renderAnalysis('weekly');
+
+// ===================== RACE PLAN =====================
+// The dashboard could always see the gap between the longest run on record and
+// the race distance. This is the ladder that closes it.
+(function(){
+  const plan = DATA.race_plan;
+  const wrap = el('racePlanWrap');
+  if(!plan || !wrap || !(plan.weeks||[]).length) return;
+
+  const gap = Math.round((plan.race_distance_km - plan.current_longest_km) * 10) / 10;
+  let verdict;
+  if(plan.on_track){
+    verdict = 'Longest run in the last 8 weeks is <b>' + plan.current_longest_km + ' km</b> against a ' +
+      plan.race_distance_km + ' km race, ' + plan.days_remaining + ' days out. That is ' + gap +
+      ' km to find, and there is room to do it at a safe build rate — follow the long runs below.';
+  } else {
+    verdict = 'Longest run in the last 8 weeks is <b>' + plan.current_longest_km + ' km</b> against a ' +
+      plan.race_distance_km + ' km race in ' + plan.days_remaining + ' days. Closing that safely needs about <b>' +
+      plan.weeks_needed_at_safe_growth + ' build weeks</b> and only <b>' + plan.build_weeks +
+      '</b> remain, so the ladder below is the fastest sensible ramp rather than a comfortable one. ' +
+      'Expect to arrive under-distance, or move the goal to finishing rather than a target time.';
+  }
+
+  const peak = Math.max.apply(null, plan.weeks.map(w => w.long_run_km)) || 1;
+  const bars = plan.weeks.map(w => {
+    const label = w.week_start.slice(5).replace('-', '/');
+    return '<div class="plan-week">' +
+      '<div class="km">' + w.long_run_km + '</div>' +
+      '<div class="plan-bar ' + w.kind + '" style="height:' + Math.max(3, Math.round(w.long_run_km / peak * 74)) + 'px"></div>' +
+      '<div class="wk">' + label + '</div></div>';
+  }).join('');
+
+  wrap.innerHTML = '<div class="section"><h2>Long Run Plan</h2>' +
+    '<div class="desc">Weekly long run from here to race day. Builds rise at most 10% a week, every fourth week backs off, ' +
+    'and the last two weeks taper so you arrive fresh instead of peaking on race morning.</div>' +
+    '<div class="plan-verdict">' + verdict + '</div>' +
+    '<div class="plan-weeks">' + bars + '</div>' +
+    '<div class="plan-legend">' +
+      '<span><i style="background:var(--neon)"></i>Build</span>' +
+      '<span><i style="background:var(--blue)"></i>Cutback</span>' +
+      '<span><i style="background:var(--yellow)"></i>Taper</span>' +
+      '<span><i style="background:var(--red)"></i>Race</span>' +
+      '<span>Next long run: <b>' + plan.next_long_run_km + ' km</b></span>' +
+    '</div></div>';
+})();
 
 // ===================== TRAINING TAB =====================
 const training = DATA.training || {sessions:[], muscle_scores:{}, streak_weeks:0, week_count:0};
