@@ -443,15 +443,25 @@ def build_training_view(runs: list[dict], other_activities: list[dict], today: d
     sessions.sort(key=lambda s: s["date"] or "", reverse=True)
 
     scores: dict[str, float] = {}
+    muscle_detail: dict[str, dict] = {}
     for s in sessions:
         try:
             d = date.fromisoformat(s["date"])
         except (ValueError, TypeError):
             continue
-        decay = muscle_decay((today - d).days)
-        if decay <= 0:
-            continue
+        days_since = (today - d).days
+        decay = muscle_decay(days_since)
         for muscle, intensity in (s["muscle_groups"] or {}).items():
+            existing = muscle_detail.get(muscle)
+            if existing is None or days_since < existing["days_since"]:
+                muscle_detail[muscle] = {
+                    "days_since": days_since,
+                    "last_date": s["date"],
+                    "last_notes": s.get("notes"),
+                    "last_type": s["type"],
+                }
+            if decay <= 0:
+                continue
             score = round(intensity * decay, 3)
             if score > scores.get(muscle, 0):
                 scores[muscle] = score
@@ -484,6 +494,7 @@ def build_training_view(runs: list[dict], other_activities: list[dict], today: d
     return {
         "sessions": sessions[:60],
         "muscle_scores": scores,
+        "muscle_detail": muscle_detail,
         "streak_weeks": streak,
         "week_count": week_count,
         "gamification": gamification,

@@ -20,7 +20,7 @@
     "chest_tris": {"chest": 1.0, "triceps": 0.8, "front_delts": 0.5}
   },
   "sports": {
-    "run": {"quads": 0.5, "hamstrings": 0.5, "calves": 0.7, "glutes": 0.4},
+    "run": {"quads": 0.65, "hamstrings": 0.6, "calves": 0.85, "glutes": 0.5},
     "football": {"quads": 0.6, "hamstrings": 0.6, "calves": 0.5, "glutes": 0.5, "abs": 0.3, "side_delts": 0.1},
     "padel": {"quads": 0.4, "calves": 0.4, "obliques": 0.4, "side_delts": 0.4, "forearms": 0.4, "triceps": 0.2},
     "hike": {"quads": 0.6, "calves": 0.6, "glutes": 0.5, "hamstrings": 0.4, "lower_back": 0.2}
