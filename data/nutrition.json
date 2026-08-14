@@ -48,5 +48,35 @@
     "protein_g": 4,
     "carbs_g": 34,
     "fat_g": 16
+  },
+  {
+    "date": "2026-08-14",
+    "meal": "snack",
+    "description": "High-protein wheat wrap/flatbread (4 slices, ~228g, 17.4g protein/100g)",
+    "grams": 228,
+    "calories": 566,
+    "protein_g": 40,
+    "carbs_g": 85,
+    "fat_g": 6
+  },
+  {
+    "date": "2026-08-14",
+    "meal": "snack",
+    "description": "Nut/cream spread on the wraps (~40g, label mostly illegible - estimated as peanut-butter-style spread)",
+    "grams": 40,
+    "calories": 235,
+    "protein_g": 10,
+    "carbs_g": 8,
+    "fat_g": 20
+  },
+  {
+    "date": "2026-08-14",
+    "meal": "snack",
+    "description": "Bitolsko sterilised milk 2.8% fat (500ml)",
+    "grams": 500,
+    "calories": 274,
+    "protein_g": 15,
+    "carbs_g": 23,
+    "fat_g": 14
   }
 ]
