@@ -725,7 +725,8 @@ function renderMuscleDetail(category){
   front.closest('.heatmap-figure').classList.toggle('no-match', !!(crop && !crop.front));
   back.closest('.heatmap-figure').classList.toggle('no-match', !!(crop && !crop.back));
 
-  const list = category === 'All' ? (DATA.muscle_group_list || []) : MUSCLE_CATEGORIES[category];
+  if(category === 'All'){ el('muscleDetailWrap').innerHTML = ''; return; }
+  const list = MUSCLE_CATEGORIES[category];
   const rows = list.map(m => {
     const score = (training.muscle_scores || {})[m] || 0;
     const status = statusLabel(score);
