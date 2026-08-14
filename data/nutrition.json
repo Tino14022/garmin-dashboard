@@ -8,5 +8,45 @@
     "protein_g": 55,
     "carbs_g": 94,
     "fat_g": 23
+  },
+  {
+    "date": "2026-08-14",
+    "meal": "dinner",
+    "description": "Lasagne (500g)",
+    "grams": 500,
+    "calories": 750,
+    "protein_g": 40,
+    "carbs_g": 60,
+    "fat_g": 40
+  },
+  {
+    "date": "2026-08-14",
+    "meal": "snack",
+    "description": "Protein shake (water, protein powder, honey, banana)",
+    "grams": null,
+    "calories": 290,
+    "protein_g": 25,
+    "carbs_g": 46,
+    "fat_g": 1
+  },
+  {
+    "date": "2026-08-14",
+    "meal": "dinner",
+    "description": "Premium cheeseburger menu (double beef patty, 2x cheddar, brioche bun, iceberg, pickles, burger sauce, fries, soft drink)",
+    "grams": null,
+    "calories": 1340,
+    "protein_g": 45,
+    "carbs_g": 135,
+    "fat_g": 65
+  },
+  {
+    "date": "2026-08-14",
+    "meal": "snack",
+    "description": "Chocolate sponge cake with cream and berry filling (2 slices, ~180g)",
+    "grams": 180,
+    "calories": 620,
+    "protein_g": 8,
+    "carbs_g": 68,
+    "fat_g": 32
   }
 ]
