@@ -595,8 +595,12 @@ def compute_gamification(sessions: list[dict], today: date) -> dict:
 # HTML build
 # ---------------------------------------------------------------------------
 
-def extract_running_tab(running_html: str) -> tuple[str, str]:
-    """Split the standalone running template into (body_content, script_content)."""
+def extract_running_tab(running_html: str) -> tuple[str, str, str]:
+    """Split the standalone running template into (style_content, body_content, script_content)."""
+    style_start = running_html.index("<style>") + len("<style>")
+    style_end = running_html.index("</style>", style_start)
+    style_content = running_html[style_start:style_end]
+
     body_start = running_html.index("<body>") + len("<body>")
     body_end = running_html.index("<script>")
     script_start = body_end + len("<script>")
@@ -613,7 +617,7 @@ def extract_running_tab(running_html: str) -> tuple[str, str]:
         if "el('footer')" not in line
     )
     body_content = body_content.replace('<footer id="footer"></footer>', "")
-    return body_content, script_content
+    return style_content, body_content, script_content
 
 
 def build_html(data: dict) -> str:
@@ -622,9 +626,12 @@ def build_html(data: dict) -> str:
     app_path = Path(__file__).parent / "app_template.html"
 
     running_html = running_path.read_text(encoding="utf-8")
-    body_content, script_content = extract_running_tab(running_html)
+    style_content, body_content, script_content = extract_running_tab(running_html)
 
     app_html = app_path.read_text(encoding="utf-8")
+    # Injected before the shell's own <style> block so the shell's rules win
+    # the cascade for any class name both files happen to define.
+    app_html = app_html.replace("__RUNNING_TAB_STYLE__", style_content)
     app_html = app_html.replace("__RUNNING_TAB_CONTENT__", body_content)
     app_html = app_html.replace("__RUNNING_TAB_SCRIPT__", script_content)
     app_html = app_html.replace("__DASHBOARD_DATA__", payload)
