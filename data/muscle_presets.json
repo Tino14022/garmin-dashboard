@@ -1,0 +1,28 @@
+{
+  "_comment": "Reference intensities (0-1) per muscle group, used as a starting point when logging a session. Muscle group ids must match the SVG regions in app_template.html.",
+  "muscle_groups": [
+    "chest", "upper_back", "lats", "lower_back", "traps",
+    "front_delts", "side_delts", "rear_delts",
+    "biceps", "triceps", "forearms",
+    "abs", "obliques",
+    "quads", "hamstrings", "glutes", "calves"
+  ],
+  "gym_splits": {
+    "push": {"chest": 1.0, "front_delts": 0.8, "side_delts": 0.6, "triceps": 0.9},
+    "pull": {"lats": 1.0, "upper_back": 0.8, "traps": 0.5, "rear_delts": 0.5, "biceps": 0.9, "forearms": 0.5},
+    "legs": {"quads": 1.0, "hamstrings": 0.8, "glutes": 0.8, "calves": 0.6},
+    "upper": {"chest": 0.8, "upper_back": 0.7, "lats": 0.6, "front_delts": 0.6, "side_delts": 0.5, "biceps": 0.7, "triceps": 0.7},
+    "lower": {"quads": 0.9, "hamstrings": 0.8, "glutes": 0.8, "calves": 0.6, "lower_back": 0.3},
+    "full_body": {"chest": 0.6, "lats": 0.6, "quads": 0.6, "hamstrings": 0.5, "glutes": 0.5, "biceps": 0.4, "triceps": 0.4, "abs": 0.5},
+    "arms": {"biceps": 1.0, "triceps": 1.0, "forearms": 0.6},
+    "core": {"abs": 1.0, "obliques": 1.0, "lower_back": 0.3},
+    "back": {"lats": 1.0, "upper_back": 0.8, "traps": 0.6, "lower_back": 0.4, "rear_delts": 0.3},
+    "chest_tris": {"chest": 1.0, "triceps": 0.8, "front_delts": 0.5}
+  },
+  "sports": {
+    "run": {"quads": 0.5, "hamstrings": 0.5, "calves": 0.7, "glutes": 0.4},
+    "football": {"quads": 0.6, "hamstrings": 0.6, "calves": 0.5, "glutes": 0.5, "abs": 0.3, "side_delts": 0.1},
+    "padel": {"quads": 0.4, "calves": 0.4, "obliques": 0.4, "side_delts": 0.4, "forearms": 0.4, "triceps": 0.2},
+    "hike": {"quads": 0.6, "calves": 0.6, "glutes": 0.5, "hamstrings": 0.4, "lower_back": 0.2}
+  }
+}

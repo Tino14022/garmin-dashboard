@@ -278,15 +278,136 @@ def split_easy_vs_workout(runs: list[dict]) -> dict:
     }
 
 
+def load_json(path: Path, default):
+    if not path.exists():
+        return default
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return default
+
+
+def muscle_decay(days_since: float) -> float:
+    """0 on the day before training, peaks the day after, fades out by day 4."""
+    if days_since < 0:
+        return 0.0
+    if days_since <= 1:
+        return days_since
+    if days_since <= 4:
+        return max(0.0, 1 - (days_since - 1) / 3)
+    return 0.0
+
+
+def build_training_view(runs: list[dict], today: date) -> dict:
+    data_dir = Path(__file__).parent / "data"
+    manual_sessions = load_json(data_dir / "trainings.json", [])
+    presets = load_json(data_dir / "muscle_presets.json", {})
+    run_preset = (presets.get("sports") or {}).get("run", {})
+
+    sessions = []
+    for s in manual_sessions:
+        sessions.append({
+            "date": s.get("date"),
+            "type": s.get("type", "other"),
+            "subtype": s.get("subtype"),
+            "duration_min": s.get("duration_min"),
+            "muscle_groups": s.get("muscle_groups") or {},
+            "notes": s.get("notes"),
+        })
+    for r in runs:
+        sessions.append({
+            "date": r["date"],
+            "type": "run",
+            "subtype": None,
+            "duration_min": round(r["duration_s"] / 60),
+            "muscle_groups": run_preset,
+            "notes": f'{r["distance_km"]} km @ {r["pace_label"]}',
+        })
+    sessions.sort(key=lambda s: s["date"] or "", reverse=True)
+
+    scores: dict[str, float] = {}
+    for s in sessions:
+        try:
+            d = date.fromisoformat(s["date"])
+        except (ValueError, TypeError):
+            continue
+        decay = muscle_decay((today - d).days)
+        if decay <= 0:
+            continue
+        for muscle, intensity in (s["muscle_groups"] or {}).items():
+            score = round(intensity * decay, 3)
+            if score > scores.get(muscle, 0):
+                scores[muscle] = score
+
+    def week_key(d: date) -> str:
+        return iso(week_start(d))
+
+    weeks_with_activity = set()
+    for s in sessions:
+        try:
+            d = date.fromisoformat(s["date"])
+        except (ValueError, TypeError):
+            continue
+        weeks_with_activity.add(week_key(d))
+
+    streak = 0
+    cursor = week_start(today)
+    while iso(cursor) in weeks_with_activity:
+        streak += 1
+        cursor -= timedelta(days=7)
+
+    this_week_key = week_key(today)
+    week_count = sum(
+        1 for s in sessions
+        if s["date"] and week_key(date.fromisoformat(s["date"])) == this_week_key
+    )
+
+    return {
+        "sessions": sessions[:60],
+        "muscle_scores": scores,
+        "streak_weeks": streak,
+        "week_count": week_count,
+    }
+
+
 # ---------------------------------------------------------------------------
 # HTML build
 # ---------------------------------------------------------------------------
 
+def extract_running_tab(running_html: str) -> tuple[str, str]:
+    """Split the standalone running template into (body_content, script_content)."""
+    body_start = running_html.index("<body>") + len("<body>")
+    body_end = running_html.index("<script>")
+    script_start = body_end + len("<script>")
+    script_end = running_html.index("</script>", script_start)
+
+    body_content = running_html[body_start:body_end]
+    script_content = running_html[script_start:script_end]
+
+    # DATA is declared once by the app shell; strip the running template's own
+    # declaration and its footer line (the shell owns the shared footer).
+    script_content = script_content.replace("const DATA = __DASHBOARD_DATA__;", "")
+    script_content = "\n".join(
+        line for line in script_content.splitlines()
+        if "el('footer')" not in line
+    )
+    body_content = body_content.replace('<footer id="footer"></footer>', "")
+    return body_content, script_content
+
+
 def build_html(data: dict) -> str:
     payload = json.dumps(data, default=str)
-    template_path = Path(__file__).parent / "template.html"
-    template = template_path.read_text(encoding="utf-8")
-    return template.replace("__DASHBOARD_DATA__", payload)
+    running_path = Path(__file__).parent / "template.html"
+    app_path = Path(__file__).parent / "app_template.html"
+
+    running_html = running_path.read_text(encoding="utf-8")
+    body_content, script_content = extract_running_tab(running_html)
+
+    app_html = app_path.read_text(encoding="utf-8")
+    app_html = app_html.replace("__RUNNING_TAB_CONTENT__", body_content)
+    app_html = app_html.replace("__RUNNING_TAB_SCRIPT__", script_content)
+    app_html = app_html.replace("__DASHBOARD_DATA__", payload)
+    return app_html
 
 
 def main() -> None:
@@ -327,6 +448,11 @@ def main() -> None:
     weekly_mileage = build_weekly_mileage(runs_12wk, trend_start, today)
     pace_panel = split_easy_vs_workout(recent_runs)
 
+    print("Loading training/nutrition/body-comp data files...")
+    training_view = build_training_view(runs_12wk, today)
+    nutrition = load_json(Path(__file__).parent / "data" / "nutrition.json", [])
+    body_comp = load_json(Path(__file__).parent / "data" / "body_comp.json", [])
+
     days_remaining = (RACE_DATE - today).days
     weeks_remaining = round(days_remaining / 7, 1)
 
@@ -355,6 +481,9 @@ def main() -> None:
         "weekly_mileage": weekly_mileage,
         "recent_runs": recent_runs,
         "pace_panel": pace_panel,
+        "training": training_view,
+        "nutrition": nutrition,
+        "body_comp": body_comp,
     }
 
     html = build_html(data)

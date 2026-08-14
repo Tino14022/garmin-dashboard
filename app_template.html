@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Training App</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0a0d13; --panel:#12161f; --panel-2:#171c27; --border:#232936;
+    --text:#e8ebf1; --text-dim:#8b93a3; --text-faint:#5b6472;
+    --blue:#5b8cff; --orange:#ff9f5a; --green:#3ddc97; --red:#ff6b7a;
+    --purple:#b98bff; --cyan:#4fd6e8; --yellow:#ffd166; --neon:#39ff8f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:0 16px 80px; max-width:1280px; margin:0 auto;
+  }
+  a{color:var(--blue);}
+
+  /* ---- Tab bar ---- */
+  .tabbar{
+    position:sticky; top:0; z-index:50; background:rgba(10,13,19,0.92); backdrop-filter:blur(8px);
+    display:flex; gap:4px; padding:10px 0; margin-bottom:16px; border-bottom:1px solid var(--border);
+    overflow-x:auto;
+  }
+  .tabbtn{
+    background:none; border:1px solid transparent; color:var(--text-dim); font-size:0.85rem;
+    padding:8px 14px; border-radius:999px; cursor:pointer; white-space:nowrap;
+    display:flex; align-items:center; gap:6px; font-weight:600;
+  }
+  .tabbtn.active{ background:var(--panel-2); border-color:var(--border); color:var(--text); }
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+
+  .section{
+    background:var(--panel); border:1px solid var(--border); border-radius:14px;
+    padding:18px 20px; margin-bottom:16px;
+  }
+  .section h2{font-size:0.95rem; margin:0 0 4px; font-weight:600;}
+  .section .desc{color:var(--text-faint); font-size:0.78rem; margin-bottom:14px;}
+  .chart-wrap{position:relative; height:260px;}
+  .chart-wrap.short{height:200px;}
+  .empty{color:var(--text-faint); font-size:0.85rem; padding:20px 0; text-align:center;}
+  table{width:100%; border-collapse:collapse; font-size:0.85rem;}
+  th{text-align:left; color:var(--text-faint); font-weight:500; font-size:0.72rem;
+     text-transform:uppercase; letter-spacing:0.04em; padding:6px 8px; border-bottom:1px solid var(--border);}
+  td{padding:8px; border-bottom:1px solid var(--border);}
+  tr:last-child td{border-bottom:none;}
+
+  /* ---- Streak header ---- */
+  .streak-card{
+    background:linear-gradient(135deg, var(--panel-2), var(--panel));
+    border:1px solid var(--border); border-radius:16px; padding:18px 22px;
+    display:flex; flex-wrap:wrap; gap:24px; align-items:center; margin-bottom:16px;
+  }
+  .streak-num{font-size:2.2rem; font-weight:700;}
+  .streak-sub{color:var(--text-dim); font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em;}
+
+  /* ---- Calendar ---- */
+  .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .cal-dow{ text-align:center; font-size:0.7rem; color:var(--text-faint); padding-bottom:4px; }
+  .cal-cell{
+    aspect-ratio:1; background:var(--panel-2); border:1px solid var(--border); border-radius:8px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    font-size:0.65rem; color:var(--text-faint); position:relative;
+  }
+  .cal-cell.empty{ background:transparent; border:none; }
+  .cal-cell .daynum{ position:absolute; top:3px; left:5px; font-size:0.6rem; color:var(--text-faint); }
+  .cal-cell .icons{ font-size:1.1rem; line-height:1; margin-top:6px; }
+  .cal-cell.today{ border-color:var(--neon); box-shadow:0 0 0 1px var(--neon); }
+
+  /* ---- Muscle heatmap ---- */
+  .heatmap-wrap{ display:flex; gap:24px; justify-content:center; flex-wrap:wrap; }
+  .heatmap-figure{ text-align:center; }
+  .heatmap-figure svg{ width:170px; height:auto; filter:drop-shadow(0 0 6px rgba(57,255,143,0.08)); }
+  .heatmap-figure .caption{ color:var(--text-faint); font-size:0.72rem; margin-top:6px; text-transform:uppercase; letter-spacing:0.05em; }
+  .muscle-shape{ stroke:var(--border); stroke-width:1; transition:fill 0.3s; }
+  .heat-legend{ display:flex; align-items:center; gap:8px; justify-content:center; margin-top:14px; font-size:0.72rem; color:var(--text-faint); }
+  .heat-legend .bar{ width:120px; height:8px; border-radius:4px; background:linear-gradient(90deg, #1a1f29, var(--neon)); }
+
+  /* ---- Placeholder ---- */
+  .placeholder{
+    text-align:center; padding:50px 20px; color:var(--text-dim);
+  }
+  .placeholder .big{ font-size:2rem; margin-bottom:10px; }
+  .placeholder p{ font-size:0.85rem; max-width:420px; margin:6px auto; color:var(--text-faint); }
+
+  footer{color:var(--text-faint); font-size:0.75rem; text-align:center; padding:20px 0 10px;}
+</style>
+</head>
+<body>
+
+<div class="tabbar" id="tabbar">
+  <button class="tabbtn" data-tab="training">💪 Training</button>
+  <button class="tabbtn" data-tab="running">🏃 Running</button>
+  <button class="tabbtn" data-tab="nutrition">🍽️ Nutrition</button>
+  <button class="tabbtn" data-tab="body">⚖️ Body</button>
+</div>
+
+<!-- ===================== TRAINING TAB ===================== -->
+<div class="tab-panel" id="tab-training">
+  <div class="streak-card">
+    <div>
+      <div class="streak-num" id="streakNum">-</div>
+      <div class="streak-sub">week streak</div>
+    </div>
+    <div>
+      <div class="streak-num" id="weekCountNum">-</div>
+      <div class="streak-sub" id="weekCountLabel">sessions this week</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Training Calendar</h2>
+    <div class="desc">🏋️ gym · 🏃 run · 🎾 padel · ⚽ football · 🥾 hike</div>
+    <div id="calWrap"></div>
+  </div>
+
+  <div class="section">
+    <h2>Muscle Recovery</h2>
+    <div class="desc">Brighter = trained more recently / harder. Fades out over ~4 days.</div>
+    <div class="heatmap-wrap">
+      <div class="heatmap-figure">
+        <svg viewBox="0 0 190 400" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="95" cy="32" r="17" fill="#1a1f29" stroke="var(--border)"/>
+          <rect x="87" y="46" width="16" height="14" fill="#1a1f29"/>
+          <path class="muscle-shape" data-muscle="front_delts" d="M40,68 q-14,4 -14,24 q0,14 12,18 q4,-20 10,-30 z" />
+          <path class="muscle-shape" data-muscle="front_delts" d="M150,68 q14,4 14,24 q0,14 -12,18 q-4,-20 -10,-30 z" />
+          <rect class="muscle-shape" data-muscle="chest" x="62" y="66" width="66" height="40" rx="14" />
+          <rect class="muscle-shape" data-muscle="abs" x="76" y="108" width="38" height="52" rx="8" />
+          <path class="muscle-shape" data-muscle="obliques" d="M60,108 h14 v52 h-14 q-8,-26 0,-52 z" />
+          <path class="muscle-shape" data-muscle="obliques" d="M130,108 h-14 v52 h14 q8,-26 0,-52 z" />
+          <rect class="muscle-shape" data-muscle="biceps" x="26" y="92" width="16" height="48" rx="8" />
+          <rect class="muscle-shape" data-muscle="biceps" x="148" y="92" width="16" height="48" rx="8" />
+          <rect class="muscle-shape" data-muscle="forearms" x="24" y="144" width="15" height="46" rx="7" />
+          <rect class="muscle-shape" data-muscle="forearms" x="151" y="144" width="15" height="46" rx="7" />
+          <path class="muscle-shape" data-muscle="quads" d="M66,164 h26 v92 q-13,10 -26,0 z" />
+          <path class="muscle-shape" data-muscle="quads" d="M124,164 h-26 v92 q13,10 26,0 z" />
+          <rect class="muscle-shape" data-muscle="calves" x="68" y="270" width="22" height="60" rx="10" />
+          <rect class="muscle-shape" data-muscle="calves" x="100" y="270" width="22" height="60" rx="10" />
+        </svg>
+        <div class="caption">Front</div>
+      </div>
+      <div class="heatmap-figure">
+        <svg viewBox="0 0 190 400" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="95" cy="32" r="17" fill="#1a1f29" stroke="var(--border)"/>
+          <rect x="87" y="46" width="16" height="14" fill="#1a1f29"/>
+          <path class="muscle-shape" data-muscle="rear_delts" d="M40,68 q-14,4 -14,24 q0,14 12,18 q4,-20 10,-30 z" />
+          <path class="muscle-shape" data-muscle="rear_delts" d="M150,68 q14,4 14,24 q0,14 -12,18 q-4,-20 -10,-30 z" />
+          <rect class="muscle-shape" data-muscle="traps" x="72" y="60" width="46" height="18" rx="6" />
+          <path class="muscle-shape" data-muscle="upper_back" d="M64,78 h62 v40 h-62 z" />
+          <path class="muscle-shape" data-muscle="lats" d="M56,88 h12 v46 h-12 q-8,-24 0,-46 z" />
+          <path class="muscle-shape" data-muscle="lats" d="M134,88 h-12 v46 h12 q8,-24 0,-46 z" />
+          <rect class="muscle-shape" data-muscle="lower_back" x="80" y="120" width="30" height="38" rx="8" />
+          <rect class="muscle-shape" data-muscle="triceps" x="26" y="92" width="16" height="48" rx="8" />
+          <rect class="muscle-shape" data-muscle="triceps" x="148" y="92" width="16" height="48" rx="8" />
+          <rect class="muscle-shape" data-muscle="forearms" x="24" y="144" width="15" height="46" rx="7" />
+          <rect class="muscle-shape" data-muscle="forearms" x="151" y="144" width="15" height="46" rx="7" />
+          <path class="muscle-shape" data-muscle="glutes" d="M66,160 h58 v34 h-58 z" rx="14" />
+          <path class="muscle-shape" data-muscle="hamstrings" d="M66,196 h26 v58 q-13,10 -26,0 z" />
+          <path class="muscle-shape" data-muscle="hamstrings" d="M124,196 h-26 v58 q13,10 26,0 z" />
+          <rect class="muscle-shape" data-muscle="calves" x="68" y="270" width="22" height="60" rx="10" />
+          <rect class="muscle-shape" data-muscle="calves" x="100" y="270" width="22" height="60" rx="10" />
+        </svg>
+        <div class="caption">Back</div>
+      </div>
+    </div>
+    <div class="heat-legend"><span>Rested</span><span class="bar"></span><span>Just trained</span></div>
+  </div>
+
+  <div class="section">
+    <h2>Recent Sessions</h2>
+    <div id="sessionsTableWrap"></div>
+  </div>
+</div>
+
+<!-- ===================== RUNNING TAB ===================== -->
+<div class="tab-panel" id="tab-running">
+__RUNNING_TAB_CONTENT__
+</div>
+
+<!-- ===================== NUTRITION TAB ===================== -->
+<div class="tab-panel" id="tab-nutrition">
+  <div id="nutritionContent"></div>
+</div>
+
+<!-- ===================== BODY TAB ===================== -->
+<div class="tab-panel" id="tab-body">
+  <div id="bodyContent"></div>
+</div>
+
+<footer id="appFooter"></footer>
+
+<script>
+const DATA = __DASHBOARD_DATA__;
+
+Chart.defaults.color = '#8b93a3';
+Chart.defaults.borderColor = '#232936';
+Chart.defaults.font.family = "-apple-system,Segoe UI,Roboto,sans-serif";
+
+function el(id){ return document.getElementById(id); }
+function fmtDate(iso){
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString(undefined, {month:'short', day:'numeric'});
+}
+function localIso(d){
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+// ---- Tabs ----
+const tabButtons = document.querySelectorAll('.tabbtn');
+function showTab(name){
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  tabButtons.forEach(b => b.classList.remove('active'));
+  el('tab-' + name).classList.add('active');
+  document.querySelector('.tabbtn[data-tab="' + name + '"]').classList.add('active');
+  location.hash = name;
+}
+tabButtons.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+showTab(['training','running','nutrition','body'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'training');
+
+// ===================== TRAINING TAB =====================
+const training = DATA.training || {sessions:[], muscle_scores:{}, streak_weeks:0, week_count:0};
+
+el('streakNum').textContent = training.streak_weeks;
+el('weekCountNum').textContent = training.week_count;
+
+const ICONS = {gym:'🏋️', run:'🏃', padel:'🎾', football:'⚽', hike:'🥾', other:'✳️'};
+
+// Calendar: last 35 days, 5 weeks, Sun-start
+function buildCalendar(sessions){
+  const byDate = {};
+  sessions.forEach(s => { (byDate[s.date] = byDate[s.date] || []).push(s.type); });
+
+  const today = new Date(DATA.generated_at + 'T00:00:00');
+  const start = new Date(today);
+  start.setDate(start.getDate() - 34);
+  while(start.getDay() !== 0) start.setDate(start.getDate() - 1);
+
+  let html = '<div class="cal-grid">';
+  ['S','M','T','W','T','F','S'].forEach(d => html += '<div class="cal-dow">' + d + '</div>');
+  const cur = new Date(start);
+  const todayStr = DATA.generated_at;
+  while(cur <= today || cur.getDay() !== 0){
+    const iso = localIso(cur);
+    const types = byDate[iso] || [];
+    const isToday = iso === todayStr;
+    const icons = types.map(t => ICONS[t] || '✳️').join('');
+    html += '<div class="cal-cell' + (isToday?' today':'') + '">' +
+      '<span class="daynum">' + cur.getDate() + '</span>' +
+      '<span class="icons">' + icons + '</span></div>';
+    cur.setDate(cur.getDate() + 1);
+    if(cur > today && cur.getDay() === 0) break;
+  }
+  html += '</div>';
+  return html;
+}
+el('calWrap').innerHTML = training.sessions.length || (DATA.recent_runs||[]).length
+  ? buildCalendar(training.sessions)
+  : '<div class="empty">No sessions logged yet — tell me about a workout and I\'ll add it.</div>';
+
+// Muscle heatmap coloring
+const scores = training.muscle_scores || {};
+document.querySelectorAll('.muscle-shape').forEach(shape => {
+  const muscle = shape.dataset.muscle;
+  const score = scores[muscle] || 0;
+  const bg = '#1a1f29';
+  if(score <= 0){ shape.setAttribute('fill', bg); return; }
+  // interpolate between panel color and neon green by score
+  const g = Math.round(30 + score * 225);
+  const r = Math.round(26 + score * 30);
+  const b = Math.round(41 + score * 90);
+  shape.setAttribute('fill', 'rgb(' + r + ',' + g + ',' + b + ')');
+  if(score > 0.5) shape.style.filter = 'drop-shadow(0 0 3px rgba(57,255,143,' + (score*0.7) + '))';
+});
+
+// Recent sessions table
+const sessWrap = el('sessionsTableWrap');
+if(training.sessions.length){
+  const rows = training.sessions.slice(0, 15).map(s =>
+    '<tr><td>' + fmtDate(s.date) + '</td><td>' + (ICONS[s.type]||'') + ' ' + s.type + (s.subtype ? ' · ' + s.subtype : '') + '</td>' +
+    '<td>' + (s.duration_min ? s.duration_min + ' min' : '-') + '</td>' +
+    '<td>' + (s.notes || '-') + '</td></tr>'
+  ).join('');
+  sessWrap.innerHTML = '<table><thead><tr><th>Date</th><th>Type</th><th>Duration</th><th>Notes</th></tr></thead><tbody>' + rows + '</tbody></table>';
+} else {
+  sessWrap.innerHTML = '<div class="empty">No manually-logged sessions yet.</div>';
+}
+
+// ===================== NUTRITION TAB =====================
+const nutrition = DATA.nutrition || [];
+if(!nutrition.length){
+  el('nutritionContent').innerHTML =
+    '<div class="placeholder"><div class="big">🍽️</div>' +
+    '<p><b>No meals logged yet.</b></p>' +
+    '<p>Tell me what you ate — "one plate of lasagna for lunch" or exact grams — and I\'ll estimate the macros and start tracking them here.</p></div>';
+} else {
+  const byDate = {};
+  nutrition.forEach(n => { (byDate[n.date] = byDate[n.date] || []).push(n); });
+  const dates = Object.keys(byDate).sort();
+  const totals = dates.map(d => byDate[d].reduce((a,n) => a + (n.calories||0), 0));
+  let html = '<div class="section"><h2>Daily Calories</h2><div class="chart-wrap short"><canvas id="calorieChart"></canvas></div></div>';
+  html += '<div class="section"><h2>Food Log</h2><div id="foodTableWrap"></div></div>';
+  el('nutritionContent').innerHTML = html;
+  new Chart(el('calorieChart'), {
+    type:'bar',
+    data:{ labels: dates.map(fmtDate), datasets:[{ data: totals, backgroundColor:'#ffd16688', borderRadius:4 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{ x:{grid:{display:false}}, y:{grid:{color:'#1b212c'}} } }
+  });
+  const rows = nutrition.slice().reverse().slice(0,25).map(n =>
+    '<tr><td>' + fmtDate(n.date) + '</td><td>' + (n.meal||'-') + '</td><td>' + n.description + '</td>' +
+    '<td>' + (n.calories||'-') + '</td><td>' + (n.protein_g||'-') + 'g</td><td>' + (n.carbs_g||'-') + 'g</td><td>' + (n.fat_g||'-') + 'g</td></tr>'
+  ).join('');
+  el('foodTableWrap').innerHTML = '<table><thead><tr><th>Date</th><th>Meal</th><th>Description</th><th>Cal</th><th>P</th><th>C</th><th>F</th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+// ===================== BODY TAB =====================
+const bodyComp = DATA.body_comp || [];
+if(!bodyComp.length){
+  el('bodyContent').innerHTML =
+    '<div class="placeholder"><div class="big">⚖️</div>' +
+    '<p><b>No body composition data yet.</b></p>' +
+    '<p>Send me your Mi Scale readings (weight, body fat %, muscle mass, etc.) after you weigh in, and I\'ll start charting the trend here.</p></div>';
+} else {
+  let html = '<div class="section"><h2>Weight & Body Fat</h2><div class="chart-wrap"><canvas id="bodyChart"></canvas></div></div>';
+  html += '<div class="section"><h2>Measurements</h2><div id="bodyTableWrap"></div></div>';
+  el('bodyContent').innerHTML = html;
+  new Chart(el('bodyChart'), {
+    data:{
+      labels: bodyComp.map(b=>fmtDate(b.date)),
+      datasets:[
+        {type:'line', label:'Weight (kg)', data: bodyComp.map(b=>b.weight_kg), borderColor:'#5b8cff', yAxisID:'y', pointRadius:3, tension:0.3},
+        {type:'line', label:'Body Fat %', data: bodyComp.map(b=>b.body_fat_pct), borderColor:'#ff9f5a', yAxisID:'y1', pointRadius:3, tension:0.3},
+      ]
+    },
+    options:{ responsive:true, maintainAspectRatio:false,
+      scales:{ y:{position:'left', grid:{color:'#1b212c'}}, y1:{position:'right', grid:{display:false}} } }
+  });
+  const rows = bodyComp.slice().reverse().map(b =>
+    '<tr><td>' + fmtDate(b.date) + '</td><td>' + (b.weight_kg??'-') + ' kg</td><td>' + (b.body_fat_pct??'-') + '%</td>' +
+    '<td>' + (b.muscle_mass_kg??'-') + ' kg</td><td>' + (b.water_pct??'-') + '%</td><td>' + (b.visceral_fat??'-') + '</td></tr>'
+  ).join('');
+  el('bodyTableWrap').innerHTML = '<table><thead><tr><th>Date</th><th>Weight</th><th>Body Fat</th><th>Muscle</th><th>Water</th><th>Visceral</th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+__RUNNING_TAB_SCRIPT__
+
+el('appFooter').textContent = 'Updated ' + DATA.generated_at_time;
+</script>
+</body>
+</html>
