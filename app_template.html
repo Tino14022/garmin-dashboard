@@ -161,10 +161,19 @@ __RUNNING_TAB_STYLE__
     background:rgba(61,220,151,0.16); border-top:1px solid rgba(61,220,151,0.55); border-bottom:1px solid rgba(61,220,151,0.55);
   }
 
-  .nutrition-grid{ max-width:520px; }
-  .nutrition-grid .cal-cell{ aspect-ratio:auto; min-height:64px; padding:2px; }
-  .nutrition-grid .cal-cal{ font-weight:700; font-size:0.8rem; margin-top:11px; color:var(--text); }
-  .nutrition-grid .cal-macros{ font-size:0.52rem; color:var(--text-faint); line-height:1.3; }
+  /* Macros read as a proportional bar rather than "P234 C485 F185" at 8px — the
+     shape of the day is legible at a glance, exact grams live in the tooltip. */
+  .nutrition-grid{ max-width:560px; }
+  .nutrition-grid .cal-cell{ aspect-ratio:auto; min-height:74px; padding:17px 6px 8px; gap:7px; }
+  .nutrition-grid .cal-cal{ font-weight:700; font-size:0.95rem; line-height:1; color:var(--text); }
+  .macro-bar{ display:flex; width:100%; height:5px; gap:1.5px; }
+  .macro-bar i{ display:block; height:100%; border-radius:2px; }
+  .macro-bar .mp{ background:var(--blue); }
+  .macro-bar .mc{ background:var(--orange); }
+  .macro-bar .mf{ background:var(--yellow); }
+  .macro-legend{ display:flex; gap:16px; justify-content:center; margin-top:14px; font-size:0.72rem; color:var(--text-faint); flex-wrap:wrap; }
+  .macro-legend span{ display:flex; align-items:center; gap:6px; }
+  .macro-legend i{ width:10px; height:10px; border-radius:2px; display:block; }
 
   /* ---- Muscle heatmap ---- */
   .heatmap-wrap{ display:flex; gap:24px; justify-content:center; flex-wrap:wrap; }
@@ -893,18 +902,33 @@ function buildCalendar(sessions, nutritionByDate){
   const todayStr = DATA.generated_at;
   while(cur <= today || cur.getDay() !== 0){
     const iso = localIso(cur);
-    let inner, active = false;
+    let inner, active = false, title = '';
     if(isNutrition){
       const d = nutritionByDate[iso];
-      inner = d
-        ? '<span class="cal-cal">' + Math.round(d.calories) + '</span><span class="cal-macros">P' + Math.round(d.protein) + ' C' + Math.round(d.carbs) + ' F' + Math.round(d.fat) + '</span>'
-        : '';
+      if(d){
+        // Bar segments are split by calories contributed, not grams — 1g of fat
+        // carries more than twice the energy of 1g of protein or carbs, so a
+        // gram-proportional bar would badly understate fat.
+        const p = d.protein * 4, c = d.carbs * 4, f = d.fat * 9;
+        const total = p + c + f;
+        const pct = v => total ? (v / total * 100).toFixed(1) : 0;
+        inner = '<span class="cal-cal">' + Math.round(d.calories) + '</span>' +
+          '<span class="macro-bar">' +
+            '<i class="mp" style="width:' + pct(p) + '%"></i>' +
+            '<i class="mc" style="width:' + pct(c) + '%"></i>' +
+            '<i class="mf" style="width:' + pct(f) + '%"></i>' +
+          '</span>';
+        title = Math.round(d.calories) + ' kcal · protein ' + Math.round(d.protein) +
+          'g · carbs ' + Math.round(d.carbs) + 'g · fat ' + Math.round(d.fat) + 'g';
+      } else {
+        inner = '';
+      }
     } else {
       const types = byDate[iso] || [];
       inner = '<span class="icons">' + types.map(t => ICONS[t] || '✳️').join('') + '</span>';
       active = types.length > 0;
     }
-    cells.push({ day: cur.getDate(), dow: cur.getDay(), isToday: iso === todayStr, inner, active });
+    cells.push({ day: cur.getDate(), dow: cur.getDay(), isToday: iso === todayStr, inner, active, title });
     cur.setDate(cur.getDate() + 1);
     if(cur > today && cur.getDay() === 0) break;
   }
@@ -926,9 +950,18 @@ function buildCalendar(sessions, nutritionByDate){
     if(c.active) cls += ' active';
     if(c.connectLeft) cls += ' connect-left';
     if(c.connectRight) cls += ' connect-right';
-    html += '<div class="' + cls + '"><span class="daynum">' + c.day + '</span>' + c.inner + '</div>';
+    html += '<div class="' + cls + '"' + (c.title ? ' title="' + c.title + '"' : '') +
+      '><span class="daynum">' + c.day + '</span>' + c.inner + '</div>';
   });
   html += '</div>';
+  if(isNutrition){
+    html += '<div class="macro-legend">' +
+      '<span><i class="mp" style="background:var(--blue)"></i>Protein</span>' +
+      '<span><i class="mc" style="background:var(--orange)"></i>Carbs</span>' +
+      '<span><i class="mf" style="background:var(--yellow)"></i>Fat</span>' +
+      '<span style="color:var(--text-faint)">Bar width = share of that day\'s calories</span>' +
+      '</div>';
+  }
   return html;
 }
 
