@@ -281,13 +281,21 @@ def fetch_sleep_trend(api, start: date, end: date) -> list[dict]:
 
 def build_nutrition_view(nutrition: list[dict], calorie_trend: list[dict], body_comp: list[dict], today: date) -> dict:
     latest_weight = WEIGHT_KG
+    latest_bmr = None
     if body_comp:
         sorted_bc = sorted(body_comp, key=lambda b: b.get("date") or "")
-        if sorted_bc and sorted_bc[-1].get("weight_kg"):
-            latest_weight = sorted_bc[-1]["weight_kg"]
+        last_bc = sorted_bc[-1] if sorted_bc else None
+        if last_bc:
+            if last_bc.get("weight_kg"):
+                latest_weight = last_bc["weight_kg"]
+            if last_bc.get("bmr"):
+                latest_bmr = last_bc["bmr"]
     protein_target_g = round(latest_weight * PROTEIN_G_PER_KG)
 
-    week_ago = today - timedelta(days=6)
+    # Only complete days count toward the average — today isn't over, so its
+    # numbers are partial and would skew a "daily average" downward.
+    yesterday = today - timedelta(days=1)
+    week_ago = today - timedelta(days=7)
     intake_by_date: dict[str, float] = {}
     protein_by_date: dict[str, float] = {}
     for n in nutrition:
@@ -295,16 +303,17 @@ def build_nutrition_view(nutrition: list[dict], calorie_trend: list[dict], body_
         if not d:
             continue
         try:
-            if date.fromisoformat(d) < week_ago:
-                continue
+            dd = date.fromisoformat(d)
         except ValueError:
+            continue
+        if dd < week_ago or dd > yesterday:
             continue
         intake_by_date[d] = intake_by_date.get(d, 0) + (n.get("calories") or 0)
         protein_by_date[d] = protein_by_date.get(d, 0) + (n.get("protein_g") or 0)
 
     burn_by_date = {
         c["date"]: c["total_kcal"] for c in calorie_trend
-        if c.get("date") and date.fromisoformat(c["date"]) >= week_ago
+        if c.get("date") and week_ago <= date.fromisoformat(c["date"]) <= yesterday
     }
 
     # Only compare days where we actually know both sides of the equation.
@@ -324,16 +333,25 @@ def build_nutrition_view(nutrition: list[dict], calorie_trend: list[dict], body_
         else:
             classification = "maintenance"
 
+    today_iso = iso(today)
+    today_intake = sum(n.get("calories") or 0 for n in nutrition if n.get("date") == today_iso)
+    today_protein = sum(n.get("protein_g") or 0 for n in nutrition if n.get("date") == today_iso)
+    today_burn_so_far = next((c["total_kcal"] for c in calorie_trend if c.get("date") == today_iso), None)
+
     return {
         "protein_target_g": protein_target_g,
         "protein_g_per_kg": PROTEIN_G_PER_KG,
         "latest_weight_kg": latest_weight,
+        "latest_bmr": latest_bmr,
         "week_avg_intake_kcal": avg_intake,
         "week_avg_burn_kcal": avg_burn,
         "week_avg_protein_g": avg_protein,
         "week_balance_kcal": round(balance) if balance is not None else None,
         "week_days_compared": len(common_dates),
         "classification": classification,
+        "today_intake_kcal": round(today_intake) if today_intake else None,
+        "today_protein_g": round(today_protein) if today_protein else None,
+        "today_burn_so_far_kcal": today_burn_so_far,
     }
 
 

@@ -2,8 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Training App</title>
+
+<!-- PWA / Add to Home Screen -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0d13">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Training">
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
 __RUNNING_TAB_STYLE__
@@ -1060,14 +1071,27 @@ if(training.sessions.length){
     maintenance: {label: 'Roughly maintaining', color:'#5b8cff', desc: 'Intake and burn are close enough that weight should stay roughly stable.'},
   };
 
-  let html = '<div class="section"><h2>Weekly Energy Balance</h2>' +
-    '<div class="desc">Burn is Garmin\'s device-measured daily total (heart-rate based), not a generic BMR formula. Only compared on days where both food logging and Garmin data are available.</div>';
+  // Today is still in progress — show it, but never blend it into the "daily average".
+  let html = '<div class="section"><h2>Today So Far</h2>' +
+    '<div class="desc">Not included in the weekly average below — the day isn\'t over, so intake and burn are both still partial.</div>' +
+    '<div class="analysis-grid">' +
+    '<div class="analysis-card"><h3>Logged today</h3>' +
+    '<div class="analysis-row"><span class="k">Calories</span><span class="v">' + (nv.today_intake_kcal ?? 0) + ' kcal</span></div>' +
+    '<div class="analysis-row"><span class="k">Protein</span><span class="v">' + (nv.today_protein_g ?? 0) + 'g <span style="color:var(--text-faint)">/ ' + nv.protein_target_g + 'g target</span></span></div>' +
+    '</div>' +
+    '<div class="analysis-card"><h3>Burned so far (Garmin)</h3>' +
+    '<div class="analysis-row"><span class="k">Today</span><span class="v">' + (nv.today_burn_so_far_kcal != null ? Math.round(nv.today_burn_so_far_kcal) + ' kcal' : 'not synced yet') + '</span></div>' +
+    (nv.latest_bmr ? '<div class="analysis-row"><span class="k">BMR (Mi Scale)</span><span class="v">' + nv.latest_bmr + ' kcal</span></div>' : '') +
+    '</div></div></div>';
+
+  html += '<div class="section"><h2>Weekly Energy Balance</h2>' +
+    '<div class="desc">Burn is Garmin\'s device-measured daily total (heart-rate based), not a generic BMR formula. Only complete days count — today is excluded, and only days with both food logged and Garmin data synced are compared.</div>';
 
   if(nv.week_days_compared > 0){
     const info = CLASSIFICATION_INFO[nv.classification] || {label:'-', color:'var(--text-dim)', desc:''};
     const balanceStr = (nv.week_balance_kcal > 0 ? '+' : '') + nv.week_balance_kcal;
     html += '<div class="analysis-grid">' +
-      '<div class="analysis-card"><h3>This week (' + nv.week_days_compared + ' day' + (nv.week_days_compared===1?'':'s') + ' compared)</h3>' +
+      '<div class="analysis-card"><h3>Last ' + nv.week_days_compared + ' complete day' + (nv.week_days_compared===1?'':'s') + '</h3>' +
       '<div class="analysis-row"><span class="k">Avg intake</span><span class="v">' + nv.week_avg_intake_kcal + ' kcal</span></div>' +
       '<div class="analysis-row"><span class="k">Avg burn (Garmin)</span><span class="v">' + nv.week_avg_burn_kcal + ' kcal</span></div>' +
       '<div class="analysis-row"><span class="k">Balance</span><span class="v" style="color:' + (nv.week_balance_kcal>0?'#3ddc97':'#ff6b7a') + '">' + balanceStr + ' kcal/day</span></div>' +
@@ -1077,7 +1101,7 @@ if(training.sessions.length){
       '<p style="font-size:0.82rem;color:var(--text-dim);margin:0;">' + info.desc + '</p></div>' +
       '</div>';
   } else {
-    html += '<div class="empty">Not enough overlapping days yet — need food logged on days Garmin also has synced data. Log a few more meals and this fills in.</div>';
+    html += '<div class="empty">No complete days to compare yet — this fills in automatically once today ends and tomorrow\'s rebuild runs. Nothing to log for past days; tracking just starts from today.</div>';
   }
   html += '<div class="desc" style="margin-top:12px;">Protein target: <b>' + (nv.protein_target_g||'-') + 'g/day</b> (' + (nv.protein_g_per_kg||'-') + 'g/kg × ' + (nv.latest_weight_kg||'-') + 'kg bodyweight)' +
     (DATA.body_comp && DATA.body_comp.length ? '' : ' — using the default weight since no Mi Scale reading is logged yet.') + '</div>' +
