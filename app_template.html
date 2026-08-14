@@ -139,7 +139,7 @@ __RUNNING_TAB_STYLE__
     text-align:center; background:radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.04), transparent 70%);
     border-radius:16px; padding:12px 8px;
   }
-  .heatmap-figure svg{ width:180px; height:auto; }
+  .heatmap-figure svg{ width:180px; height:290px; display:block; }
   .heatmap-figure .caption{ color:var(--text-faint); font-size:0.72rem; margin-top:2px; text-transform:uppercase; letter-spacing:0.05em; }
   .body-silhouette{ fill:rgba(255,255,255,0.035); stroke:rgba(255,255,255,0.06); stroke-width:1; }
   .muscle-shape{ stroke:rgba(0,0,0,0.35); stroke-width:1; transition:fill 0.4s, opacity 0.35s, filter 0.35s; }
@@ -726,14 +726,20 @@ function renderMuscleDetail(category){
   back.closest('.heatmap-figure').classList.toggle('no-match', !!(crop && !crop.back));
 
   const list = category === 'All' ? (DATA.muscle_group_list || []) : MUSCLE_CATEGORIES[category];
-  const chips = list.map(m => {
+  const rows = list.map(m => {
     const score = (training.muscle_scores || {})[m] || 0;
     const status = statusLabel(score);
     const detail = muscleDetail[m];
-    const ago = detail ? (detail.days_since === 0 ? 'today' : detail.days_since + 'd ago') : 'no data';
-    return '<span class="muscle-chip"><span class="dot" style="background:' + status.color + '"></span>' + m.replace(/_/g,' ') + ' · ' + ago + '</span>';
+    const meta = detail
+      ? (detail.days_since === 0 ? 'Today' : detail.days_since + 'd ago') + ' · ' + (ICONS[detail.last_type] || '') + ' ' + (detail.last_notes || detail.last_type)
+      : 'No sessions logged yet';
+    return '<div class="muscle-detail-row">' +
+      '<span class="muscle-dot" style="background:' + status.color + '"></span>' +
+      '<span class="mname">' + m.replace(/_/g,' ') + '</span>' +
+      '<span class="mstatus">' + status.label + '</span>' +
+      '<span class="mmeta">' + meta + '</span></div>';
   }).join('');
-  el('muscleDetailWrap').innerHTML = '<div class="muscle-chip-row">' + chips + '</div>';
+  el('muscleDetailWrap').innerHTML = rows;
 }
 
 const muscleTabBar = el('muscleTabBar');
