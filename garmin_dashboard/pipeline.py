@@ -124,6 +124,9 @@ def build_payload(
         "nutrition": nutrition,
         "body_comp": body_comp,
         "muscle_group_list": presets.get("muscle_groups", []),
+        # Exposed so the page can label a finished workout with the right
+        # muscles at log time, rather than waiting for the watch to sync.
+        "gym_splits": presets.get("gym_splits", {}),
         "calorie_trend": calorie_trend,
         "nutrition_view": nutrition_view,
         "lifestyle": lifestyle,
