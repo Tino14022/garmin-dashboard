@@ -165,6 +165,39 @@ __RUNNING_TAB_STYLE__
   .muscle-chip-row{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:12px; }
   .muscle-chip{ display:flex; align-items:center; gap:5px; font-size:0.72rem; color:var(--text-dim); background:var(--panel-2); border:1px solid var(--border); border-radius:999px; padding:4px 10px; }
   .muscle-chip .dot{ width:8px; height:8px; border-radius:50%; }
+
+  /* ---- Workout checklist ---- */
+  .workout-exercise{ padding:12px 0; border-bottom:1px solid var(--border); }
+  .workout-exercise:last-child{ border-bottom:none; }
+  .workout-exercise-header{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; gap:8px; flex-wrap:wrap; }
+  .workout-exercise-name{ font-weight:700; font-size:0.88rem; }
+  .workout-exercise-target{ font-size:0.75rem; color:var(--text-faint); }
+  .set-dots{ display:flex; gap:8px; flex-wrap:wrap; }
+  .set-dot{
+    width:32px; height:32px; border-radius:50%; border:2px solid var(--border); background:var(--panel-2);
+    display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:700; color:var(--text-faint);
+    cursor:pointer; user-select:none;
+  }
+  .set-dot.done{ background:var(--neon); border-color:var(--neon); color:#06170d; }
+  .workout-progress-bar{ height:6px; border-radius:3px; background:#1b212c; overflow:hidden; margin-top:4px; }
+  .workout-progress-fill{ height:100%; background:var(--neon); transition:width 0.3s; }
+  .finish-btn{
+    width:100%; margin-top:16px; padding:14px; border-radius:12px; border:none;
+    background:var(--neon); color:#06170d; font-weight:800; font-size:0.95rem; cursor:pointer;
+  }
+  .finish-btn:active{ transform:scale(0.98); }
+  .workout-summary-box textarea{
+    width:100%; min-height:170px; background:var(--panel-2); border:1px solid var(--border); border-radius:10px;
+    color:var(--text); font-family:monospace; font-size:0.76rem; padding:10px; resize:vertical; margin-top:12px;
+  }
+  .copy-btn{
+    margin-top:8px; padding:8px 16px; border-radius:8px; border:1px solid var(--border); background:var(--panel-2);
+    color:var(--text); font-size:0.8rem; cursor:pointer;
+  }
+  .sync-pending{
+    display:inline-block; background:rgba(255,209,102,0.15); color:var(--yellow);
+    border-radius:999px; padding:2px 9px; font-size:0.66rem; font-weight:700; margin-left:6px;
+  }
   .muscle-shape.sore-pulse{ animation:sorePulse 1.7s ease-in-out infinite; }
   @keyframes sorePulse{
     0%, 100% { filter:drop-shadow(0 0 4px rgba(255,107,122,0.55)); }
@@ -221,6 +254,8 @@ __RUNNING_TAB_STYLE__
 
 <!-- ===================== TRAINING TAB ===================== -->
 <div class="tab-panel" id="tab-training">
+  <div id="workoutPlanWrap"></div>
+
   <div class="streak-card">
     <div class="level-badge" id="levelBadge"><span class="lvl" id="levelNum">-</span></div>
     <div class="xp-block">
@@ -693,6 +728,82 @@ renderAnalysis('weekly');
 // ===================== TRAINING TAB =====================
 const training = DATA.training || {sessions:[], muscle_scores:{}, streak_weeks:0, week_count:0};
 
+// ---- Today's Workout checklist ----
+(function(){
+  const plan = DATA.workout_plan;
+  const wrap = el('workoutPlanWrap');
+  if(!plan || !plan.exercises || !plan.exercises.length) return;
+
+  const storageKey = 'workoutProgress_' + plan.date;
+  let progress = {};
+  try{ progress = JSON.parse(localStorage.getItem(storageKey) || '{}'); }catch(e){ progress = {}; }
+
+  function save(){ try{ localStorage.setItem(storageKey, JSON.stringify(progress)); }catch(e){} }
+  function totalDone(){ return plan.exercises.reduce((a,ex,i) => a + (progress[i] || 0), 0); }
+  function totalTarget(){ return plan.exercises.reduce((a,ex) => a + ex.target_sets, 0); }
+
+  function render(){
+    const done = totalDone(), target = totalTarget();
+    const pct = target ? Math.round(done/target*100) : 0;
+    let html = '<div class="section"><h2>Today\'s Workout' + (plan.name ? ' — ' + plan.name : '') + '</h2>' +
+      '<div class="desc">Tap a set to mark it done. Progress saves on this device only.</div>' +
+      '<div class="workout-progress-bar"><div class="workout-progress-fill" style="width:' + pct + '%"></div></div>' +
+      '<div style="font-size:0.75rem;color:var(--text-faint);margin:4px 0 12px;">' + done + ' / ' + target + ' sets</div>';
+
+    plan.exercises.forEach((ex, i) => {
+      const doneCount = progress[i] || 0;
+      html += '<div class="workout-exercise">' +
+        '<div class="workout-exercise-header"><span class="workout-exercise-name">' + ex.name + '</span>' +
+        '<span class="workout-exercise-target">' + ex.target_reps + ' reps</span></div>' +
+        '<div class="set-dots">';
+      for(let s=0; s<ex.target_sets; s++){
+        html += '<div class="set-dot' + (s < doneCount ? ' done' : '') + '" data-ex="' + i + '" data-set="' + s + '">' + (s+1) + '</div>';
+      }
+      html += '</div></div>';
+    });
+
+    html += '<button class="finish-btn" id="finishWorkoutBtn">Finish Workout</button>';
+    html += '<div id="workoutSummaryBox"></div>';
+    html += '</div>';
+    wrap.innerHTML = html;
+
+    wrap.querySelectorAll('.set-dot').forEach(dot => {
+      dot.addEventListener('click', () => {
+        const exIdx = parseInt(dot.dataset.ex), setIdx = parseInt(dot.dataset.set);
+        const current = progress[exIdx] || 0;
+        // Tapping a filled dot un-does it (and later ones); tapping an empty one fills up to it.
+        progress[exIdx] = (setIdx < current) ? setIdx : setIdx + 1;
+        save();
+        render();
+      });
+    });
+    el('finishWorkoutBtn').addEventListener('click', finishWorkout);
+  }
+
+  function finishWorkout(){
+    const lines = ['Finished workout: ' + (plan.name || 'Today\'s Workout') + ' (' + plan.date + ')', ''];
+    plan.exercises.forEach((ex, i) => {
+      const doneCount = progress[i] || 0;
+      lines.push('- ' + ex.name + ': ' + doneCount + '/' + ex.target_sets + ' sets (' + ex.target_reps + ' reps)');
+    });
+    lines.push('', 'Paste this to your coach to log it — it\'ll sync with Garmin automatically once your watch data comes in.');
+    const summary = lines.join('\n');
+    try{ localStorage.setItem(storageKey + '_finished', '1'); }catch(e){}
+
+    const box = el('workoutSummaryBox');
+    box.innerHTML = '<div class="workout-summary-box"><textarea readonly id="workoutSummaryText"></textarea><br>' +
+      '<button class="copy-btn" id="copySummaryBtn">Copy to clipboard</button></div>';
+    el('workoutSummaryText').value = summary;
+    el('copySummaryBtn').addEventListener('click', () => {
+      if(navigator.clipboard){
+        navigator.clipboard.writeText(summary).then(() => { el('copySummaryBtn').textContent = 'Copied!'; }).catch(() => {});
+      }
+    });
+  }
+
+  render();
+})();
+
 el('weekCountNum').textContent = training.week_count;
 
 const gam = training.gamification || {xp:0, level:1, level_progress:0, streak_days:0, longest_streak_days:0, badges:[], badges_earned:0, badges_total:0};
@@ -867,7 +978,8 @@ renderMuscleDetail('All');
 const sessWrap = el('sessionsTableWrap');
 if(training.sessions.length){
   const rows = training.sessions.slice(0, 15).map(s =>
-    '<tr><td>' + fmtDate(s.date) + '</td><td>' + (ICONS[s.type]||'') + ' ' + s.type + (s.subtype ? ' · ' + s.subtype : '') + '</td>' +
+    '<tr><td>' + fmtDate(s.date) + '</td><td>' + (ICONS[s.type]||'') + ' ' + s.type + (s.subtype ? ' · ' + s.subtype : '') +
+    (s.garmin_synced === false ? '<span class="sync-pending">⏳ pending sync</span>' : '') + '</td>' +
     '<td>' + (s.duration_min ? s.duration_min + ' min' : '-') + '</td>' +
     '<td>' + (s.notes || '-') + '</td></tr>'
   ).join('');

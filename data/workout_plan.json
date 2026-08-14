@@ -1,0 +1,13 @@
+{
+  "date": "2026-08-14",
+  "name": "Push Day",
+  "exercises": [
+    {"name": "Incline DB Press", "target_sets": 4, "target_reps": "8-10"},
+    {"name": "Shoulder Press", "target_sets": 3, "target_reps": "8-10"},
+    {"name": "Flat DB Press or Cable Crossover (high-to-low)", "target_sets": 3, "target_reps": "10-12"},
+    {"name": "Chest Flyes (machine)", "target_sets": 3, "target_reps": "12-15"},
+    {"name": "Lateral Raises", "target_sets": 4, "target_reps": "12-15"},
+    {"name": "Triceps Pushdown", "target_sets": 3, "target_reps": "10-12"},
+    {"name": "Triceps Overhead Extension", "target_sets": 3, "target_reps": "10-12"}
+  ]
+}

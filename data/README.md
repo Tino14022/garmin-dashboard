@@ -9,11 +9,27 @@ Non-running sessions (gym/padel/football/hike) — running comes from Garmin aut
   "date": "2026-08-14",
   "type": "gym",              // gym | padel | football | hike | other
   "subtype": "push",          // free text, e.g. a data/muscle_presets.json gym_splits key
-  "duration_min": 60,
+  "duration_min": 60,         // omit entirely (not null) to make this an annotation - see below
   "muscle_groups": {"chest": 1.0, "triceps": 0.9},  // 0-1 intensity, ids from muscle_presets.json
-  "notes": "bench 4x8@80kg"
+  "notes": "bench 4x8@80kg",
+  "exercises": [{"name": "Incline DB Press", "target_sets": 4, "target_reps": "8-10", "sets_completed": 4}]  // optional, from a finished workout-plan checklist
 }
 ```
+**Annotation vs standalone:** an entry with no `duration_min` key is an annotation — it supplies subtype/muscle_groups/exercises for whatever Garmin activity syncs on that (date, type), and shows as "pending Garmin sync" in the app until that match happens. An entry WITH `duration_min` is a standalone record, shown as-is regardless of Garmin. Default to annotations (omit duration_min) whenever the workout was done wearing the watch — which is the normal case.
+
+## workout_plan.json
+The coach-assigned plan for today, rendered as an interactive checklist in the Training tab. Single object, not an array — gets replaced each time a new plan is set.
+```json
+{
+  "date": "2026-08-14",
+  "name": "Push Day",
+  "exercises": [
+    {"name": "Incline DB Press", "target_sets": 4, "target_reps": "8-10"},
+    {"name": "Shoulder Press", "target_sets": 3, "target_reps": "8-10"}
+  ]
+}
+```
+Only shown in the app when `date` matches the build date. Checklist progress lives in the browser's localStorage, not here — when the user finishes and pastes the summary back, log the result into `trainings.json` as an annotation (see above), using the `exercises` field to capture what was actually completed.
 
 ## nutrition.json
 ```json

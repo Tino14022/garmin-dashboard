@@ -530,6 +530,8 @@ def build_training_view(runs: list[dict], other_activities: list[dict], today: d
             "duration_min": s.get("duration_min"),
             "muscle_groups": s.get("muscle_groups") or {},
             "notes": s.get("notes"),
+            "exercises": s.get("exercises"),
+            "garmin_synced": True,
         })
     for r in runs:
         hour = None
@@ -543,9 +545,13 @@ def build_training_view(runs: list[dict], other_activities: list[dict], today: d
             "muscle_groups": run_preset,
             "notes": f'{r["distance_km"]} km @ {r["pace_label"]}',
             "hour": hour,
+            "garmin_synced": True,
         })
+    matched_keys = set()
     for o in other_activities:
-        ann = annotations.get((o["date"], o["type"]))
+        key = (o["date"], o["type"])
+        matched_keys.add(key)
+        ann = annotations.get(key)
         guessed = guess_muscle_groups_from_name(o["name"], gym_splits) if o["type"] == "gym" else {}
         muscle_groups = (
             (ann.get("muscle_groups") if ann else None)
@@ -559,7 +565,27 @@ def build_training_view(runs: list[dict], other_activities: list[dict], today: d
             "duration_min": o["duration_min"],
             "muscle_groups": muscle_groups,
             "notes": (ann.get("notes") if ann else None) or o["name"],
+            "exercises": ann.get("exercises") if ann else None,
             "hour": o.get("hour"),
+            "garmin_synced": True,
+        })
+    # Annotations logged before Garmin's own activity has synced yet — show them now
+    # so nothing feels lost, flagged as pending; a later rebuild upgrades them
+    # automatically once the matching Garmin activity appears in other_activities.
+    for key, ann in annotations.items():
+        if key in matched_keys:
+            continue
+        ann_date, ann_type = key
+        sessions.append({
+            "date": ann_date,
+            "type": ann_type,
+            "subtype": ann.get("subtype"),
+            "duration_min": None,
+            "muscle_groups": ann.get("muscle_groups") or {},
+            "notes": ann.get("notes"),
+            "exercises": ann.get("exercises"),
+            "hour": None,
+            "garmin_synced": False,
         })
     sessions.sort(key=lambda s: s["date"] or "", reverse=True)
 
@@ -814,6 +840,9 @@ def main() -> None:
     nutrition = load_json(Path(__file__).parent / "data" / "nutrition.json", [])
     body_comp = load_json(Path(__file__).parent / "data" / "body_comp.json", [])
     lifestyle = load_json(Path(__file__).parent / "data" / "lifestyle.json", [])
+    workout_plan = load_json(Path(__file__).parent / "data" / "workout_plan.json", None)
+    if workout_plan and workout_plan.get("date") != iso(today):
+        workout_plan = None  # only show a plan for today; stale plans just disappear
     muscle_group_list = load_json(Path(__file__).parent / "data" / "muscle_presets.json", {}).get("muscle_groups", [])
 
     print(f"Fetching {CALORIE_WEEKS} weeks of Garmin daily calorie burn (one call per day)...")
@@ -855,6 +884,7 @@ def main() -> None:
         "calorie_trend": calorie_trend,
         "nutrition_view": nutrition_view,
         "lifestyle": lifestyle,
+        "workout_plan": workout_plan,
     }
 
     html = build_html(data)
