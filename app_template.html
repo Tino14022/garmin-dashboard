@@ -1039,6 +1039,58 @@ if(training.sessions.length){
   if(lowSpo2Nights >= 2){
     issues.push(lowSpo2Nights + ' of the last 7 nights had blood oxygen dip below 92%. Occasional dips happen, but a repeated pattern is worth mentioning to a doctor — it can point to airway or breathing issues during sleep.');
   }
+  // Lifestyle factors (alcohol/cannabis/cigarettes) vs sleep — uses the full available
+  // history, not just this week, since these events are sparse (esp. alcohol/cannabis).
+  const lifestyleByDate = {};
+  (DATA.lifestyle || []).forEach(l => { lifestyleByDate[l.date] = l; });
+  const lifestyleFor = (sleepDateStr) => lifestyleByDate[dayBeforeIso(sleepDateStr)] || lifestyleByDate[sleepDateStr];
+  const sleepStatsFor = (nights) => ({
+    score: avg(nights.map(s=>s.score)),
+    deepPct: avg(nights.map(s => s.hours ? (s.deep_min/(s.hours*60))*100 : null)),
+  });
+
+  const alcoholNights = [], soberNights = [];
+  sleep.forEach(s => {
+    const l = lifestyleFor(s.date);
+    if(!l || l.alcohol_drinks == null) return;
+    (l.alcohol_drinks > 0 ? alcoholNights : soberNights).push(s);
+  });
+  if(alcoholNights.length >= 2 && soberNights.length >= 2){
+    const a = sleepStatsFor(alcoholNights), b = sleepStatsFor(soberNights);
+    if(a.score != null && b.score != null){
+      issues.push('Nights after drinking average a sleep score of ' + Math.round(a.score) + ' vs ' + Math.round(b.score) + ' on non-drinking nights' +
+        (a.deepPct!=null && b.deepPct!=null ? ', deep sleep down to ' + Math.round(a.deepPct) + '% vs ' + Math.round(b.deepPct) + '%' : '') +
+        ' — alcohol is measurably costing sleep quality here, not just how it feels the next day.');
+    }
+  }
+
+  const cannabisNights = [], noCannabisNights = [];
+  sleep.forEach(s => {
+    const l = lifestyleFor(s.date);
+    if(!l || l.cannabis_used == null) return;
+    (l.cannabis_used ? cannabisNights : noCannabisNights).push(s);
+  });
+  if(cannabisNights.length >= 2 && noCannabisNights.length >= 2){
+    const a = sleepStatsFor(cannabisNights), b = sleepStatsFor(noCannabisNights);
+    if(a.score != null && b.score != null && Math.abs(a.score - b.score) >= 5){
+      issues.push('Sleep score averages ' + Math.round(a.score) + ' on nights with cannabis use vs ' + Math.round(b.score) + ' without' +
+        (a.score < b.score ? ' — a real cost to sleep quality.' : ' — no negative signal from this so far.'));
+    }
+  }
+
+  const CIG_RANK = {low:1, usual:2, alot:3, extreme:4};
+  const cigNights = sleep.map(s => {
+    const l = lifestyleFor(s.date);
+    return (l && l.cigarettes_level) ? {rank: CIG_RANK[l.cigarettes_level], rhr: s.resting_hr} : null;
+  }).filter(Boolean);
+  const heavySmoke = cigNights.filter(x=>x.rank>=3), lightSmoke = cigNights.filter(x=>x.rank<=2);
+  if(heavySmoke.length >= 2 && lightSmoke.length >= 2){
+    const rhrHeavy = avg(heavySmoke.map(x=>x.rhr)), rhrLight = avg(lightSmoke.map(x=>x.rhr));
+    if(rhrHeavy != null && rhrLight != null && Math.round(rhrHeavy - rhrLight) >= 2){
+      issues.push('Overnight resting HR runs ' + Math.round(rhrHeavy-rhrLight) + ' bpm higher on heavier-smoking days vs lighter ones — nicotine is a stimulant, so this tracks with what you\'d expect physiologically.');
+    }
+  }
+
   const worstNight = last(7).slice().sort((a,b) => (a.score||100) - (b.score||100))[0];
   if(worstNight && worstNight.score != null && worstNight.score < 65){
     const dayBefore = new Date(worstNight.date + 'T00:00:00'); dayBefore.setDate(dayBefore.getDate()-1);

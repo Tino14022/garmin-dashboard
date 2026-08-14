@@ -45,3 +45,16 @@ Mi Scale readings.
 }
 ```
 Only include fields the user actually provided.
+
+## lifestyle.json
+Factors that measurably affect sleep/recovery but aren't training or food.
+```json
+{
+  "date": "2026-08-14",
+  "cigarettes_level": "usual",   // low (0-5) | usual (5-15) | alot (15-20/one pack) | extreme (more than a pack) | null
+  "alcohol_drinks": 0,           // count, null if not mentioned that day
+  "cannabis_used": false,        // true/false/null
+  "notes": null
+}
+```
+One entry per day. Cigarettes default to "usual" going forward once the user gives a baseline — only log a different level when they mention a day was notably different. Don't fabricate entries for days never mentioned; leave the day absent rather than guessing.

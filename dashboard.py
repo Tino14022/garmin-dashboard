@@ -813,6 +813,7 @@ def main() -> None:
     training_view = build_training_view(runs_12wk, other_activities, today)
     nutrition = load_json(Path(__file__).parent / "data" / "nutrition.json", [])
     body_comp = load_json(Path(__file__).parent / "data" / "body_comp.json", [])
+    lifestyle = load_json(Path(__file__).parent / "data" / "lifestyle.json", [])
     muscle_group_list = load_json(Path(__file__).parent / "data" / "muscle_presets.json", {}).get("muscle_groups", [])
 
     print(f"Fetching {CALORIE_WEEKS} weeks of Garmin daily calorie burn (one call per day)...")
@@ -853,6 +854,7 @@ def main() -> None:
         "muscle_group_list": muscle_group_list,
         "calorie_trend": calorie_trend,
         "nutrition_view": nutrition_view,
+        "lifestyle": lifestyle,
     }
 
     html = build_html(data)
