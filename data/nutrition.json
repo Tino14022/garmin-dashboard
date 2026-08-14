@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "date": "2026-08-14",
+    "meal": "lunch",
+    "description": "Chicken in curry sauce (300g) with rice, extra rice portion",
+    "grams": null,
+    "calories": 820,
+    "protein_g": 55,
+    "carbs_g": 94,
+    "fat_g": 23
+  }
+]
