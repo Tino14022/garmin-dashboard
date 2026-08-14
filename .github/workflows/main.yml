@@ -17,7 +17,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      # The suite needs no Garmin credentials and no network — it drives the
+      # whole pipeline through a fake source.
+      - name: Run tests
+        run: uv run --with pytest --with tzdata python -m pytest tests/ -q
+
   build-deploy:
+    needs: test
     runs-on: ubuntu-latest
     environment:
       name: github-pages
