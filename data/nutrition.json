@@ -42,11 +42,11 @@
   {
     "date": "2026-08-14",
     "meal": "snack",
-    "description": "Chocolate sponge cake with cream and berry filling (2 slices, ~180g)",
-    "grams": 180,
-    "calories": 620,
-    "protein_g": 8,
-    "carbs_g": 68,
-    "fat_g": 32
+    "description": "Chocolate sponge cake with cream and berry filling (1 slice, ~90g)",
+    "grams": 90,
+    "calories": 310,
+    "protein_g": 4,
+    "carbs_g": 34,
+    "fat_g": 16
   }
 ]
