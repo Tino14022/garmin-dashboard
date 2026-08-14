@@ -44,8 +44,8 @@
   }
   .section h2{font-size:0.95rem; margin:0 0 4px; font-weight:600;}
   .section .desc{color:var(--text-faint); font-size:0.78rem; margin-bottom:14px;}
-  .chart-wrap{position:relative; height:260px;}
-  .chart-wrap.short{height:200px;}
+  .chart-wrap{position:relative; height:190px;}
+  .chart-wrap.short{height:150px;}
   .empty{color:var(--text-faint); font-size:0.85rem; padding:20px 0; text-align:center;}
   table{width:100%; border-collapse:collapse; font-size:0.85rem;}
   th{text-align:left; color:var(--text-faint); font-weight:500; font-size:0.72rem;
@@ -105,6 +105,12 @@
     display:inline-block; background:rgba(255,107,122,0.12); color:var(--red);
     border-radius:999px; padding:3px 10px; font-size:0.7rem; margin:3px 3px 0 0;
   }
+  .my-take{
+    background:linear-gradient(135deg, rgba(57,255,143,0.07), var(--panel));
+    border:1px solid rgba(57,255,143,0.25); border-left:3px solid var(--neon);
+    border-radius:12px; padding:16px 18px; margin-bottom:16px; font-size:0.88rem; line-height:1.6;
+  }
+  .my-take .tag{ font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--neon); font-weight:700; margin-bottom:6px; display:block; }
 
   /* ---- Calendar ---- */
   .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; max-width:420px; margin:0 auto; }
@@ -357,6 +363,62 @@ function trendArrow(cur, prev){
   return pct > 0 ? '<span class="trend-up">▲ ' + pct + '%</span>' : '<span class="trend-down">▼ ' + Math.abs(pct) + '%</span>';
 }
 
+function personalTake(period, ctx){
+  const {tr, trPrev, ru, lt, nu, bcNow, neglected, muscleList, daysRemaining, raceDistanceKm, longestRunKm} = ctx;
+  const sentences = [];
+
+  if(daysRemaining != null && raceDistanceKm){
+    const gap = raceDistanceKm - longestRunKm;
+    if(gap > raceDistanceKm * 0.4){
+      sentences.push('With ' + daysRemaining + ' days to go and your longest run on record still only ' + longestRunKm.toFixed(1) + 'km against a ' + raceDistanceKm + 'km race, that gap is the thing I\'d worry about most — it needs a real long-run progression soon, it won\'t close on its own.');
+    } else if(gap > 0){
+      sentences.push('Your longest run (' + longestRunKm.toFixed(1) + 'km) is getting within range of the ' + raceDistanceKm + 'km race distance, which is the right trajectory with ' + daysRemaining + ' days left — keep building the long run specifically, not just weekly total.');
+    } else {
+      sentences.push('You\'ve already covered race distance or more in training, which is a strong sign with ' + daysRemaining + ' days to go — from here it\'s about sharpening pace, not just surviving the distance.');
+    }
+  }
+
+  if(lt){
+    if(lt.tsb < -30){
+      sentences.push('Form is deep in the red (TSB ' + lt.tsb + '), meaning fatigue is outrunning fitness right now — I\'d treat the next few days as a recovery priority rather than pushing another hard session.');
+    } else if(lt.acwr_status === 'HIGH'){
+      sentences.push('Your ACWR is flagged HIGH, which is the training-load zone most associated with injury — worth backing off intensity for a few days even if you feel fine.');
+    } else if(lt.tsb > 100){
+      sentences.push('Form is very fresh (TSB ' + lt.tsb + '), which usually means load has dropped off — there\'s headroom to train harder without much risk right now.');
+    }
+  }
+
+  if(period !== 'daily' && trPrev.totalMin > 60 && tr.totalMin > 0){
+    const diffPct = Math.round(((tr.totalMin - trPrev.totalMin) / trPrev.totalMin) * 100);
+    if(diffPct >= 25) sentences.push('Training volume jumped ' + diffPct + '% vs. the period before — a big enough jump that I\'d keep an eye on how your body responds over the next week.');
+    else if(diffPct <= -25) sentences.push('Volume dropped ' + Math.abs(diffPct) + '% vs. the prior period — fine if that was planned recovery, worth noting if it wasn\'t.');
+  }
+
+  if(period !== 'daily' && neglected.length){
+    if(neglected.length >= muscleList.length * 0.6){
+      sentences.push('Most muscle groups outside what running/your recent sport work hits haven\'t been trained this period — expected if you\'re in a running-focused block, but flagging it in case that\'s not intentional.');
+    }
+  }
+
+  if(period !== 'daily'){
+    if(!nu.entries.length){
+      sentences.push('No food logged this period, so I genuinely can\'t say anything useful about fueling — that\'s the biggest blind spot in this data right now, and probably the highest-value thing to start tracking.');
+    } else if(nu.avgCalories > 0 && nu.avgCalories < 1800 && tr.totalMin > 200){
+      sentences.push('Average logged intake (' + nu.avgCalories + ' cal/day) looks low relative to how much you\'re training — worth double-checking you\'re not under-fueling, especially with a half marathon build going.');
+    }
+  }
+
+  if(!bcNow && period === 'monthly'){
+    sentences.push('No body composition readings yet — even a weigh-in every week or two would make the weight/body-fat trend actually meaningful.');
+  }
+
+  if(!sentences.length){
+    sentences.push('Not much to react to yet this period — keep logging and I\'ll have something sharper to say here.');
+  }
+
+  return sentences.join(' ');
+}
+
 function renderAnalysis(period){
   document.querySelectorAll('.period-btn').forEach(b => b.classList.toggle('active', b.dataset.period === period));
   const today = new Date(DATA.generated_at + 'T00:00:00');
@@ -389,7 +451,20 @@ function renderAnalysis(period){
 
   const neglected = muscleList.filter(m => !tr.musclesHit.has(m));
 
+  const longestRunPR = (DATA.personal_records || []).find(p => p.label === 'Longest Run');
+  const longestRunKm = longestRunPR ? parseFloat(longestRunPR.value) : 0;
+  const lt = (DATA.load_trend || []).slice(-1)[0];
+
+  const takeText = personalTake(period, {
+    tr, trPrev, ru, lt, nu, bcNow,
+    neglected, muscleList,
+    daysRemaining: DATA.race ? DATA.race.days_remaining : null,
+    raceDistanceKm: DATA.race ? DATA.race.distance_km : null,
+    longestRunKm,
+  });
+
   let html = '<h2 style="margin-bottom:14px;">' + title + '</h2>';
+  html += '<div class="my-take"><span class="tag">My take</span>' + takeText + '</div>';
   html += '<div class="analysis-grid">';
 
   html += '<div class="analysis-card"><h3>💪 Training</h3>';
@@ -410,7 +485,6 @@ function renderAnalysis(period){
   } else {
     html += '<div class="empty">No runs</div>';
   }
-  const lt = (DATA.load_trend||[]).slice(-1)[0];
   if(lt){
     html += '<div class="analysis-row"><span class="k">Form (TSB)</span><span class="v">' + lt.tsb + '</span></div>';
     html += '<div class="analysis-row"><span class="k">ACWR</span><span class="v">' + (lt.acwr_status||'-') + '</span></div>';

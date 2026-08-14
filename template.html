@@ -116,19 +116,19 @@
 
 <div class="section">
   <h2>Training Load — Fitness / Fatigue / Form</h2>
-  <div class="desc">CTL (chronic load, ~fitness), ATL (acute load, ~fatigue) and TSB (form = CTL − ATL), in Garmin's own training-load units — last 12 weeks.</div>
+  <div class="desc"><b>Fitness (CTL)</b> is your accumulated training load over roughly the last 6 weeks — it rises slowly with consistent training. <b>Fatigue (ATL)</b> is the same idea but over just the last week, so it reacts fast to hard sessions. <b>Form (TSB)</b> is Fitness minus Fatigue: strongly positive means you're rested and primed to perform well; strongly negative means fatigue is piling up and injury risk climbs. The status badge under Form (LOW/OPTIMAL/HIGH) is your <b>ACWR</b> — how this week's load compares to your recent average; HIGH is the zone most linked to injury.</div>
   <div class="chart-wrap"><canvas id="loadChart"></canvas></div>
 </div>
 
 <div class="section">
   <h2>Weekly Mileage</h2>
-  <div class="desc">Running distance per week, last 12 weeks.</div>
+  <div class="desc">Total running distance per week. The yellow line is the trend. A common rule of thumb training for a race: increase no more than ~10% week over week, with an easier week every 3-4 weeks — steady growth beats big jumps.</div>
   <div class="chart-wrap"><canvas id="mileageChart"></canvas></div>
 </div>
 
 <div class="section">
   <h2>Recovery</h2>
-  <div class="desc">HRV, resting heart rate and sleep — last 4 weeks.</div>
+  <div class="desc">Three signals your body gives off overnight. <b>HRV</b> (heart rate variability) is the tiny variation in time between heartbeats — counterintuitively, <i>higher</i> usually means your nervous system is well-recovered, and a sharp drop is often the earliest sign of fatigue, stress, or getting sick, sometimes before you feel anything. <b>Resting HR</b> creeping up over several days can signal the same thing. <b>Sleep</b> is total time asleep per night, from your watch.</div>
   <div class="recovery-grid">
     <div class="recovery-card">
       <h3>HRV (ms)</h3>
@@ -147,13 +147,13 @@
 
 <div class="section">
   <h2>VO2 Max Trend</h2>
-  <div class="desc">Running VO2 max estimate — last 12 weeks.</div>
+  <div class="desc">Garmin's estimate of your aerobic engine — roughly, how much oxygen your body can use per minute while running. It isn't a lab test; Garmin infers it from your pace vs. heart rate during runs, so it can jump around with just a couple of data points. Higher is better, and it typically climbs slowly as your easy-run fitness builds over weeks to months.</div>
   <div class="chart-wrap short"><canvas id="vo2Chart"></canvas></div>
 </div>
 
 <div class="section">
   <h2>Easy vs. Workout Pace</h2>
-  <div class="desc">Splits runs from the last 4 weeks by Garmin's training-effect label, so you can see if easy days are actually easy.</div>
+  <div class="desc">Splits runs from the last 4 weeks by Garmin's training-effect label. A common mistake is running easy days too hard — if the "easy" pace here isn't meaningfully slower than the workout pace, your easy days probably aren't giving you real recovery, which is usually what the extra fatigue in the Training Load chart above comes from.</div>
   <div class="pace-compare">
     <div class="pace-box easy">
       <h3>Easy runs</h3>
