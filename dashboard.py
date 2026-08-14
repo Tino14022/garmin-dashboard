@@ -123,6 +123,37 @@ def fetch_activities(api, start: date, end: date) -> list[dict]:
     return runs
 
 
+GARMIN_TYPE_MAP = {
+    "strength_training": "gym",
+    "indoor_cardio": "gym",
+    "cycling": "bike", "indoor_cycling": "bike", "mountain_biking": "bike", "gravel_cycling": "bike",
+    "hiking": "hike",
+    "walking": "walk",
+    "swimming": "swim", "lap_swimming": "swim", "open_water_swimming": "swim",
+}
+RUNNING_TYPE_KEYS = {"running", "trail_running", "treadmill_running", "track_running", "street_running"}
+
+
+def fetch_other_activities(api, start: date, end: date) -> list[dict]:
+    """Every non-running activity in range, generically classified (no per-sport API filtering)."""
+    raw = safe_call(api.get_activities_by_date, iso(start), iso(end), None, default=[]) or []
+    out = []
+    for a in raw:
+        type_key = (a.get("activityType") or {}).get("typeKey", "") or ""
+        if type_key in RUNNING_TYPE_KEYS:
+            continue  # covered by fetch_activities already
+        dur_s = a.get("duration") or 0
+        if dur_s <= 0:
+            continue
+        out.append({
+            "date": (a.get("startTimeLocal") or "")[:10],
+            "type": GARMIN_TYPE_MAP.get(type_key, "other"),
+            "duration_min": round(dur_s / 60),
+            "name": a.get("activityName") or type_key.replace("_", " ").title() or "Activity",
+        })
+    return out
+
+
 def fetch_load_trend(api, start: date, end: date) -> list[dict]:
     trend = []
     d = start
@@ -298,14 +329,58 @@ def muscle_decay(days_since: float) -> float:
     return 0.0
 
 
-def build_training_view(runs: list[dict], today: date) -> dict:
+NAME_KEYWORD_MUSCLES = {
+    "push": "push", "pull": "pull",
+    "leg": "legs", "legs": "legs",
+    "arm": "arms", "arms": "arms",
+    "core": "core", "abs": "core",
+    "upper": "upper", "lower": "lower",
+    "chest": {"chest": 1.0, "triceps": 0.5, "front_delts": 0.5},
+    "back": {"lats": 1.0, "upper_back": 0.8, "traps": 0.5},
+    "bicep": {"biceps": 1.0}, "biceps": {"biceps": 1.0},
+    "tricep": {"triceps": 1.0}, "triceps": {"triceps": 1.0},
+    "shoulder": {"front_delts": 0.7, "side_delts": 0.8, "rear_delts": 0.5},
+    "shoulders": {"front_delts": 0.7, "side_delts": 0.8, "rear_delts": 0.5},
+}
+
+
+def guess_muscle_groups_from_name(name: str, gym_splits: dict) -> dict:
+    """Best-effort split detection from an activity name like 'Push + Abs' or 'Back + biceps'."""
+    words = name.lower().replace("+", " ").replace("/", " ").split()
+    merged: dict[str, float] = {}
+    for w in words:
+        ref = NAME_KEYWORD_MUSCLES.get(w)
+        if ref is None:
+            continue
+        group = gym_splits.get(ref, ref) if isinstance(ref, str) else ref
+        for muscle, intensity in group.items():
+            if intensity > merged.get(muscle, 0):
+                merged[muscle] = intensity
+    return merged
+
+
+def build_training_view(runs: list[dict], other_activities: list[dict], today: date) -> dict:
     data_dir = Path(__file__).parent / "data"
     manual_sessions = load_json(data_dir / "trainings.json", [])
     presets = load_json(data_dir / "muscle_presets.json", {})
     run_preset = (presets.get("sports") or {}).get("run", {})
+    gym_splits = presets.get("gym_splits") or {}
+    default_presets_by_type = dict(presets.get("sports") or {})
+    default_presets_by_type["gym"] = gym_splits.get("full_body", {})
+
+    # Manual entries with no duration_min are annotations (subtype/muscle_groups) for a
+    # Garmin-sourced activity on the same (date, type) — e.g. "Monday was push day".
+    # Manual entries WITH duration_min are standalone records (e.g. no watch that day).
+    annotations: dict[tuple, dict] = {}
+    standalone = []
+    for s in manual_sessions:
+        if not s.get("duration_min"):
+            annotations[(s.get("date"), s.get("type"))] = s
+        else:
+            standalone.append(s)
 
     sessions = []
-    for s in manual_sessions:
+    for s in standalone:
         sessions.append({
             "date": s.get("date"),
             "type": s.get("type", "other"),
@@ -322,6 +397,22 @@ def build_training_view(runs: list[dict], today: date) -> dict:
             "duration_min": round(r["duration_s"] / 60),
             "muscle_groups": run_preset,
             "notes": f'{r["distance_km"]} km @ {r["pace_label"]}',
+        })
+    for o in other_activities:
+        ann = annotations.get((o["date"], o["type"]))
+        guessed = guess_muscle_groups_from_name(o["name"], gym_splits) if o["type"] == "gym" else {}
+        muscle_groups = (
+            (ann.get("muscle_groups") if ann else None)
+            or guessed
+            or default_presets_by_type.get(o["type"], {})
+        )
+        sessions.append({
+            "date": o["date"],
+            "type": o["type"],
+            "subtype": ann.get("subtype") if ann else None,
+            "duration_min": o["duration_min"],
+            "muscle_groups": muscle_groups,
+            "notes": (ann.get("notes") if ann else None) or o["name"],
         })
     sessions.sort(key=lambda s: s["date"] or "", reverse=True)
 
@@ -448,8 +539,11 @@ def main() -> None:
     weekly_mileage = build_weekly_mileage(runs_12wk, trend_start, today)
     pace_panel = split_easy_vs_workout(recent_runs)
 
+    print("Fetching non-running activities (gym, etc.)...")
+    other_activities = fetch_other_activities(api, trend_start, today)
+
     print("Loading training/nutrition/body-comp data files...")
-    training_view = build_training_view(runs_12wk, today)
+    training_view = build_training_view(runs_12wk, other_activities, today)
     nutrition = load_json(Path(__file__).parent / "data" / "nutrition.json", [])
     body_comp = load_json(Path(__file__).parent / "data" / "body_comp.json", [])
 
