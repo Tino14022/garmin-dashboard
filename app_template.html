@@ -61,6 +61,9 @@ __RUNNING_TAB_STYLE__
   .chart-wrap{position:relative; height:190px;}
   .chart-wrap.short{height:150px;}
   .empty{color:var(--text-faint); font-size:0.85rem; padding:20px 0; text-align:center;}
+  /* Tables shrink to fit where they can; where their columns genuinely don't fit
+     (narrow phones), this scrolls the table itself instead of the whole page. */
+  .table-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
   table{width:100%; border-collapse:collapse; font-size:0.85rem;}
   th{text-align:left; color:var(--text-faint); font-weight:500; font-size:0.72rem;
      text-transform:uppercase; letter-spacing:0.04em; padding:6px 8px; border-bottom:1px solid var(--border);}
@@ -1081,7 +1084,7 @@ if(training.sessions.length){
     '<td>' + (s.duration_min ? s.duration_min + ' min' : '-') + '</td>' +
     '<td>' + (s.notes || '-') + '</td></tr>'
   ).join('');
-  sessWrap.innerHTML = '<table><thead><tr><th>Date</th><th>Type</th><th>Duration</th><th>Notes</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  sessWrap.innerHTML = '<div class="table-scroll"><table><thead><tr><th>Date</th><th>Type</th><th>Duration</th><th>Notes</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
 } else {
   sessWrap.innerHTML = '<div class="empty">No manually-logged sessions yet.</div>';
 }
@@ -1186,7 +1189,7 @@ if(training.sessions.length){
     '<tr><td>' + fmtDate(s.date) + '</td><td>' + fmt1(s.hours) + 'h</td><td>' + (s.score ?? '-') + ' (' + (s.quality||'-').toLowerCase() + ')</td>' +
     '<td>' + (s.resting_hr ?? '-') + ' bpm</td><td>' + fmt1(s.respiration) + '</td><td>' + fmt1(s.spo2) + '%</td></tr>'
   ).join('');
-  el('sleepTableWrap').innerHTML = '<table><thead><tr><th>Date</th><th>Duration</th><th>Score</th><th>Resting HR</th><th>Respiration</th><th>SpO2</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  el('sleepTableWrap').innerHTML = '<div class="table-scroll"><table><thead><tr><th>Date</th><th>Duration</th><th>Score</th><th>Resting HR</th><th>Respiration</th><th>SpO2</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
 
   // ---- Ongoing sleep analysis (recomputed every rebuild as new nights land) ----
   // Structured like a real report: verdict, specific issues with WHY they matter, then tips.
@@ -1386,7 +1389,7 @@ if(training.sessions.length){
     '<tr><td>' + fmtDate(n.date) + '</td><td>' + (n.meal||'-') + '</td><td>' + n.description + '</td>' +
     '<td>' + (n.calories||'-') + '</td><td>' + (n.protein_g||'-') + 'g</td><td>' + (n.carbs_g||'-') + 'g</td><td>' + (n.fat_g||'-') + 'g</td></tr>'
   ).join('');
-  el('foodTableWrap').innerHTML = '<table><thead><tr><th>Date</th><th>Meal</th><th>Description</th><th>Cal</th><th>P</th><th>C</th><th>F</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  el('foodTableWrap').innerHTML = '<div class="table-scroll"><table><thead><tr><th>Date</th><th>Meal</th><th>Description</th><th>Cal</th><th>P</th><th>C</th><th>F</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
 })();
 
 // ===================== BODY TAB =====================
@@ -1415,7 +1418,7 @@ if(!bodyComp.length){
     '<tr><td>' + fmtDate(b.date) + '</td><td>' + (b.weight_kg??'-') + ' kg</td><td>' + (b.body_fat_pct??'-') + '%</td>' +
     '<td>' + (b.muscle_mass_kg??'-') + ' kg</td><td>' + (b.water_pct??'-') + '%</td><td>' + (b.visceral_fat??'-') + '</td></tr>'
   ).join('');
-  el('bodyTableWrap').innerHTML = '<table><thead><tr><th>Date</th><th>Weight</th><th>Body Fat</th><th>Muscle</th><th>Water</th><th>Visceral</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  el('bodyTableWrap').innerHTML = '<div class="table-scroll"><table><thead><tr><th>Date</th><th>Weight</th><th>Body Fat</th><th>Muscle</th><th>Water</th><th>Visceral</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
 }
 
 __RUNNING_TAB_SCRIPT__

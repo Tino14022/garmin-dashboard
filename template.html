@@ -364,7 +364,7 @@ if(runs.length){
       '<td><span class="badge ' + (isEasy?'easy':'workout') + '">' + r.label.replaceAll('_',' ') + '</span></td>' +
     '</tr>';
   }).join('');
-  tableWrap.innerHTML = '<table><thead><tr><th>Date</th><th>Distance</th><th>Pace</th><th>Avg HR</th><th>Type</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  tableWrap.innerHTML = '<div class="table-scroll"><table><thead><tr><th>Date</th><th>Distance</th><th>Pace</th><th>Avg HR</th><th>Type</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
 } else {
   tableWrap.innerHTML = '<div class="empty">No runs in the last 4 weeks.</div>';
 }
