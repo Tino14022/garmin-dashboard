@@ -14,7 +14,7 @@
   }
   *{box-sizing:border-box;}
   body{
-    margin:0; background:var(--bg); color:var(--text);
+    margin:0; background:var(--bg); color:var(--text); position:relative;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     padding:0 16px 80px; max-width:1280px; margin:0 auto;
   }
@@ -32,8 +32,11 @@
     display:flex; align-items:center; gap:6px; font-weight:600;
   }
   .tabbtn.active{ background:var(--panel-2); border-color:var(--border); color:var(--text); }
-  .tab-panel{ display:none; }
-  .tab-panel.active{ display:block; }
+  /* Inactive panels stay laid out (not display:none) so any charts inside them
+     always have real, non-zero dimensions when Chart.js measures them — display:none
+     collapses to 0x0 and Chart.js then renders stretched/broken once shown. */
+  .tab-panel{ position:absolute; left:16px; right:16px; visibility:hidden; pointer-events:none; z-index:0; }
+  .tab-panel.active{ position:relative; left:0; right:0; visibility:visible; pointer-events:auto; z-index:1; }
 
   .section{
     background:var(--panel); border:1px solid var(--border); border-radius:14px;

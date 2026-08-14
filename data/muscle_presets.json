@@ -8,8 +8,8 @@
     "quads", "hamstrings", "glutes", "calves"
   ],
   "gym_splits": {
-    "push": {"chest": 1.0, "front_delts": 0.8, "side_delts": 0.6, "triceps": 0.9},
-    "pull": {"lats": 1.0, "upper_back": 0.8, "traps": 0.5, "rear_delts": 0.5, "biceps": 0.9, "forearms": 0.5},
+    "push": {"chest": 1.0, "front_delts": 0.8, "side_delts": 0.6, "triceps": 0.9, "abs": 0.4, "obliques": 0.4},
+    "pull": {"lats": 1.0, "upper_back": 0.8, "traps": 0.5, "rear_delts": 0.5, "biceps": 0.9, "forearms": 0.5, "lower_back": 0.3},
     "legs": {"quads": 1.0, "hamstrings": 0.8, "glutes": 0.8, "calves": 0.6},
     "upper": {"chest": 0.8, "upper_back": 0.7, "lats": 0.6, "front_delts": 0.6, "side_delts": 0.5, "biceps": 0.7, "triceps": 0.7},
     "lower": {"quads": 0.9, "hamstrings": 0.8, "glutes": 0.8, "calves": 0.6, "lower_back": 0.3},

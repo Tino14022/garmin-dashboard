@@ -359,7 +359,7 @@ NAME_KEYWORD_MUSCLES = {
     "core": "core", "abs": "core",
     "upper": "upper", "lower": "lower",
     "chest": {"chest": 1.0, "triceps": 0.5, "front_delts": 0.5},
-    "back": {"lats": 1.0, "upper_back": 0.8, "traps": 0.5},
+    "back": {"lats": 1.0, "upper_back": 0.8, "traps": 0.5, "lower_back": 0.4},
     "bicep": {"biceps": 1.0}, "biceps": {"biceps": 1.0},
     "tricep": {"triceps": 1.0}, "triceps": {"triceps": 1.0},
     "shoulder": {"front_delts": 0.7, "side_delts": 0.8, "rear_delts": 0.5},

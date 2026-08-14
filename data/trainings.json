@@ -3,14 +3,14 @@
     "date": "2026-08-10",
     "type": "gym",
     "subtype": "push",
-    "muscle_groups": {"chest": 1.0, "front_delts": 0.8, "side_delts": 0.6, "triceps": 0.9},
+    "muscle_groups": {"chest": 1.0, "front_delts": 0.8, "side_delts": 0.6, "triceps": 0.9, "abs": 0.4, "obliques": 0.4},
     "notes": "Push day"
   },
   {
     "date": "2026-08-11",
     "type": "gym",
     "subtype": "pull",
-    "muscle_groups": {"lats": 1.0, "upper_back": 0.8, "traps": 0.5, "rear_delts": 0.5, "biceps": 0.9, "forearms": 0.5},
+    "muscle_groups": {"lats": 1.0, "upper_back": 0.8, "traps": 0.5, "rear_delts": 0.5, "biceps": 0.9, "forearms": 0.5, "lower_back": 0.3},
     "notes": "Pull day"
   },
   {
