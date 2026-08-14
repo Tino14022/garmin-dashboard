@@ -1,1 +1,9 @@
-[]
+[
+  {
+    "date": "2026-08-13",
+    "cigarettes_level": "usual",
+    "alcohol_drinks": null,
+    "cannabis_used": true,
+    "notes": "7-8 cigarettes"
+  }
+]
