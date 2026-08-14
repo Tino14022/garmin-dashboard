@@ -739,18 +739,60 @@ const training = DATA.training || {sessions:[], muscle_scores:{}, streak_weeks:0
   if(!plan || !plan.exercises || !plan.exercises.length) return;
 
   const storageKey = 'workoutProgress_' + plan.date;
+  const finishedKey = storageKey + '_finished';
   let progress = {};
   try{ progress = JSON.parse(localStorage.getItem(storageKey) || '{}'); }catch(e){ progress = {}; }
+  let finished = localStorage.getItem(finishedKey) === '1';
 
   function save(){ try{ localStorage.setItem(storageKey, JSON.stringify(progress)); }catch(e){} }
   function totalDone(){ return plan.exercises.reduce((a,ex,i) => a + (progress[i] || 0), 0); }
   function totalTarget(){ return plan.exercises.reduce((a,ex) => a + ex.target_sets, 0); }
 
+  function buildSummary(){
+    const lines = ['Finished workout: ' + (plan.name || 'Today\'s Workout') + ' (' + plan.date + ')', ''];
+    plan.exercises.forEach((ex, i) => {
+      const doneCount = progress[i] || 0;
+      lines.push('- ' + ex.name + ': ' + doneCount + '/' + ex.target_sets + ' sets (' + ex.target_reps + ' reps)');
+    });
+    lines.push('', 'Paste this to your coach to log it — it\'ll sync with Garmin automatically once your watch data comes in.');
+    return lines.join('\n');
+  }
+
+  function renderSummaryBox(){
+    const summary = buildSummary();
+    const box = el('workoutSummaryBox');
+    box.innerHTML = '<div class="workout-summary-box"><textarea readonly id="workoutSummaryText"></textarea><br>' +
+      '<button class="copy-btn" id="copySummaryBtn">Copy to clipboard</button></div>';
+    el('workoutSummaryText').value = summary;
+    el('copySummaryBtn').addEventListener('click', () => {
+      if(navigator.clipboard){
+        navigator.clipboard.writeText(summary).then(() => { el('copySummaryBtn').textContent = 'Copied!'; }).catch(() => {});
+      }
+    });
+  }
+
   function render(){
     const done = totalDone(), target = totalTarget();
     const pct = target ? Math.round(done/target*100) : 0;
-    let html = '<div class="section"><h2>Today\'s Workout' + (plan.name ? ' — ' + plan.name : '') + '</h2>' +
-      '<div class="desc">Tap a set to mark it done. Progress saves on this device only.</div>' +
+    let html = '<div class="section"><h2>Today\'s Workout' + (plan.name ? ' — ' + plan.name : '') + '</h2>';
+
+    if(finished){
+      // Closed state: checklist is locked in, only the read-only summary + a way to reopen remain.
+      html += '<div class="desc">Workout finished ✅ (' + done + ' / ' + target + ' sets)</div>' +
+        '<div class="workout-progress-bar"><div class="workout-progress-fill" style="width:' + pct + '%"></div></div>' +
+        '<div id="workoutSummaryBox"></div>' +
+        '<button class="copy-btn" id="reopenWorkoutBtn" style="margin-top:8px;">Reopen</button></div>';
+      wrap.innerHTML = html;
+      renderSummaryBox();
+      el('reopenWorkoutBtn').addEventListener('click', () => {
+        finished = false;
+        try{ localStorage.removeItem(finishedKey); }catch(e){}
+        render();
+      });
+      return;
+    }
+
+    html += '<div class="desc">Tap a set to mark it done. Progress saves on this device only.</div>' +
       '<div class="workout-progress-bar"><div class="workout-progress-fill" style="width:' + pct + '%"></div></div>' +
       '<div style="font-size:0.75rem;color:var(--text-faint);margin:4px 0 12px;">' + done + ' / ' + target + ' sets</div>';
 
@@ -767,7 +809,6 @@ const training = DATA.training || {sessions:[], muscle_scores:{}, streak_weeks:0
     });
 
     html += '<button class="finish-btn" id="finishWorkoutBtn">Finish Workout</button>';
-    html += '<div id="workoutSummaryBox"></div>';
     html += '</div>';
     wrap.innerHTML = html;
 
@@ -785,24 +826,9 @@ const training = DATA.training || {sessions:[], muscle_scores:{}, streak_weeks:0
   }
 
   function finishWorkout(){
-    const lines = ['Finished workout: ' + (plan.name || 'Today\'s Workout') + ' (' + plan.date + ')', ''];
-    plan.exercises.forEach((ex, i) => {
-      const doneCount = progress[i] || 0;
-      lines.push('- ' + ex.name + ': ' + doneCount + '/' + ex.target_sets + ' sets (' + ex.target_reps + ' reps)');
-    });
-    lines.push('', 'Paste this to your coach to log it — it\'ll sync with Garmin automatically once your watch data comes in.');
-    const summary = lines.join('\n');
-    try{ localStorage.setItem(storageKey + '_finished', '1'); }catch(e){}
-
-    const box = el('workoutSummaryBox');
-    box.innerHTML = '<div class="workout-summary-box"><textarea readonly id="workoutSummaryText"></textarea><br>' +
-      '<button class="copy-btn" id="copySummaryBtn">Copy to clipboard</button></div>';
-    el('workoutSummaryText').value = summary;
-    el('copySummaryBtn').addEventListener('click', () => {
-      if(navigator.clipboard){
-        navigator.clipboard.writeText(summary).then(() => { el('copySummaryBtn').textContent = 'Copied!'; }).catch(() => {});
-      }
-    });
+    finished = true;
+    try{ localStorage.setItem(finishedKey, '1'); }catch(e){}
+    render();
   }
 
   render();
