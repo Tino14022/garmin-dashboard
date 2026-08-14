@@ -133,6 +133,26 @@ GARMIN_TYPE_MAP = {
 }
 RUNNING_TYPE_KEYS = {"running", "trail_running", "treadmill_running", "track_running", "street_running"}
 
+NAME_TYPE_KEYWORDS = {
+    "padel": "padel",
+    "football": "football", "soccer": "football",
+    "hike": "hike", "hiking": "hike",
+    "tennis": "tennis",
+    "basketball": "basketball",
+    "cycling": "bike", "bike": "bike", "cycle": "bike",
+    "swim": "swim", "swimming": "swim",
+    "walk": "walk", "walking": "walk",
+    "yoga": "yoga",
+}
+
+
+def guess_type_from_name(name: str, fallback: str) -> str:
+    lower = name.lower()
+    for kw, t in NAME_TYPE_KEYWORDS.items():
+        if kw in lower:
+            return t
+    return fallback
+
 
 def fetch_other_activities(api, start: date, end: date) -> list[dict]:
     """Every non-running activity in range, generically classified (no per-sport API filtering)."""
@@ -145,11 +165,14 @@ def fetch_other_activities(api, start: date, end: date) -> list[dict]:
         dur_s = a.get("duration") or 0
         if dur_s <= 0:
             continue
+        name = a.get("activityName") or type_key.replace("_", " ").title() or "Activity"
+        start_local = a.get("startTimeLocal") or ""
         out.append({
-            "date": (a.get("startTimeLocal") or "")[:10],
-            "type": GARMIN_TYPE_MAP.get(type_key, "other"),
+            "date": start_local[:10],
+            "hour": int(start_local[11:13]) if len(start_local) >= 13 else None,
+            "type": guess_type_from_name(name, GARMIN_TYPE_MAP.get(type_key, "other")),
             "duration_min": round(dur_s / 60),
-            "name": a.get("activityName") or type_key.replace("_", " ").title() or "Activity",
+            "name": name,
         })
     return out
 
@@ -390,6 +413,9 @@ def build_training_view(runs: list[dict], other_activities: list[dict], today: d
             "notes": s.get("notes"),
         })
     for r in runs:
+        hour = None
+        if r.get("start_time_local") and len(r["start_time_local"]) >= 13:
+            hour = int(r["start_time_local"][11:13])
         sessions.append({
             "date": r["date"],
             "type": "run",
@@ -397,6 +423,7 @@ def build_training_view(runs: list[dict], other_activities: list[dict], today: d
             "duration_min": round(r["duration_s"] / 60),
             "muscle_groups": run_preset,
             "notes": f'{r["distance_km"]} km @ {r["pace_label"]}',
+            "hour": hour,
         })
     for o in other_activities:
         ann = annotations.get((o["date"], o["type"]))
@@ -413,6 +440,7 @@ def build_training_view(runs: list[dict], other_activities: list[dict], today: d
             "duration_min": o["duration_min"],
             "muscle_groups": muscle_groups,
             "notes": (ann.get("notes") if ann else None) or o["name"],
+            "hour": o.get("hour"),
         })
     sessions.sort(key=lambda s: s["date"] or "", reverse=True)
 
@@ -453,11 +481,113 @@ def build_training_view(runs: list[dict], other_activities: list[dict], today: d
         if s["date"] and week_key(date.fromisoformat(s["date"])) == this_week_key
     )
 
+    gamification = compute_gamification(sessions, today)
+
     return {
         "sessions": sessions[:60],
         "muscle_scores": scores,
         "streak_weeks": streak,
         "week_count": week_count,
+        "gamification": gamification,
+    }
+
+
+def compute_gamification(sessions: list[dict], today: date) -> dict:
+    session_dates = set()
+    for s in sessions:
+        try:
+            session_dates.add(date.fromisoformat(s["date"]))
+        except (ValueError, TypeError):
+            continue
+
+    # Daily streak: consecutive calendar days with >=1 session, alive if today or
+    # yesterday has one (today isn't "missed" until the day is over).
+    if today in session_dates:
+        cursor = today
+    elif (today - timedelta(days=1)) in session_dates:
+        cursor = today - timedelta(days=1)
+    else:
+        cursor = None
+    streak_days = 0
+    d = cursor
+    while d is not None and d in session_dates:
+        streak_days += 1
+        d -= timedelta(days=1)
+
+    longest_streak_days = 0
+    if session_dates:
+        ordered = sorted(session_dates)
+        run_len = 1
+        longest_streak_days = 1
+        for i in range(1, len(ordered)):
+            if (ordered[i] - ordered[i - 1]).days == 1:
+                run_len += 1
+                longest_streak_days = max(longest_streak_days, run_len)
+            else:
+                run_len = 1
+
+    # XP: 1 point per minute trained, total across all logged sessions.
+    xp = sum(s.get("duration_min") or 0 for s in sessions)
+    level = int((xp / 50) ** 0.5) + 1
+    xp_for_level = lambda n: 50 * (n - 1) ** 2
+    xp_into_level = xp - xp_for_level(level)
+    xp_for_next = xp_for_level(level + 1) - xp_for_level(level)
+    level_progress = round(xp_into_level / xp_for_next, 3) if xp_for_next else 0
+
+    total_sessions = len(sessions)
+    total_run_km = round(sum(
+        float((s.get("notes") or "0 km").split(" km")[0])
+        for s in sessions if s["type"] == "run" and "km" in (s.get("notes") or "")
+    ), 1)
+    gym_count = sum(1 for s in sessions if s["type"] == "gym")
+    early_bird = sum(1 for s in sessions if s.get("hour") is not None and s["hour"] < 7)
+    night_owl = sum(1 for s in sessions if s.get("hour") is not None and s["hour"] >= 21)
+    longest_session = max((s.get("duration_min") or 0 for s in sessions), default=0)
+
+    this_week_muscles: set[str] = set()
+    week_cursor = week_start(today)
+    for s in sessions:
+        try:
+            d2 = date.fromisoformat(s["date"])
+        except (ValueError, TypeError):
+            continue
+        if d2 >= week_cursor:
+            this_week_muscles.update((s.get("muscle_groups") or {}).keys())
+
+    def badge(id_, icon, label, earned, desc):
+        return {"id": id_, "icon": icon, "label": label, "earned": earned, "description": desc}
+
+    badges = [
+        badge("streak3", "🔥", "3-Day Streak", streak_days >= 3, "Train 3 days in a row"),
+        badge("streak7", "🔥🔥", "Week Streak", streak_days >= 7, "Train 7 days in a row"),
+        badge("streak14", "🔥🔥🔥", "Fortnight Streak", streak_days >= 14, "Train 14 days in a row"),
+        badge("streak30", "🌋", "30-Day Streak", max(streak_days, longest_streak_days) >= 30, "Train 30 days in a row"),
+        badge("sessions10", "🏅", "10 Sessions", total_sessions >= 10, "Log 10 total sessions"),
+        badge("sessions50", "🎖️", "50 Sessions", total_sessions >= 50, "Log 50 total sessions"),
+        badge("sessions100", "🏆", "Century", total_sessions >= 100, "Log 100 total sessions"),
+        badge("run25", "🏃", "25K Runner", total_run_km >= 25, "25km total running (tracked window)"),
+        badge("run50", "🏃‍♂️", "50K Runner", total_run_km >= 50, "50km total running (tracked window)"),
+        badge("run100", "🚀", "100K Runner", total_run_km >= 100, "100km total running (tracked window)"),
+        badge("balanced", "⚖️", "Balanced Week", len(this_week_muscles) >= 10, "Train 10+ muscle groups this week"),
+        badge("earlybird", "🌅", "Early Bird", early_bird >= 5, "5 sessions started before 7am"),
+        badge("nightowl", "🦉", "Night Owl", night_owl >= 5, "5 sessions started after 9pm"),
+        badge("ironwill", "💪", "Iron Will", gym_count >= 20, "20 gym sessions logged"),
+        badge("endurance", "🧗", "Endurance", longest_session >= 90, "A single session 90+ minutes"),
+        badge("level5", "⭐", "Level 5", level >= 5, "Reach level 5"),
+        badge("level10", "🌟", "Level 10", level >= 10, "Reach level 10"),
+    ]
+
+    return {
+        "xp": xp,
+        "level": level,
+        "xp_into_level": xp_into_level,
+        "xp_for_next_level": xp_for_next,
+        "level_progress": level_progress,
+        "streak_days": streak_days,
+        "longest_streak_days": longest_streak_days,
+        "badges": badges,
+        "badges_earned": sum(1 for b in badges if b["earned"]),
+        "badges_total": len(badges),
     }
 
 
@@ -546,6 +676,7 @@ def main() -> None:
     training_view = build_training_view(runs_12wk, other_activities, today)
     nutrition = load_json(Path(__file__).parent / "data" / "nutrition.json", [])
     body_comp = load_json(Path(__file__).parent / "data" / "body_comp.json", [])
+    muscle_group_list = load_json(Path(__file__).parent / "data" / "muscle_presets.json", {}).get("muscle_groups", [])
 
     days_remaining = (RACE_DATE - today).days
     weeks_remaining = round(days_remaining / 7, 1)
@@ -578,6 +709,7 @@ def main() -> None:
         "training": training_view,
         "nutrition": nutrition,
         "body_comp": body_comp,
+        "muscle_group_list": muscle_group_list,
     }
 
     html = build_html(data)

@@ -99,11 +99,6 @@
 </head>
 <body>
 
-<div class="top">
-  <h1 id="athleteHeading">Training Dashboard</h1>
-  <div class="updated" id="updatedLabel"></div>
-</div>
-
 <div class="countdown-card">
   <div>
     <div class="countdown-num" id="daysNum">-</div>
@@ -200,8 +195,6 @@ function fmtDate(iso){
 }
 
 // ---- Header ----
-el('athleteHeading').textContent = (DATA.athlete_name || 'Training') + ' — Training Dashboard';
-el('updatedLabel').textContent = 'Updated ' + DATA.generated_at_time;
 el('daysNum').textContent = DATA.race.days_remaining;
 el('daysSub').textContent = 'days to go · ' + DATA.race.weeks_remaining + ' weeks';
 el('raceNameLine').innerHTML = '<b>' + DATA.race.name + '</b>';

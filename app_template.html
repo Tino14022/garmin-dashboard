@@ -59,8 +59,52 @@
   .streak-num{font-size:2.2rem; font-weight:700;}
   .streak-sub{color:var(--text-dim); font-size:0.78rem; text-transform:uppercase; letter-spacing:0.04em;}
 
+  /* ---- Gamification ---- */
+  .level-badge{
+    width:56px; height:56px; border-radius:50%; flex-shrink:0;
+    background:conic-gradient(var(--neon) calc(var(--pct,0)*1%), #232936 0);
+    display:flex; align-items:center; justify-content:center; position:relative;
+  }
+  .level-badge::before{ content:''; position:absolute; inset:5px; border-radius:50%; background:var(--panel-2); }
+  .level-badge .lvl{ position:relative; font-weight:800; font-size:1.1rem; color:var(--neon); }
+  .xp-block{ flex:1; min-width:160px; }
+  .xp-label{ font-size:0.72rem; color:var(--text-faint); margin-bottom:4px; }
+  .xp-bar{ height:8px; border-radius:4px; background:#1b212c; overflow:hidden; }
+  .xp-bar-fill{ height:100%; background:linear-gradient(90deg, #1d8f52, var(--neon)); border-radius:4px; }
+
+  .badge-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(120px,1fr)); gap:10px; }
+  .badge-chip{
+    background:var(--panel-2); border:1px solid var(--border); border-radius:12px;
+    padding:12px 10px; text-align:center; opacity:0.35; filter:grayscale(1);
+  }
+  .badge-chip.earned{ opacity:1; filter:none; border-color:rgba(57,255,143,0.35); box-shadow:0 0 12px rgba(57,255,143,0.08); }
+  .badge-chip .bicon{ font-size:1.6rem; }
+  .badge-chip .blabel{ font-size:0.68rem; font-weight:700; margin-top:4px; }
+  .badge-chip .bdesc{ font-size:0.6rem; color:var(--text-faint); margin-top:2px; line-height:1.3; }
+
+  /* ---- Analysis ---- */
+  .period-toggle{ display:flex; gap:6px; margin-bottom:16px; }
+  .period-btn{
+    background:var(--panel); border:1px solid var(--border); color:var(--text-dim);
+    padding:8px 18px; border-radius:999px; font-size:0.82rem; font-weight:600; cursor:pointer;
+  }
+  .period-btn.active{ background:var(--neon); color:#06170d; border-color:var(--neon); }
+  .analysis-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:14px; }
+  .analysis-card{ background:var(--panel-2); border:1px solid var(--border); border-radius:14px; padding:16px 18px; }
+  .analysis-card h3{ margin:0 0 10px; font-size:0.82rem; color:var(--text-dim); display:flex; align-items:center; gap:6px; }
+  .analysis-row{ display:flex; justify-content:space-between; font-size:0.82rem; padding:4px 0; border-bottom:1px solid var(--border); }
+  .analysis-row:last-child{ border-bottom:none; }
+  .analysis-row .k{ color:var(--text-faint); }
+  .analysis-row .v{ font-weight:600; }
+  .trend-up{ color:var(--green); }
+  .trend-down{ color:var(--red); }
+  .neglect-tag{
+    display:inline-block; background:rgba(255,107,122,0.12); color:var(--red);
+    border-radius:999px; padding:3px 10px; font-size:0.7rem; margin:3px 3px 0 0;
+  }
+
   /* ---- Calendar ---- */
-  .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; max-width:420px; margin:0 auto; }
   .cal-dow{ text-align:center; font-size:0.7rem; color:var(--text-faint); padding-bottom:4px; }
   .cal-cell{
     aspect-ratio:1; background:var(--panel-2); border:1px solid var(--border); border-radius:8px;
@@ -71,6 +115,11 @@
   .cal-cell .daynum{ position:absolute; top:3px; left:5px; font-size:0.6rem; color:var(--text-faint); }
   .cal-cell .icons{ font-size:1.1rem; line-height:1; margin-top:6px; }
   .cal-cell.today{ border-color:var(--neon); box-shadow:0 0 0 1px var(--neon); }
+
+  .nutrition-grid{ max-width:520px; }
+  .nutrition-grid .cal-cell{ aspect-ratio:auto; min-height:64px; padding:2px; }
+  .nutrition-grid .cal-cal{ font-weight:700; font-size:0.8rem; margin-top:11px; color:var(--text); }
+  .nutrition-grid .cal-macros{ font-size:0.52rem; color:var(--text-faint); line-height:1.3; }
 
   /* ---- Muscle heatmap ---- */
   .heatmap-wrap{ display:flex; gap:24px; justify-content:center; flex-wrap:wrap; }
@@ -94,23 +143,49 @@
 <body>
 
 <div class="tabbar" id="tabbar">
+  <button class="tabbtn" data-tab="analysis">📊 Analysis</button>
   <button class="tabbtn" data-tab="training">💪 Training</button>
   <button class="tabbtn" data-tab="running">🏃 Running</button>
   <button class="tabbtn" data-tab="nutrition">🍽️ Nutrition</button>
   <button class="tabbtn" data-tab="body">⚖️ Body</button>
 </div>
 
+<!-- ===================== ANALYSIS TAB ===================== -->
+<div class="tab-panel" id="tab-analysis">
+  <div class="period-toggle" id="periodToggle">
+    <button class="period-btn" data-period="daily">Daily</button>
+    <button class="period-btn" data-period="weekly">Weekly</button>
+    <button class="period-btn" data-period="monthly">Monthly</button>
+  </div>
+  <div id="analysisContent"></div>
+</div>
+
 <!-- ===================== TRAINING TAB ===================== -->
 <div class="tab-panel" id="tab-training">
   <div class="streak-card">
+    <div class="level-badge" id="levelBadge"><span class="lvl" id="levelNum">-</span></div>
+    <div class="xp-block">
+      <div class="xp-label" id="xpLabel">- XP</div>
+      <div class="xp-bar"><div class="xp-bar-fill" id="xpBarFill" style="width:0%"></div></div>
+    </div>
     <div>
-      <div class="streak-num" id="streakNum">-</div>
-      <div class="streak-sub">week streak</div>
+      <div class="streak-num" id="dayStreakNum">-</div>
+      <div class="streak-sub">🔥 day streak</div>
+    </div>
+    <div>
+      <div class="streak-num" id="longestStreakNum">-</div>
+      <div class="streak-sub">longest streak</div>
     </div>
     <div>
       <div class="streak-num" id="weekCountNum">-</div>
       <div class="streak-sub" id="weekCountLabel">sessions this week</div>
     </div>
+  </div>
+
+  <div class="section">
+    <h2>Achievements</h2>
+    <div class="desc" id="badgeProgress"></div>
+    <div class="badge-grid" id="badgeGrid"></div>
   </div>
 
   <div class="section">
@@ -218,45 +293,237 @@ function showTab(name){
   el('tab-' + name).classList.add('active');
   document.querySelector('.tabbtn[data-tab="' + name + '"]').classList.add('active');
   location.hash = name;
+  // Charts created while their tab was display:none get sized wrong by Chart.js;
+  // force a resize pass once the panel is actually visible.
+  requestAnimationFrame(() => {
+    Object.values(Chart.instances || {}).forEach(c => c.resize());
+  });
 }
 tabButtons.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
-showTab(['training','running','nutrition','body'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'training');
+
+const ICONS = {gym:'🏋️', run:'🏃', padel:'🏓', football:'⚽', hike:'🥾', tennis:'🎾', basketball:'🏀', bike:'🚴', swim:'🏊', walk:'🚶', yoga:'🧘', other:'✳️'};
+
+showTab(['analysis','training','running','nutrition','body'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'analysis');
+
+// ===================== ANALYSIS TAB =====================
+function daysAgo(n){
+  const d = new Date(DATA.generated_at + 'T00:00:00');
+  d.setDate(d.getDate() - n);
+  return d;
+}
+function inRange(dateStr, start, end){
+  const d = new Date(dateStr + 'T00:00:00');
+  return d >= start && d <= end;
+}
+function aggregateTraining(sessions, start, end){
+  const filtered = sessions.filter(s => s.date && inRange(s.date, start, end));
+  const byType = {};
+  let totalMin = 0;
+  const musclesHit = new Set();
+  filtered.forEach(s => {
+    byType[s.type] = (byType[s.type]||0) + 1;
+    totalMin += s.duration_min || 0;
+    Object.keys(s.muscle_groups||{}).forEach(m => musclesHit.add(m));
+  });
+  return {sessions: filtered, byType, totalMin, musclesHit};
+}
+function aggregateNutrition(nutrition, start, end){
+  const filtered = nutrition.filter(n => n.date && inRange(n.date, start, end));
+  const days = new Set(filtered.map(n=>n.date));
+  const totals = filtered.reduce((a,n)=>{
+    a.calories += n.calories||0; a.protein += n.protein_g||0; a.carbs += n.carbs_g||0; a.fat += n.fat_g||0;
+    return a;
+  }, {calories:0,protein:0,carbs:0,fat:0});
+  const dayCount = days.size || 1;
+  return {entries: filtered, totals, dayCount, avgCalories: Math.round(totals.calories/dayCount)};
+}
+function aggregateRuns(runs, start, end){
+  const filtered = runs.filter(r => r.date && inRange(r.date, start, end));
+  const totalKm = filtered.reduce((a,r)=>a+r.distance_km,0);
+  return {runs: filtered, totalKm: Math.round(totalKm*10)/10};
+}
+function latestBodyComp(bodyComp, before){
+  const sorted = bodyComp.filter(b=>new Date(b.date+'T00:00:00') <= before).slice().sort((a,b)=>a.date<b.date?1:-1);
+  return sorted[0] || null;
+}
+function trendArrow(cur, prev){
+  if(prev === 0 && cur === 0) return '';
+  if(prev === 0) return '<span class="trend-up">▲ new</span>';
+  const pct = Math.round(((cur-prev)/prev)*100);
+  if(pct === 0) return '<span>–</span>';
+  return pct > 0 ? '<span class="trend-up">▲ ' + pct + '%</span>' : '<span class="trend-down">▼ ' + Math.abs(pct) + '%</span>';
+}
+
+function renderAnalysis(period){
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.toggle('active', b.dataset.period === period));
+  const today = new Date(DATA.generated_at + 'T00:00:00');
+  const sessions = (DATA.training && DATA.training.sessions) || [];
+  const nutrition = DATA.nutrition || [];
+  const runs = DATA.recent_runs || [];
+  const bodyComp = DATA.body_comp || [];
+  const muscleList = DATA.muscle_group_list || [];
+
+  let start, end, prevStart, prevEnd, title;
+  if(period === 'daily'){
+    start = today; end = today; prevStart = daysAgo(1); prevEnd = daysAgo(1);
+    title = today.toLocaleDateString(undefined, {weekday:'long', month:'long', day:'numeric'});
+  } else if(period === 'weekly'){
+    end = today; start = daysAgo(6); prevEnd = daysAgo(7); prevStart = daysAgo(13);
+    title = 'Last 7 days';
+  } else {
+    end = today; start = daysAgo(29); prevEnd = daysAgo(30); prevStart = daysAgo(59);
+    title = 'Last 30 days';
+  }
+
+  const tr = aggregateTraining(sessions, start, end);
+  const trPrev = aggregateTraining(sessions, prevStart, prevEnd);
+  const nu = aggregateNutrition(nutrition, start, end);
+  const nuPrev = aggregateNutrition(nutrition, prevStart, prevEnd);
+  const ru = aggregateRuns(runs, start, end);
+  const ruPrev = aggregateRuns(runs, prevStart, prevEnd);
+  const bcNow = latestBodyComp(bodyComp, end);
+  const bcPrev = latestBodyComp(bodyComp, prevEnd);
+
+  const neglected = muscleList.filter(m => !tr.musclesHit.has(m));
+
+  let html = '<h2 style="margin-bottom:14px;">' + title + '</h2>';
+  html += '<div class="analysis-grid">';
+
+  html += '<div class="analysis-card"><h3>💪 Training</h3>';
+  if(tr.sessions.length){
+    Object.entries(tr.byType).forEach(([t,c]) => {
+      html += '<div class="analysis-row"><span class="k">' + (ICONS[t]||'') + ' ' + t + '</span><span class="v">' + c + '</span></div>';
+    });
+    html += '<div class="analysis-row"><span class="k">Total time</span><span class="v">' + tr.totalMin + ' min ' + trendArrow(tr.totalMin, trPrev.totalMin) + '</span></div>';
+  } else {
+    html += '<div class="empty">No sessions</div>';
+  }
+  html += '</div>';
+
+  html += '<div class="analysis-card"><h3>🏃 Running</h3>';
+  if(ru.runs.length){
+    html += '<div class="analysis-row"><span class="k">Distance</span><span class="v">' + ru.totalKm + ' km ' + trendArrow(ru.totalKm, ruPrev.totalKm) + '</span></div>';
+    html += '<div class="analysis-row"><span class="k">Runs</span><span class="v">' + ru.runs.length + '</span></div>';
+  } else {
+    html += '<div class="empty">No runs</div>';
+  }
+  const lt = (DATA.load_trend||[]).slice(-1)[0];
+  if(lt){
+    html += '<div class="analysis-row"><span class="k">Form (TSB)</span><span class="v">' + lt.tsb + '</span></div>';
+    html += '<div class="analysis-row"><span class="k">ACWR</span><span class="v">' + (lt.acwr_status||'-') + '</span></div>';
+  }
+  html += '</div>';
+
+  html += '<div class="analysis-card"><h3>🍽️ Nutrition</h3>';
+  if(nu.entries.length){
+    const prevAvg = Math.round(nuPrev.totals.calories/(nuPrev.dayCount||1));
+    html += '<div class="analysis-row"><span class="k">Avg calories/day</span><span class="v">' + nu.avgCalories + ' ' + trendArrow(nu.avgCalories, prevAvg) + '</span></div>';
+    html += '<div class="analysis-row"><span class="k">Protein</span><span class="v">' + Math.round(nu.totals.protein) + ' g</span></div>';
+    html += '<div class="analysis-row"><span class="k">Carbs</span><span class="v">' + Math.round(nu.totals.carbs) + ' g</span></div>';
+    html += '<div class="analysis-row"><span class="k">Fat</span><span class="v">' + Math.round(nu.totals.fat) + ' g</span></div>';
+    html += '<div class="analysis-row"><span class="k">Days logged</span><span class="v">' + nu.dayCount + '</span></div>';
+  } else {
+    html += '<div class="empty">No meals logged</div>';
+  }
+  html += '</div>';
+
+  html += '<div class="analysis-card"><h3>⚖️ Body</h3>';
+  if(bcNow){
+    let weightCell = bcNow.weight_kg + ' kg';
+    if(bcPrev && bcPrev.weight_kg != null && bcNow.weight_kg != null){
+      const diff = Math.round((bcNow.weight_kg - bcPrev.weight_kg) * 10) / 10;
+      weightCell += ' (' + (diff > 0 ? '+' : '') + diff + ')';
+    }
+    html += '<div class="analysis-row"><span class="k">Weight</span><span class="v">' + weightCell + '</span></div>';
+    if(bcNow.body_fat_pct != null) html += '<div class="analysis-row"><span class="k">Body fat</span><span class="v">' + bcNow.body_fat_pct + '%</span></div>';
+    if(bcNow.muscle_mass_kg != null) html += '<div class="analysis-row"><span class="k">Muscle mass</span><span class="v">' + bcNow.muscle_mass_kg + ' kg</span></div>';
+  } else {
+    html += '<div class="empty">No body comp data</div>';
+  }
+  html += '</div>';
+
+  html += '</div>';
+
+  if(neglected.length && period !== 'daily'){
+    html += '<div class="section"><h2>Muscle groups not trained this period</h2><div>' +
+      neglected.map(m => '<span class="neglect-tag">' + m.replace(/_/g,' ') + '</span>').join('') + '</div></div>';
+  }
+
+  el('analysisContent').innerHTML = html;
+}
+
+document.querySelectorAll('.period-btn').forEach(b => b.addEventListener('click', () => renderAnalysis(b.dataset.period)));
+renderAnalysis('weekly');
 
 // ===================== TRAINING TAB =====================
 const training = DATA.training || {sessions:[], muscle_scores:{}, streak_weeks:0, week_count:0};
 
-el('streakNum').textContent = training.streak_weeks;
 el('weekCountNum').textContent = training.week_count;
 
-const ICONS = {gym:'🏋️', run:'🏃', padel:'🎾', football:'⚽', hike:'🥾', other:'✳️'};
+const gam = training.gamification || {xp:0, level:1, level_progress:0, streak_days:0, longest_streak_days:0, badges:[], badges_earned:0, badges_total:0};
+el('levelBadge').style.setProperty('--pct', Math.round(gam.level_progress * 100));
+el('levelNum').textContent = gam.level;
+el('xpLabel').textContent = gam.xp + ' XP · ' + gam.xp_into_level + '/' + gam.xp_for_next_level + ' to level ' + (gam.level + 1);
+el('xpBarFill').style.width = Math.round(gam.level_progress * 100) + '%';
+el('dayStreakNum').textContent = gam.streak_days;
+el('longestStreakNum').textContent = gam.longest_streak_days;
 
-// Calendar: last 35 days, 5 weeks, Sun-start
-function buildCalendar(sessions){
+el('badgeProgress').textContent = gam.badges_earned + ' / ' + gam.badges_total + ' unlocked';
+el('badgeGrid').innerHTML = gam.badges.map(b =>
+  '<div class="badge-chip' + (b.earned ? ' earned' : '') + '">' +
+  '<div class="bicon">' + b.icon + '</div>' +
+  '<div class="blabel">' + b.label + '</div>' +
+  '<div class="bdesc">' + b.description + '</div></div>'
+).join('');
+
+// Calendar: last 35 days, 5 weeks, Sun-start.
+// Pass nutritionByDate to render calorie/macro cells instead of activity icons.
+function buildCalendar(sessions, nutritionByDate){
   const byDate = {};
   sessions.forEach(s => { (byDate[s.date] = byDate[s.date] || []).push(s.type); });
+  const isNutrition = !!nutritionByDate;
 
   const today = new Date(DATA.generated_at + 'T00:00:00');
   const start = new Date(today);
   start.setDate(start.getDate() - 34);
   while(start.getDay() !== 0) start.setDate(start.getDate() - 1);
 
-  let html = '<div class="cal-grid">';
+  let html = '<div class="cal-grid' + (isNutrition ? ' nutrition-grid' : '') + '">';
   ['S','M','T','W','T','F','S'].forEach(d => html += '<div class="cal-dow">' + d + '</div>');
   const cur = new Date(start);
   const todayStr = DATA.generated_at;
   while(cur <= today || cur.getDay() !== 0){
     const iso = localIso(cur);
-    const types = byDate[iso] || [];
     const isToday = iso === todayStr;
-    const icons = types.map(t => ICONS[t] || '✳️').join('');
+    let inner;
+    if(isNutrition){
+      const d = nutritionByDate[iso];
+      inner = d
+        ? '<span class="cal-cal">' + Math.round(d.calories) + '</span><span class="cal-macros">P' + Math.round(d.protein) + ' C' + Math.round(d.carbs) + ' F' + Math.round(d.fat) + '</span>'
+        : '';
+    } else {
+      const types = byDate[iso] || [];
+      inner = '<span class="icons">' + types.map(t => ICONS[t] || '✳️').join('') + '</span>';
+    }
     html += '<div class="cal-cell' + (isToday?' today':'') + '">' +
-      '<span class="daynum">' + cur.getDate() + '</span>' +
-      '<span class="icons">' + icons + '</span></div>';
+      '<span class="daynum">' + cur.getDate() + '</span>' + inner + '</div>';
     cur.setDate(cur.getDate() + 1);
     if(cur > today && cur.getDay() === 0) break;
   }
   html += '</div>';
   return html;
+}
+
+function dailyNutritionTotals(nutrition){
+  const byDate = {};
+  nutrition.forEach(n => {
+    const d = byDate[n.date] = byDate[n.date] || {calories:0, protein:0, carbs:0, fat:0};
+    d.calories += n.calories || 0;
+    d.protein += n.protein_g || 0;
+    d.carbs += n.carbs_g || 0;
+    d.fat += n.fat_g || 0;
+  });
+  return byDate;
 }
 el('calWrap').innerHTML = training.sessions.length || (DATA.recent_runs||[]).length
   ? buildCalendar(training.sessions)
@@ -298,19 +565,11 @@ if(!nutrition.length){
     '<p><b>No meals logged yet.</b></p>' +
     '<p>Tell me what you ate — "one plate of lasagna for lunch" or exact grams — and I\'ll estimate the macros and start tracking them here.</p></div>';
 } else {
-  const byDate = {};
-  nutrition.forEach(n => { (byDate[n.date] = byDate[n.date] || []).push(n); });
-  const dates = Object.keys(byDate).sort();
-  const totals = dates.map(d => byDate[d].reduce((a,n) => a + (n.calories||0), 0));
-  let html = '<div class="section"><h2>Daily Calories</h2><div class="chart-wrap short"><canvas id="calorieChart"></canvas></div></div>';
+  const dayTotals = dailyNutritionTotals(nutrition);
+  let html = '<div class="section"><h2>Daily Nutrition</h2><div class="desc">Calories and macros (P/C/F in grams) per day.</div><div id="nutriCalWrap"></div></div>';
   html += '<div class="section"><h2>Food Log</h2><div id="foodTableWrap"></div></div>';
   el('nutritionContent').innerHTML = html;
-  new Chart(el('calorieChart'), {
-    type:'bar',
-    data:{ labels: dates.map(fmtDate), datasets:[{ data: totals, backgroundColor:'#ffd16688', borderRadius:4 }] },
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
-      scales:{ x:{grid:{display:false}}, y:{grid:{color:'#1b212c'}} } }
-  });
+  el('nutriCalWrap').innerHTML = buildCalendar([], dayTotals);
   const rows = nutrition.slice().reverse().slice(0,25).map(n =>
     '<tr><td>' + fmtDate(n.date) + '</td><td>' + (n.meal||'-') + '</td><td>' + n.description + '</td>' +
     '<td>' + (n.calories||'-') + '</td><td>' + (n.protein_g||'-') + 'g</td><td>' + (n.carbs_g||'-') + 'g</td><td>' + (n.fat_g||'-') + 'g</td></tr>'
