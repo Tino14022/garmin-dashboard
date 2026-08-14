@@ -342,14 +342,12 @@ def load_json(path: Path, default):
 
 
 def muscle_decay(days_since: float) -> float:
-    """0 on the day before training, peaks the day after, fades out by day 4."""
+    """1.0 (max soreness) the moment a session is logged, fading out linearly by day 4."""
     if days_since < 0:
         return 0.0
-    if days_since <= 1:
-        return days_since
-    if days_since <= 4:
-        return max(0.0, 1 - (days_since - 1) / 3)
-    return 0.0
+    if days_since >= 4:
+        return 0.0
+    return 1 - days_since / 4
 
 
 NAME_KEYWORD_MUSCLES = {

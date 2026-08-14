@@ -140,7 +140,7 @@ __RUNNING_TAB_STYLE__
   .heatmap-figure .caption{ color:var(--text-faint); font-size:0.72rem; margin-top:6px; text-transform:uppercase; letter-spacing:0.05em; }
   .muscle-shape{ stroke:var(--border); stroke-width:1; transition:fill 0.3s; }
   .heat-legend{ display:flex; align-items:center; gap:8px; justify-content:center; margin-top:14px; font-size:0.72rem; color:var(--text-faint); }
-  .heat-legend .bar{ width:120px; height:8px; border-radius:4px; background:linear-gradient(90deg, #1a1f29, var(--neon)); }
+  .heat-legend .bar{ width:120px; height:8px; border-radius:4px; background:linear-gradient(90deg, #3ddc97, #ffd166, #ff6b7a); }
 
   /* ---- Placeholder ---- */
   .placeholder{
@@ -208,7 +208,7 @@ __RUNNING_TAB_STYLE__
 
   <div class="section">
     <h2>Muscle Recovery</h2>
-    <div class="desc">Brighter = trained more recently / harder. Fades out over ~4 days.</div>
+    <div class="desc"><b style="color:#3ddc97">Green</b> = recovered, safe to train. <b style="color:#ffd166">Amber</b> = partially recovered. <b style="color:#ff6b7a">Red</b> = still sore from a recent session — hold off training it again. Fades from red back to green over ~4 days.</div>
     <div class="heatmap-wrap">
       <div class="heatmap-figure">
         <svg viewBox="0 0 190 400" xmlns="http://www.w3.org/2000/svg">
@@ -255,7 +255,7 @@ __RUNNING_TAB_STYLE__
         <div class="caption">Back</div>
       </div>
     </div>
-    <div class="heat-legend"><span>Rested</span><span class="bar"></span><span>Just trained</span></div>
+    <div class="heat-legend"><span>Ready</span><span class="bar"></span><span>Sore — avoid</span></div>
   </div>
 
   <div class="section">
@@ -609,19 +609,23 @@ el('calWrap').innerHTML = training.sessions.length || (DATA.recent_runs||[]).len
   ? buildCalendar(training.sessions)
   : '<div class="empty">No sessions logged yet — tell me about a workout and I\'ll add it.</div>';
 
-// Muscle heatmap coloring
+// Muscle heatmap coloring: 0 = fully recovered (green, safe to train),
+// 1 = just trained / still sore (red, avoid training it again yet).
+const RECOVERY_GREEN = [61, 220, 151];
+const CAUTION_YELLOW = [255, 209, 102];
+const SORE_RED = [255, 107, 122];
+function lerp(a, b, t){ return Math.round(a + (b - a) * t); }
+function soreColor(score){
+  const [c1, c2, t] = score <= 0.5 ? [RECOVERY_GREEN, CAUTION_YELLOW, score / 0.5] : [CAUTION_YELLOW, SORE_RED, (score - 0.5) / 0.5];
+  return [lerp(c1[0],c2[0],t), lerp(c1[1],c2[1],t), lerp(c1[2],c2[2],t)];
+}
 const scores = training.muscle_scores || {};
 document.querySelectorAll('.muscle-shape').forEach(shape => {
   const muscle = shape.dataset.muscle;
   const score = scores[muscle] || 0;
-  const bg = '#1a1f29';
-  if(score <= 0){ shape.setAttribute('fill', bg); return; }
-  // interpolate between panel color and neon green by score
-  const g = Math.round(30 + score * 225);
-  const r = Math.round(26 + score * 30);
-  const b = Math.round(41 + score * 90);
+  const [r,g,b] = soreColor(score);
   shape.setAttribute('fill', 'rgb(' + r + ',' + g + ',' + b + ')');
-  if(score > 0.5) shape.style.filter = 'drop-shadow(0 0 3px rgba(57,255,143,' + (score*0.7) + '))';
+  if(score > 0.5) shape.style.filter = 'drop-shadow(0 0 3px rgba(255,107,122,' + ((score-0.5)*1.4) + '))';
 });
 
 // Recent sessions table
