@@ -142,7 +142,13 @@ __RUNNING_TAB_STYLE__
   .heatmap-figure svg{ width:180px; height:auto; }
   .heatmap-figure .caption{ color:var(--text-faint); font-size:0.72rem; margin-top:2px; text-transform:uppercase; letter-spacing:0.05em; }
   .body-silhouette{ fill:rgba(255,255,255,0.035); stroke:rgba(255,255,255,0.06); stroke-width:1; }
-  .muscle-shape{ stroke:rgba(0,0,0,0.35); stroke-width:1; transition:fill 0.4s; }
+  .muscle-shape{ stroke:rgba(0,0,0,0.35); stroke-width:1; transition:fill 0.4s, opacity 0.35s, filter 0.35s; }
+  .muscle-shape.dimmed{ opacity:0.1; filter:grayscale(1); }
+  .heatmap-figure svg{ transition:none; }
+  .heatmap-figure.no-match{ opacity:0.35; }
+  .muscle-chip-row{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:12px; }
+  .muscle-chip{ display:flex; align-items:center; gap:5px; font-size:0.72rem; color:var(--text-dim); background:var(--panel-2); border:1px solid var(--border); border-radius:999px; padding:4px 10px; }
+  .muscle-chip .dot{ width:8px; height:8px; border-radius:50%; }
   .muscle-shape.sore-pulse{ animation:sorePulse 1.7s ease-in-out infinite; }
   @keyframes sorePulse{
     0%, 100% { filter:drop-shadow(0 0 4px rgba(255,107,122,0.55)); }
@@ -236,7 +242,7 @@ __RUNNING_TAB_STYLE__
     <div class="muscle-tab-bar" id="muscleTabBar"></div>
     <div class="heatmap-wrap">
       <div class="heatmap-figure">
-        <svg viewBox="0 0 190 400" xmlns="http://www.w3.org/2000/svg">
+        <svg id="frontSvg" viewBox="0 0 190 400" xmlns="http://www.w3.org/2000/svg">
           <g class="body-silhouette">
             <ellipse cx="95" cy="118" rx="50" ry="72"/>
             <ellipse cx="33" cy="118" rx="13" ry="76"/>
@@ -264,7 +270,7 @@ __RUNNING_TAB_STYLE__
         <div class="caption">Front</div>
       </div>
       <div class="heatmap-figure">
-        <svg viewBox="0 0 190 400" xmlns="http://www.w3.org/2000/svg">
+        <svg id="backSvg" viewBox="0 0 190 400" xmlns="http://www.w3.org/2000/svg">
           <g class="body-silhouette">
             <ellipse cx="95" cy="118" rx="50" ry="72"/>
             <ellipse cx="33" cy="118" rx="13" ry="76"/>
@@ -692,25 +698,42 @@ function statusLabel(score){
   return {label: 'Ready to train', color: '#3ddc97'};
 }
 
+// Zoomed crop per category, in the shared 0 0 190 400 viewBox coordinate space.
+// null means that category has no muscles on that figure (e.g. chest is front-only).
+const CATEGORY_VIEWBOX = {
+  'Chest':     { front: '46 52 98 68',  back: null },
+  'Back':      { front: null,           back: '46 52 98 78' },
+  'Shoulders': { front: '10 55 170 75', back: '10 55 170 75' },
+  'Arms':      { front: '4 84 182 118', back: '4 84 182 118' },
+  'Core':      { front: '48 100 94 68', back: null },
+  'Legs':      { front: '48 155 94 182', back: '48 155 94 182' },
+};
+const FULL_VIEWBOX = '0 0 190 400';
+
 function renderMuscleDetail(category){
   document.querySelectorAll('.muscle-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === category));
-  const muscles = category === 'All' ? Object.keys(muscleDetail).length ? Object.keys(muscleDetail) : (DATA.muscle_group_list || []) : MUSCLE_CATEGORIES[category];
-  const list = (category === 'All' ? (DATA.muscle_group_list || muscles) : muscles);
-  if(!list.length){ el('muscleDetailWrap').innerHTML = ''; return; }
-  const rows = list.map(m => {
+
+  const inCategory = category === 'All' ? null : new Set(MUSCLE_CATEGORIES[category]);
+  document.querySelectorAll('.muscle-shape').forEach(shape => {
+    shape.classList.toggle('dimmed', !!inCategory && !inCategory.has(shape.dataset.muscle));
+  });
+
+  const front = el('frontSvg'), back = el('backSvg');
+  const crop = category === 'All' ? null : CATEGORY_VIEWBOX[category];
+  front.setAttribute('viewBox', crop ? (crop.front || FULL_VIEWBOX) : FULL_VIEWBOX);
+  back.setAttribute('viewBox', crop ? (crop.back || FULL_VIEWBOX) : FULL_VIEWBOX);
+  front.closest('.heatmap-figure').classList.toggle('no-match', !!(crop && !crop.front));
+  back.closest('.heatmap-figure').classList.toggle('no-match', !!(crop && !crop.back));
+
+  const list = category === 'All' ? (DATA.muscle_group_list || []) : MUSCLE_CATEGORIES[category];
+  const chips = list.map(m => {
     const score = (training.muscle_scores || {})[m] || 0;
     const status = statusLabel(score);
     const detail = muscleDetail[m];
-    const meta = detail
-      ? (detail.days_since === 0 ? 'Today' : detail.days_since + 'd ago') + ' · ' + (ICONS[detail.last_type] || '') + ' ' + (detail.last_notes || detail.last_type)
-      : 'No sessions logged yet';
-    return '<div class="muscle-detail-row">' +
-      '<span class="muscle-dot" style="background:' + status.color + '"></span>' +
-      '<span class="mname">' + m.replace(/_/g,' ') + '</span>' +
-      '<span class="mstatus">' + status.label + '</span>' +
-      '<span class="mmeta">' + meta + '</span></div>';
+    const ago = detail ? (detail.days_since === 0 ? 'today' : detail.days_since + 'd ago') : 'no data';
+    return '<span class="muscle-chip"><span class="dot" style="background:' + status.color + '"></span>' + m.replace(/_/g,' ') + ' · ' + ago + '</span>';
   }).join('');
-  el('muscleDetailWrap').innerHTML = rows;
+  el('muscleDetailWrap').innerHTML = '<div class="muscle-chip-row">' + chips + '</div>';
 }
 
 const muscleTabBar = el('muscleTabBar');
