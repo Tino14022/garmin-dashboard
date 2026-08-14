@@ -114,6 +114,11 @@ __RUNNING_TAB_STYLE__
     border-radius:12px; padding:16px 18px; margin-bottom:16px; font-size:0.88rem; line-height:1.6;
   }
   .my-take .tag{ font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--neon); font-weight:700; margin-bottom:6px; display:block; }
+  .my-take p{ margin:6px 0; }
+  .my-take ul{ margin:4px 0 0; padding-left:20px; }
+  .my-take li{ margin-bottom:7px; }
+  .sleep-issue-list li::marker{ color:var(--red); }
+  .sleep-tip-list li::marker{ color:var(--neon); }
 
   /* ---- Calendar ---- */
   .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; max-width:420px; margin:0 auto; }
@@ -876,33 +881,83 @@ if(training.sessions.length){
   el('sleepTableWrap').innerHTML = '<table><thead><tr><th>Date</th><th>Duration</th><th>Score</th><th>Resting HR</th><th>Respiration</th><th>SpO2</th></tr></thead><tbody>' + rows + '</tbody></table>';
 
   // ---- Ongoing sleep analysis (recomputed every rebuild as new nights land) ----
-  const sentences = [];
-  if(avgPrev7.score != null && avg7.score != null){
-    const diff = Math.round(avg7.score - avgPrev7.score);
-    if(diff >= 8) sentences.push('Sleep score is up ' + diff + ' points over the last week vs. the week before — recovery is trending in the right direction.');
-    else if(diff <= -8) sentences.push('Sleep score dropped ' + Math.abs(diff) + ' points over the last week vs. the week before — worth figuring out why (training load, stress, schedule) before it compounds.');
+  // Structured like a real report: verdict, specific issues with WHY they matter, then tips.
+  function fmtBedtime(h){
+    if(h == null) return '-';
+    const hh = h % 24;
+    const hour = Math.floor(hh);
+    const min = Math.round((hh - hour) * 60);
+    const period = hour >= 12 ? 'PM' : 'AM';
+    let displayHour = hour % 12; if(displayHour === 0) displayHour = 12;
+    return displayHour + ':' + String(min).padStart(2,'0') + period;
   }
+
+  const avg7full = {
+    bodyBattery: avg(last(7).map(s=>s.body_battery_change)),
+    efficiency: avg(last(7).map(s=>s.efficiency)),
+  };
+  const bedtimes7 = last(7).map(s=>s.bedtime_hour).filter(x=>x!=null);
+  const bedtimeRange = bedtimes7.length >= 2 ? Math.max(...bedtimes7) - Math.min(...bedtimes7) : null;
+  const sleepDebtMin = avg(last(7).map(s => (s.sleep_need_min!=null && s.hours!=null) ? (s.sleep_need_min - s.hours*60) : null));
   const deepPct = avg(last(7).map(s => s.hours ? (s.deep_min / (s.hours*60)) * 100 : null));
-  if(deepPct != null){
-    if(deepPct < 10) sentences.push('Deep sleep is only averaging ' + Math.round(deepPct) + '% of total sleep this week (healthy range is roughly 13-23%) — that\'s the stage most responsible for physical recovery, so this is worth watching, especially with hard training in the mix.');
-    else if(deepPct > 13) sentences.push('Deep sleep is averaging a solid ' + Math.round(deepPct) + '% of total sleep this week.');
+
+  const issues = [];
+  const tips = new Set();
+
+  let verdict;
+  if(avg7.score == null) verdict = 'Not enough recent data yet to give a confident read.';
+  else if(avg7.score >= 80) verdict = 'Sleep has been solid this week — average score ' + Math.round(avg7.score) + '. What follows is refinement, not damage control.';
+  else if(avg7.score >= 65) verdict = 'Sleep is fair this week — average score ' + Math.round(avg7.score) + '. There\'s real room here, and the data points to specific, fixable causes below.';
+  else verdict = 'Sleep score has been low this week — average ' + Math.round(avg7.score) + '. Several factors below are actively working against recovery right now.';
+
+  if(sleepDebtMin != null && sleepDebtMin > 20){
+    issues.push('Averaging about ' + Math.round(sleepDebtMin) + ' fewer minutes than Garmin estimates you need — that shortfall compounds night over night into real sleep debt, and tends to show up as lower HRV and higher resting HR if it continues.');
+    tips.add('Move bedtime 20-30 minutes earlier rather than trying to fix a week of debt in one night — it\'s paid back gradually, not in one long sleep-in.');
+  }
+  if(avg7full.efficiency != null && avg7full.efficiency < 90){
+    issues.push('Sleep efficiency is averaging ' + Math.round(avg7full.efficiency) + '% (time actually asleep vs. time in bed). Under 90% means a meaningful chunk of the night is fragmented awake time rather than the uninterrupted rest that actually drives score.');
+    tips.add('Keep the room cold and dark, and cut screens in the 30 minutes before bed — fragmented sleep is usually an environment or wind-down problem, not a duration problem.');
+  }
+  if(deepPct != null && deepPct < 13){
+    issues.push('Deep sleep is only ' + Math.round(deepPct) + '% of total sleep (healthy range is roughly 13-23%). Deep sleep is where most physical tissue repair happens, so this is the stage most worth protecting, especially around hard training days.');
+    tips.add('Finish hard training at least 2-3 hours before bed — elevated core temperature and heart rate close to bedtime measurably suppress deep sleep.');
+    tips.add('Go easy on alcohol and late caffeine — both are well-documented deep sleep suppressants even when they don\'t seem to affect falling asleep.');
+  }
+  if(avg7full.bodyBattery != null && avg7full.bodyBattery < 50){
+    issues.push('Body battery is only recharging by about ' + Math.round(avg7full.bodyBattery) + ' points overnight on average — that\'s the clearest single signal that the sleep you\'re getting isn\'t very restorative, even on nights where duration looks fine.');
   }
   if(avgPrev7.rhr != null && avg7.rhr != null){
     const rhrDiff = Math.round((avg7.rhr - avgPrev7.rhr) * 10) / 10;
-    if(rhrDiff >= 2) sentences.push('Overnight resting HR is up ' + rhrDiff + ' bpm vs. last week — often an early sign of accumulated fatigue or fighting something off.');
+    if(rhrDiff >= 2){
+      issues.push('Overnight resting HR is up ' + rhrDiff + ' bpm vs. the week before — usually means your nervous system is still working overtime at night, often from training load, stress, or poor sleep compounding on itself.');
+      tips.add('Prioritize an easy or rest day and watch whether resting HR comes back down within 2-3 nights — if it doesn\'t, treat it as a signal to dial back load, not push through.');
+    }
+  }
+  if(bedtimeRange != null && bedtimeRange > 1.5){
+    issues.push('Bedtime swung by about ' + (Math.round(bedtimeRange*10)/10) + ' hours this week (earliest ' + fmtBedtime(Math.min(...bedtimes7)) + ', latest ' + fmtBedtime(Math.max(...bedtimes7)) + '). An inconsistent schedule confuses your circadian rhythm independent of how many hours you actually get.');
+    tips.add('Pick a wake time and hold it within 30-60 minutes every day, weekends included — consistency is one of the highest-leverage, lowest-effort changes for sleep score.');
   }
   const lowSpo2Nights = last(7).filter(s => s.spo2 != null && s.spo2 < 92).length;
-  if(lowSpo2Nights >= 2) sentences.push(lowSpo2Nights + ' of the last 7 nights had SpO2 dip below 92% — occasional dips are normal, but if this keeps showing up it\'s worth mentioning to a doctor.');
-  // Correlate worst night with training the day before
+  if(lowSpo2Nights >= 2){
+    issues.push(lowSpo2Nights + ' of the last 7 nights had blood oxygen dip below 92%. Occasional dips happen, but a repeated pattern is worth mentioning to a doctor — it can point to airway or breathing issues during sleep.');
+  }
   const worstNight = last(7).slice().sort((a,b) => (a.score||100) - (b.score||100))[0];
   if(worstNight && worstNight.score != null && worstNight.score < 65){
     const dayBefore = new Date(worstNight.date + 'T00:00:00'); dayBefore.setDate(dayBefore.getDate()-1);
-    const dayBeforeStr = localIso(dayBefore);
-    const hardSessionBefore = (DATA.training.sessions||[]).find(s => s.date === dayBeforeStr && s.duration_min > 45);
-    if(hardSessionBefore) sentences.push('Your worst night this week (' + fmtDate(worstNight.date) + ', score ' + worstNight.score + ') followed a ' + hardSessionBefore.duration_min + '-minute ' + hardSessionBefore.type + ' session the day before — a pattern worth watching if it repeats.');
+    const hardSessionBefore = (DATA.training.sessions||[]).find(s => s.date === localIso(dayBefore) && s.duration_min > 45);
+    if(hardSessionBefore) issues.push('Your worst night this week (' + fmtDate(worstNight.date) + ', score ' + worstNight.score + ') followed a ' + hardSessionBefore.duration_min + '-minute ' + hardSessionBefore.type + ' session the day before — worth watching if that pattern repeats.');
   }
-  if(!sentences.length) sentences.push('Nothing alarming in the last week of sleep data — scores, resting HR, and overnight vitals are holding steady.');
-  el('sleepTake').innerHTML += sentences.join(' ');
+  if(avgPrev7.score != null && avg7.score != null){
+    const diff = Math.round(avg7.score - avgPrev7.score);
+    if(diff >= 8) issues.push('Score is up ' + diff + ' points vs. the week before — whatever changed, it\'s working.');
+  }
+  if(!issues.length) issues.push('Nothing in the data is actively working against your sleep this week — score, resting HR, and overnight vitals are all holding steady.');
+
+  el('sleepTake').innerHTML =
+    '<span class="tag">Sleep Analysis</span>' +
+    '<p>' + verdict + '</p>' +
+    '<ul class="sleep-issue-list">' + issues.map(i => '<li>' + i + '</li>').join('') + '</ul>' +
+    (tips.size ? '<p style="margin-top:12px;margin-bottom:2px;"><b>What would actually move the needle:</b></p><ul class="sleep-tip-list">' + [...tips].map(t => '<li>' + t + '</li>').join('') + '</ul>' : '');
 })();
 
 // ===================== NUTRITION TAB =====================

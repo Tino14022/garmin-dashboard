@@ -17,7 +17,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import garminconnect
@@ -242,6 +242,16 @@ def fetch_sleep_trend(api, start: date, end: date) -> list[dict]:
         total_s = v.get("totalSleepTimeInSeconds")
         if not total_s:
             continue
+        awake_min = round((v.get("awakeTime") or 0) / 60)
+        sleep_min = round(total_s / 60)
+        bedtime_ms = v.get("localSleepStartTimeInMillis")
+        bedtime_hour = None
+        if bedtime_ms:
+            # Garmin's "local" sleep timestamps are UTC-encoded local wall-clock time.
+            t = datetime.fromtimestamp(bedtime_ms / 1000, tz=timezone.utc)
+            bedtime_hour = t.hour + t.minute / 60
+            if bedtime_hour < 12:  # after-midnight bedtime -> keep evening bedtimes contiguous (e.g. 24.5 = 12:30am)
+                bedtime_hour += 24
         out.append({
             "date": e.get("calendarDate"),
             "hours": round(total_s / 3600, 2),
@@ -250,7 +260,9 @@ def fetch_sleep_trend(api, start: date, end: date) -> list[dict]:
             "deep_min": round((v.get("deepTime") or 0) / 60),
             "light_min": round((v.get("lightTime") or 0) / 60),
             "rem_min": round((v.get("remTime") or 0) / 60),
-            "awake_min": round((v.get("awakeTime") or 0) / 60),
+            "awake_min": awake_min,
+            "efficiency": round(sleep_min / (sleep_min + awake_min) * 100, 1) if (sleep_min + awake_min) else None,
+            "bedtime_hour": round(bedtime_hour, 2) if bedtime_hour is not None else None,
             "resting_hr": v.get("restingHeartRate"),
             "avg_hr": v.get("avgHeartRate"),
             "respiration": v.get("respiration"),
