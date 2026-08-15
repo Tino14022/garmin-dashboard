@@ -15,6 +15,7 @@ from .domain.goals import build_fat_loss_view
 from .domain.health import FetchLog
 from .domain.insights import build_insights
 from .domain.nutrition import build_nutrition_view
+from .domain.overview import build_overview
 from .domain.plan import build_race_plan
 from .domain.training import (
     build_training_view,
@@ -151,4 +152,6 @@ def build_payload(
         body_comp, nutrition_view, settings.goal, today, race_date=settings.race.date
     )
     payload["insights"] = build_insights(payload, today)
+    # Last: the overview summarises everything above it, insights included.
+    payload["overview"] = build_overview(payload, today)
     return payload

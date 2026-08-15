@@ -309,12 +309,33 @@ __RUNNING_TAB_STYLE__
   .conf.tentative{ color:var(--yellow); }
   .conf.early{ color:var(--text-faint); }
 
+  /* ---- Overview ---- */
+  .ov-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(190px,1fr)); gap:12px; }
+  .ov-card{
+    background:var(--panel-2); border:1px solid var(--border); border-left-width:3px; border-radius:12px;
+    padding:13px 15px; cursor:pointer; text-align:left; width:100%; font-family:inherit; color:inherit;
+    display:block; position:relative;
+  }
+  .ov-card:hover{ border-color:var(--text-faint); }
+  .ov-card.good{ border-left-color:var(--neon); }
+  .ov-card.warn{ border-left-color:var(--yellow); }
+  .ov-card.info{ border-left-color:var(--blue); }
+  .ov-card .head{ display:flex; align-items:center; gap:6px; font-size:0.72rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.04em; }
+  .ov-card .val{ font-size:1.4rem; font-weight:700; margin:5px 0 2px; line-height:1.15; }
+  .ov-card .val .u{ font-size:0.75rem; font-weight:600; color:var(--text-faint); margin-left:3px; }
+  .ov-card .sub{ font-size:0.74rem; color:var(--text-dim); line-height:1.4; }
+  .ov-card .age{ font-size:0.66rem; color:var(--text-faint); margin-top:6px; }
+  .ov-card.warn .age{ color:var(--yellow); }
+  .ov-today{ display:flex; gap:22px; flex-wrap:wrap; font-size:0.85rem; }
+  .ov-today b{ font-size:1.1rem; }
+
   footer{color:var(--text-faint); font-size:0.75rem; text-align:center; padding:20px 0 10px;}
 </style>
 </head>
 <body>
 
 <div class="tabbar" id="tabbar">
+  <button class="tabbtn" data-tab="overview">🏠 Overview</button>
   <button class="tabbtn" data-tab="analysis">📊 Analysis</button>
   <button class="tabbtn" data-tab="workout">📋 Workout</button>
   <button class="tabbtn" data-tab="training">💪 Training</button>
@@ -325,6 +346,11 @@ __RUNNING_TAB_STYLE__
 </div>
 
 <div class="health-banner" id="healthBanner"></div>
+
+<!-- ===================== OVERVIEW TAB ===================== -->
+<div class="tab-panel" id="tab-overview">
+  <div id="overviewContent"></div>
+</div>
 
 <!-- ===================== ANALYSIS TAB ===================== -->
 <div class="tab-panel" id="tab-analysis">
@@ -511,7 +537,7 @@ tabButtons.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)
 
 const ICONS = {gym:'🏋️', run:'🏃', padel:'🏓', football:'⚽', hike:'🥾', tennis:'🎾', basketball:'🏀', bike:'🚴', swim:'🏊', walk:'🚶', yoga:'🧘', other:'✳️'};
 
-showTab(['analysis','workout','training','running','sleep','nutrition','body'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'analysis');
+showTab(['overview','analysis','workout','training','running','sleep','nutrition','body'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview');
 
 // ===================== BUILD HEALTH =====================
 // A build that lost some of its Garmin data still deploys — silently, before
@@ -543,6 +569,63 @@ showTab(['analysis','workout','training','running','sleep','nutrition','body'].i
   banner.className = 'health-banner show ' + severity;
   banner.innerHTML = '<b>' + (severity === 'bad' ? 'Data problem' : 'Heads up') + '</b>' +
     problems.map(p => '<div class="detail">' + p + '</div>').join('');
+})();
+
+// ===================== OVERVIEW TAB =====================
+// A summary with links, not a second copy of the app: latest fact per domain,
+// how old it is, and what needs doing. Rendered last in the payload so it can
+// draw on the insights and goal analysis above it.
+(function(){
+  const ov = DATA.overview;
+  const wrap = el('overviewContent');
+  if(!ov || !wrap) return;
+  let html = '';
+
+  // Today, if there's anything to say about it.
+  const t = ov.today || {};
+  const plan = ov.workout_plan;
+  if(plan || t.intake_kcal || t.burn_kcal){
+    html += '<div class="section"><h2>Today</h2><div class="ov-today">';
+    if(plan) html += '<span>Planned: <b>' + plan.name + '</b> · ' + plan.exercises.length + ' exercises</span>';
+    if(t.burn_kcal != null) html += '<span>Burned so far: <b>' + Math.round(t.burn_kcal) + '</b> kcal</span>';
+    html += '<span>Eaten: <b>' + (t.intake_kcal || 0) + '</b> kcal</span>';
+    html += '<span>Protein: <b>' + (t.protein_g || 0) + '</b>g / ' + (t.protein_target_g || '—') + 'g</span>';
+    html += '</div></div>';
+  }
+
+  if((ov.priorities||[]).length){
+    html += '<div class="section"><h2>Needs attention</h2>' +
+      '<div class="desc">The ' + Math.min(ov.priorities.length, ov.priority_count) + ' of ' + ov.priority_count +
+      ' open flags worth acting on first. Full reasoning on the Analysis and Body tabs.</div>' +
+      ov.priorities.map(p => findingHtml({severity:p.severity, headline:p.title, detail:p.detail})).join('') +
+      '</div>';
+  }
+
+  html += '<div class="section"><h2>Where everything stands</h2>' +
+    '<div class="desc">Most recent entry in each area. Tap any card to open it.</div>' +
+    '<div class="ov-grid">' +
+    ov.cards.map((c, i) =>
+      '<button class="ov-card ' + c.status + '" data-goto="' + c.tab + '" data-i="' + i + '">' +
+        '<div class="head">' + c.icon + ' ' + c.title + '</div>' +
+        '<div class="val">' + c.value + (c.unit ? '<span class="u">' + c.unit + '</span>' : '') + '</div>' +
+        (c.sub ? '<div class="sub">' + c.sub + '</div>' : '') +
+        (c.age_label && c.age_days != null
+          ? '<div class="age">' + (c.stale ? '⚠ last update ' : '') + c.age_label + '</div>' : '') +
+      '</button>'
+    ).join('') +
+    '</div>';
+
+  if((ov.stale_domains||[]).length){
+    html += '<div class="log-hint" style="margin-top:14px;color:var(--yellow);font-size:0.78rem;">' +
+      'Not being kept up to date: ' + ov.stale_domains.join(', ') +
+      '. Gaps here quietly weaken everything downstream — the cross-domain analysis can only correlate what exists.</div>';
+  }
+  html += '</div>';
+
+  wrap.innerHTML = html;
+  wrap.querySelectorAll('.ov-card').forEach(btn => {
+    btn.addEventListener('click', () => showTab(btn.dataset.goto));
+  });
 })();
 
 // ===================== ANALYSIS TAB =====================
