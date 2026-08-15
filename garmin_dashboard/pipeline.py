@@ -11,6 +11,7 @@ from datetime import date, datetime, timedelta, timezone
 from .config import Settings
 from .domain.body import build_body_view
 from .domain.formatting import iso
+from .domain.goals import build_fat_loss_view
 from .domain.health import FetchLog
 from .domain.insights import build_insights
 from .domain.nutrition import build_nutrition_view
@@ -72,13 +73,20 @@ def build_payload(
     if workout_plan and workout_plan.get("date") != iso(today):
         workout_plan = None  # only show a plan for today; stale plans just disappear
 
+    # Cutting raises the protein target rather than lowering it — protein is what
+    # keeps the loss coming off as fat instead of muscle.
+    protein_g_per_kg = (
+        settings.goal.protein_g_per_kg
+        if settings.goal
+        else settings.athlete.protein_g_per_kg
+    )
     nutrition_view = build_nutrition_view(
         nutrition,
         calorie_trend,
         body_comp,
         today,
         default_weight_kg=settings.athlete.weight_kg,
-        protein_g_per_kg=settings.athlete.protein_g_per_kg,
+        protein_g_per_kg=protein_g_per_kg,
     )
 
     race_plan = build_race_plan(
@@ -138,6 +146,9 @@ def build_payload(
     # exactly what the page sees and cannot drift from it.
     payload["body_view"] = build_body_view(
         body_comp, height_cm=settings.athlete.height_cm, today=today
+    )
+    payload["fat_loss"] = build_fat_loss_view(
+        body_comp, nutrition_view, settings.goal, today, race_date=settings.race.date
     )
     payload["insights"] = build_insights(payload, today)
     return payload

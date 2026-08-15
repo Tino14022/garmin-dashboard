@@ -25,6 +25,23 @@ class AthleteConfig:
 
 
 @dataclass(frozen=True)
+class FatLossGoal:
+    """A deliberately modest cut, because it runs alongside a race build.
+
+    Faster than about 0.5kg a week starts costing lean mass and long-run quality
+    rather than just fat, which is the wrong trade seven weeks out from a race.
+    """
+
+    target_body_fat_pct: float = 18.0
+    weekly_rate_kg: float = 0.4
+    # Protein goes up in a deficit, not down: it is what stops the weight coming
+    # off as muscle. 2.0g/kg bodyweight is the usual floor while cutting.
+    protein_g_per_kg: float = 2.0
+    # Above this share of bodyweight per week, loss is too fast to be mostly fat.
+    max_safe_weekly_pct: float = 1.0
+
+
+@dataclass(frozen=True)
 class WindowConfig:
     """How far back each family of metrics is fetched, in weeks."""
 
@@ -39,6 +56,8 @@ class WindowConfig:
 class Settings:
     race: RaceConfig
     athlete: AthleteConfig
+    # Set to None to stop tracking a cut; the panel disappears with it.
+    goal: FatLossGoal | None = field(default_factory=FatLossGoal)
     windows: WindowConfig = field(default_factory=WindowConfig)
     # The build runs on a UTC CI runner; without this, "today" flips over at
     # 02:00 local in summer and the dashboard shows yesterday for two hours.

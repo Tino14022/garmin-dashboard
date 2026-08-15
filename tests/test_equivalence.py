@@ -17,7 +17,7 @@ from garmin_dashboard.pipeline import build_payload
 from garmin_dashboard.sources.garmin import GarminSource
 from garmin_dashboard.storage import DictDataStore
 
-NEW_KEYS = {"race_plan", "build_health", "generated_at_iso", "body_view", "insights"}
+NEW_KEYS = {"race_plan", "build_health", "generated_at_iso", "body_view", "insights", "fat_loss"}
 
 
 def legacy_payload(api, data_files, today):
@@ -152,12 +152,23 @@ def test_training_view_is_identical(payloads, key):
     assert new["training"][key] == old["training"][key]
 
 
-def test_nutrition_view_keeps_every_legacy_field(payloads):
-    """nutrition_view deliberately gained fields (the active/basal split, and
-    partial-day exclusion). Every value the legacy build produced must still
-    agree; the additions are pinned in test_nutrition_completeness.py."""
+# Deliberately changed since the legacy build: an active fat-loss goal raises the
+# protein target (2.0g/kg while cutting, against the 1.8g/kg maintenance figure),
+# because protein is what keeps the loss coming off as fat rather than muscle.
+# `classification` follows from that target — the same intake that cleared the
+# old one falls short of the new one, so it correctly reads as low-protein now.
+# Pinned in test_goals.py.
+INTENTIONALLY_CHANGED = {"protein_target_g", "protein_g_per_kg", "classification"}
+
+
+def test_nutrition_view_keeps_every_other_legacy_field(payloads):
+    """nutrition_view gained fields (the active/basal split, partial-day
+    exclusion) and changed the protein target on purpose. Everything else the
+    legacy build computed must still agree exactly."""
     old, new = payloads
     for key, value in old["nutrition_view"].items():
+        if key in INTENTIONALLY_CHANGED:
+            continue
         assert new["nutrition_view"][key] == value, f"nutrition_view.{key} changed"
 
 

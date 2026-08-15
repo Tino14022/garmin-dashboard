@@ -1641,6 +1641,40 @@ if(!bodyView){
   const v = bodyView;
   let html = '';
 
+  // Goal panel first — it's the thing being worked toward, so it leads.
+  const fl = DATA.fat_loss;
+  if(fl){
+    const span = Math.max(0.1, fl.start_body_fat_pct - fl.target_body_fat_pct);
+    const done = Math.max(0, Math.min(100, (fl.start_body_fat_pct - fl.current_body_fat_pct) / span * 100));
+    html += '<div class="section"><h2>Fat Loss Goal</h2>' +
+      '<div class="desc">Target holds your lean mass fixed — the aim is to lose the fat and keep the ' +
+      fl.lean_mass_kg + 'kg of muscle, not simply to weigh less.</div>' +
+      '<div class="stat-grid" style="margin-bottom:16px;">' +
+        '<div class="stat-tile"><div class="lbl">Now</div><div class="val">' + fl.current_body_fat_pct + '<span class="u">%</span></div><div class="delta">' + fl.fat_mass_kg + 'kg fat</div></div>' +
+        '<div class="stat-tile"><div class="lbl">Target</div><div class="val">' + fl.target_body_fat_pct + '<span class="u">%</span></div><div class="delta">' + fl.target_fat_mass_kg + 'kg fat · ' + fl.target_weight_kg + 'kg</div></div>' +
+        '<div class="stat-tile"><div class="lbl">To lose</div><div class="val">' + fl.fat_to_lose_kg + '<span class="u">kg</span></div><div class="delta">at ' + fl.target_weekly_rate_kg + 'kg/week</div></div>' +
+        '<div class="stat-tile"><div class="lbl">Daily deficit</div><div class="val">' + fl.required_daily_deficit_kcal + '<span class="u">kcal</span></div><div class="delta">protein ' + fl.protein_target_g + 'g/day</div></div>' +
+      '</div>' +
+      '<div class="workout-progress-bar" style="height:10px;"><div class="workout-progress-fill" style="width:' + done.toFixed(0) + '%"></div></div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:0.7rem;color:var(--text-faint);margin-top:5px;">' +
+        '<span>' + fl.start_body_fat_pct + '% start</span>' +
+        (fl.projected_date ? '<span>' + fl.weeks_needed + ' weeks · on track for ' + fmtDate(fl.projected_date) + '</span>' : '<span></span>') +
+        '<span>' + fl.target_body_fat_pct + '% goal</span>' +
+      '</div>';
+
+    if(fl.actual){
+      const a = fl.actual;
+      html += '<div class="stat-grid" style="margin-top:16px;">' +
+        '<div class="stat-tile"><div class="lbl">Fat change</div><div class="val" style="color:' + (a.fat_change_kg<=0?'var(--neon)':'var(--orange)') + '">' + (a.fat_change_kg>0?'+':'') + a.fat_change_kg + '<span class="u">kg</span></div><div class="delta">over ' + a.days + ' days</div></div>' +
+        '<div class="stat-tile"><div class="lbl">Lean change</div><div class="val" style="color:' + (a.lean_change_kg>=-0.3?'var(--neon)':'var(--red)') + '">' + (a.lean_change_kg>0?'+':'') + a.lean_change_kg + '<span class="u">kg</span></div><div class="delta">muscle retention</div></div>' +
+        '<div class="stat-tile"><div class="lbl">Actual rate</div><div class="val">' + Math.abs(a.fat_rate_kg_per_week) + '<span class="u">kg/wk</span></div><div class="delta">target ' + fl.target_weekly_rate_kg + '</div></div>' +
+        '</div>';
+    }
+
+    html += fl.findings.map(f => findingHtml({severity:f.severity, headline:f.title, detail:f.detail})).join('');
+    html += '</div>';
+  }
+
   // Headline: the composition split, which is what the numbers are really about.
   html += '<div class="section"><h2>Composition</h2>' +
     '<div class="desc">Measured ' + fmtDate(v.measured_on) + (v.latest.time ? ' at ' + v.latest.time : '') +
