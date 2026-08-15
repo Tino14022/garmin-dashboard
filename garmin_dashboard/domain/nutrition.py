@@ -12,6 +12,11 @@ from .formatting import iso, parse_iso
 # below this share of the athlete's typical full-day BMR are treated as partial.
 COMPLETE_DAY_BMR_RATIO = 0.9
 
+# A single day is a meal, not a trend. Calling one logged day a surplus and
+# concluding "likely building muscle" from it is how this panel embarrassed
+# itself; below this many compared days the numbers are shown without a verdict.
+MIN_DAYS_FOR_VERDICT = 3
+
 
 def typical_daily_bmr(calorie_trend: list[dict]) -> float | None:
     """Median full-day basal burn, used as the yardstick for completeness.
@@ -112,7 +117,7 @@ def build_nutrition_view(
     )
 
     classification = None
-    if balance is not None:
+    if balance is not None and len(common_dates) >= MIN_DAYS_FOR_VERDICT:
         protein_adequate = (
             avg_protein is not None and avg_protein >= protein_target_g * 0.85
         )
@@ -154,6 +159,11 @@ def build_nutrition_view(
         "today_bmr_kcal": today_entry.get("bmr_kcal") if today_entry else None,
         "partial_days_excluded": partial_days,
         "typical_bmr_kcal": round(typical_bmr) if typical_bmr else None,
+        # True when there are numbers but too few days to draw a conclusion from.
+        "too_few_days_for_verdict": bool(
+            balance is not None and len(common_dates) < MIN_DAYS_FOR_VERDICT
+        ),
+        "min_days_for_verdict": MIN_DAYS_FOR_VERDICT,
         "protein_target_g": protein_target_g,
         "protein_g_per_kg": protein_g_per_kg,
         "latest_weight_kg": latest_weight,

@@ -91,6 +91,32 @@ def test_the_shipped_case_no_longer_invents_a_surplus():
     assert partial["date"] in view["partial_days_excluded"]
 
 
+def test_one_logged_day_reports_numbers_but_refuses_a_verdict():
+    """A single day was enough to print 'likely building muscle'. It isn't."""
+    rows = [day(n, active=354, bmr=FULL_BMR) for n in range(1, 8)]
+    intake = [{"date": rows[0]["date"], "calories": 4585, "protein_g": 234}]
+    view = build_nutrition_view(
+        intake, rows, [], TODAY, default_weight_kg=98.9, protein_g_per_kg=1.8
+    )
+    assert view["week_days_compared"] == 1
+    assert view["week_balance_kcal"] == 1765     # the number is still shown
+    assert view["classification"] is None         # but no conclusion is drawn
+    assert view["too_few_days_for_verdict"] is True
+
+
+def test_verdict_appears_once_enough_days_are_logged():
+    rows = [day(n, active=354, bmr=FULL_BMR) for n in range(1, 8)]
+    intake = [
+        {"date": r["date"], "calories": 4585, "protein_g": 234} for r in rows[:3]
+    ]
+    view = build_nutrition_view(
+        intake, rows, [], TODAY, default_weight_kg=98.9, protein_g_per_kg=1.8
+    )
+    assert view["week_days_compared"] == 3
+    assert view["classification"] == "surplus_adequate_protein"
+    assert view["too_few_days_for_verdict"] is False
+
+
 def test_burn_is_reported_split_into_basal_and_active(week):
     intake = [
         {"date": (TODAY - timedelta(days=n)).isoformat(), "calories": 2500, "protein_g": 150}
