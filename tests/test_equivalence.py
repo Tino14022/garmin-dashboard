@@ -17,7 +17,13 @@ from garmin_dashboard.pipeline import build_payload
 from garmin_dashboard.sources.garmin import GarminSource
 from garmin_dashboard.storage import DictDataStore
 
-NEW_KEYS = {"race_plan", "build_health", "generated_at_iso", "body_view", "insights", "fat_loss", "overview"}
+NEW_KEYS = {
+    "race_plan", "build_health", "generated_at_iso", "body_view", "insights",
+    "fat_loss", "overview", "readiness", "todays_call", "recovery_debt",
+    "circadian", "hypnogram", "body_battery", "punch_card", "streak_quality",
+    "volume_map", "pace_curve", "pr_wall", "macro_plate", "energy_flow",
+    "protein_distribution", "benchmarks", "correlation_matrix", "rings", "digest",
+}
 
 
 def legacy_payload(api, data_files, today):

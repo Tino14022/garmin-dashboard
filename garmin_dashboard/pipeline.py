@@ -9,14 +9,35 @@ import time
 from datetime import date, datetime, timedelta, timezone
 
 from .config import Settings
+from .domain.benchmarks import build_benchmarks
 from .domain.body import build_body_view
 from .domain.formatting import iso
+from .domain.fuelling import (
+    build_energy_flow,
+    build_macro_plate,
+    build_protein_distribution,
+)
 from .domain.goals import build_fat_loss_view
 from .domain.health import FetchLog
 from .domain.insights import build_insights
+from .domain.matrix import build_digest, build_matrix, build_rings
 from .domain.nutrition import build_nutrition_view
 from .domain.overview import build_overview
+from .domain.patterns import (
+    build_body_battery,
+    build_circadian,
+    build_hypnogram,
+    build_punch_card,
+    build_streak_quality,
+    build_volume_map,
+)
+from .domain.performance import build_pace_curve, build_pr_wall
 from .domain.plan import build_race_plan
+from .domain.readiness import (
+    build_readiness,
+    build_recovery_debt,
+    build_todays_call,
+)
 from .domain.training import (
     build_training_view,
     build_weekly_mileage,
@@ -152,6 +173,29 @@ def build_payload(
         body_comp, nutrition_view, settings.goal, today, race_date=settings.race.date
     )
     payload["insights"] = build_insights(payload, today)
-    # Last: the overview summarises everything above it, insights included.
+
+    # Presentation modules. Each reads the assembled payload rather than the raw
+    # sources, so none can drift from what the rest of the page shows, and each
+    # returns None when its data isn't there — the tab simply omits that block.
+    payload["readiness"] = build_readiness(payload, today)
+    payload["todays_call"] = build_todays_call(payload, payload["readiness"], today)
+    payload["recovery_debt"] = build_recovery_debt(payload, today)
+    payload["circadian"] = build_circadian(payload, today)
+    payload["hypnogram"] = build_hypnogram(payload)
+    payload["body_battery"] = build_body_battery(payload)
+    payload["punch_card"] = build_punch_card(payload, today)
+    payload["streak_quality"] = build_streak_quality(payload, today)
+    payload["volume_map"] = build_volume_map(payload, today)
+    payload["pace_curve"] = build_pace_curve(payload)
+    payload["pr_wall"] = build_pr_wall(payload)
+    payload["macro_plate"] = build_macro_plate(payload, today)
+    payload["energy_flow"] = build_energy_flow(payload, today)
+    payload["protein_distribution"] = build_protein_distribution(payload, today)
+    payload["benchmarks"] = build_benchmarks(payload)
+    payload["correlation_matrix"] = build_matrix(payload)
+    payload["rings"] = build_rings(payload, today)
+    payload["digest"] = build_digest(payload, today)
+
+    # Last: the overview summarises everything above it.
     payload["overview"] = build_overview(payload, today)
     return payload

@@ -103,7 +103,7 @@ __RUNNING_TAB_STYLE__
   .badge-chip .bdesc{ font-size:0.6rem; color:var(--text-faint); margin-top:2px; line-height:1.3; }
 
   /* ---- Analysis ---- */
-  .period-toggle{ display:flex; gap:6px; margin-bottom:16px; }
+  .period-toggle{ display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
   .period-btn{
     background:var(--panel); border:1px solid var(--border); color:var(--text-dim);
     padding:8px 18px; border-radius:999px; font-size:0.82rem; font-weight:600; cursor:pointer;
@@ -329,6 +329,76 @@ __RUNNING_TAB_STYLE__
   .ov-today{ display:flex; gap:22px; flex-wrap:wrap; font-size:0.85rem; }
   .ov-today b{ font-size:1.1rem; }
 
+  /* ---- Readiness / today's call ---- */
+  .readiness-wrap{ display:flex; gap:22px; align-items:center; flex-wrap:wrap; }
+  .readiness-dial{ position:relative; width:118px; height:118px; flex-shrink:0; }
+  .readiness-dial svg{ width:100%; height:100%; transform:rotate(-90deg); }
+  .readiness-dial .mid{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .readiness-dial .num{ font-size:1.9rem; font-weight:800; line-height:1; }
+  .readiness-dial .cap{ font-size:0.62rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.06em; }
+  /* min-width:0 throughout: these live inside a flex row, and without it the
+     grid tracks refuse to shrink below their content and push the page wide. */
+  .comp-list{ flex:1 1 200px; min-width:0; }
+  .comp-row{ display:grid; grid-template-columns:76px minmax(0,1fr) 30px; gap:8px; align-items:center; margin-bottom:6px; font-size:0.75rem; }
+  .comp-row .cn{ color:var(--text-faint); text-transform:capitalize; min-width:0; overflow-wrap:anywhere; }
+  .comp-track{ height:6px; border-radius:3px; background:#1b212c; overflow:hidden; min-width:0; }
+  .comp-fill{ height:100%; border-radius:3px; }
+  .comp-row .cv{ text-align:right; font-weight:700; }
+  .comp-row.na .cv{ color:var(--text-faint); font-weight:400; }
+  .comp-detail{ font-size:0.68rem; color:var(--text-faint); grid-column:2 / -1; margin:-3px 0 6px; min-width:0; overflow-wrap:anywhere; }
+  .call-box{ border-radius:12px; padding:15px 17px; border:1px solid; margin-top:16px; }
+  .call-box.hard{ background:rgba(61,220,151,0.09); border-color:rgba(61,220,151,0.4); }
+  .call-box.easy{ background:rgba(255,209,102,0.09); border-color:rgba(255,209,102,0.4); }
+  .call-box.rest{ background:rgba(255,107,122,0.09); border-color:rgba(255,107,122,0.4); }
+  .call-box h3{ margin:0 0 5px; font-size:1.15rem; }
+  .call-box.hard h3{ color:var(--neon); }
+  .call-box.easy h3{ color:var(--yellow); }
+  .call-box.rest h3{ color:var(--red); }
+  .call-box p{ margin:0 0 9px; font-size:0.84rem; color:var(--text-dim); line-height:1.55; }
+  .call-because{ font-size:0.72rem; color:var(--text-faint); }
+  .call-because li{ margin-bottom:2px; }
+
+  /* ---- Rings ---- */
+  .rings{ display:flex; gap:20px; flex-wrap:wrap; justify-content:center; }
+  .ring{ text-align:center; width:96px; }
+  .ring svg{ width:84px; height:84px; transform:rotate(-90deg); }
+  .ring .rl{ font-size:0.7rem; color:var(--text-faint); margin-top:4px; }
+  .ring .rv{ font-size:0.72rem; font-weight:700; }
+
+  /* ---- Grid views (punch card, streak, circadian) ---- */
+  .pc-grid{ display:grid; grid-template-columns:34px repeat(24, 1fr); gap:2px; align-items:center; min-width:520px; }
+  .pc-lbl{ font-size:0.6rem; color:var(--text-faint); }
+  .pc-cell{ aspect-ratio:1; border-radius:2px; background:#151a23; }
+  .streak-grid{ display:grid; grid-auto-flow:column; grid-template-rows:repeat(7, 1fr); gap:3px; }
+  .streak-cell{ width:13px; height:13px; border-radius:3px; background:#151a23; }
+  .circ-row{ display:grid; grid-template-columns:46px 1fr; gap:8px; align-items:center; margin-bottom:3px; }
+  .circ-track{ position:relative; height:15px; background:#12161e; border-radius:3px; overflow:hidden; }
+  .circ-sleep{ position:absolute; top:0; bottom:0; background:rgba(91,140,255,0.55); border-radius:2px; }
+  .circ-sess{ position:absolute; top:2px; bottom:2px; background:var(--orange); border-radius:2px; min-width:3px; }
+  .circ-lbl{ font-size:0.62rem; color:var(--text-faint); }
+  .circ-axis{ display:grid; grid-template-columns:46px 1fr; gap:8px; font-size:0.58rem; color:var(--text-faint); margin-top:3px; }
+
+  /* ---- Stacked bars (hypnogram, energy flow, macro) ---- */
+  .stack-row{ display:grid; grid-template-columns:52px 1fr 44px; gap:8px; align-items:center; margin-bottom:4px; font-size:0.68rem; }
+  .stack-bar{ display:flex; height:14px; border-radius:3px; overflow:hidden; background:#12161e; }
+  .stack-bar i{ display:block; height:100%; }
+  .flow-col{ display:flex; flex-direction:column; gap:8px; }
+  .flow-bar{ display:flex; height:32px; border-radius:6px; overflow:hidden; background:#12161e; }
+  .flow-bar i{ display:flex; align-items:center; justify-content:center; font-size:0.66rem; font-weight:700; color:#06170d; }
+
+  /* ---- Benchmark bars ---- */
+  .bm-row{ margin-bottom:14px; }
+  .bm-head{ display:flex; justify-content:space-between; font-size:0.78rem; margin-bottom:4px; }
+  .bm-track{ height:8px; border-radius:4px; background:linear-gradient(90deg,#ff6b7a,#ffd166,#3ddc97); position:relative; }
+  .bm-pin{ position:absolute; top:-4px; width:3px; height:16px; background:var(--text); border-radius:2px; }
+  .bm-note{ font-size:0.7rem; color:var(--text-faint); margin-top:4px; }
+
+  /* ---- Correlation matrix ---- */
+  .cm-wrap{ overflow-x:auto; }
+  .cm-grid{ display:grid; gap:2px; }
+  .cm-cell{ aspect-ratio:1; border-radius:2px; min-width:22px; }
+  .cm-axis{ font-size:0.58rem; color:var(--text-faint); white-space:nowrap; }
+
   footer{color:var(--text-faint); font-size:0.75rem; text-align:center; padding:20px 0 10px;}
 </style>
 </head>
@@ -360,6 +430,7 @@ __RUNNING_TAB_STYLE__
     <button class="period-btn" data-period="monthly">Monthly</button>
   </div>
   <div id="analysisContent"></div>
+  <div id="analysisModules"></div>
 </div>
 
 <!-- ===================== WORKOUT TAB ===================== -->
@@ -400,6 +471,8 @@ __RUNNING_TAB_STYLE__
     <div class="desc">🏋️ gym · 🏃 run · 🎾 padel · ⚽ football · 🥾 hike</div>
     <div id="calWrap"></div>
   </div>
+
+  <div id="trainingModules"></div>
 
   <div class="section">
     <h2>Muscle Recovery</h2>
@@ -483,22 +556,26 @@ __RUNNING_TAB_STYLE__
 <!-- ===================== RUNNING TAB ===================== -->
 <div class="tab-panel" id="tab-running">
 <div id="racePlanWrap"></div>
+<div id="runningModules"></div>
 __RUNNING_TAB_CONTENT__
 </div>
 
 <!-- ===================== SLEEP TAB ===================== -->
 <div class="tab-panel" id="tab-sleep">
   <div id="sleepContent"></div>
+  <div id="sleepModules"></div>
 </div>
 
 <!-- ===================== NUTRITION TAB ===================== -->
 <div class="tab-panel" id="tab-nutrition">
   <div id="nutritionContent"></div>
+  <div id="nutritionModules"></div>
 </div>
 
 <!-- ===================== BODY TAB ===================== -->
 <div class="tab-panel" id="tab-body">
   <div id="bodyContent"></div>
+  <div id="bodyModules"></div>
 </div>
 
 <footer id="appFooter"></footer>
@@ -571,6 +648,22 @@ showTab(['overview','analysis','workout','training','running','sleep','nutrition
     problems.map(p => '<div class="detail">' + p + '</div>').join('');
 })();
 
+// ===================== SHARED MODULE HELPERS =====================
+const HEAT = ['#151a23','#0e3a2a','#1a6b47','#2aa86a','#3ddc97'];
+function ringSvg(pct, colour, size, stroke){
+  size = size || 84; stroke = stroke || 9;
+  const r = (size - stroke) / 2, c = 2 * Math.PI * r;
+  return '<svg viewBox="0 0 ' + size + ' ' + size + '">' +
+    '<circle cx="' + size/2 + '" cy="' + size/2 + '" r="' + r + '" fill="none" stroke="#1b212c" stroke-width="' + stroke + '"/>' +
+    '<circle cx="' + size/2 + '" cy="' + size/2 + '" r="' + r + '" fill="none" stroke="' + colour + '" stroke-width="' + stroke +
+    '" stroke-linecap="round" stroke-dasharray="' + (c * Math.min(1, pct/100)).toFixed(1) + ' ' + c.toFixed(1) + '"/></svg>';
+}
+function scoreColour(v){ return v >= 75 ? 'var(--neon)' : v >= 55 ? 'var(--yellow)' : 'var(--red)'; }
+function section(title, desc, body){
+  return '<div class="section"><h2>' + title + '</h2>' +
+    (desc ? '<div class="desc">' + desc + '</div>' : '') + body + '</div>';
+}
+
 // ===================== OVERVIEW TAB =====================
 // A summary with links, not a second copy of the app: latest fact per domain,
 // how old it is, and what needs doing. Rendered last in the payload so it can
@@ -580,6 +673,46 @@ showTab(['overview','analysis','workout','training','running','sleep','nutrition
   const wrap = el('overviewContent');
   if(!ov || !wrap) return;
   let html = '';
+
+  // Today's call leads: the one thing you open the app to find out.
+  const call = DATA.todays_call, rd = DATA.readiness;
+  if(call && rd){
+    let body = '<div class="readiness-wrap">' +
+      '<div class="readiness-dial">' + ringSvg(rd.score, scoreColour(rd.score), 118, 11) +
+        '<div class="mid"><div class="num" style="color:' + scoreColour(rd.score) + '">' + rd.score + '</div>' +
+        '<div class="cap">' + rd.label + '</div></div></div>' +
+      '<div class="comp-list">';
+    rd.components.forEach(c => {
+      if(c.score == null){
+        body += '<div class="comp-row na"><span class="cn">' + c.key.replace(/_/g,' ') + '</span>' +
+          '<span style="font-size:0.68rem;color:var(--text-faint)">' + c.detail + '</span><span class="cv">—</span></div>';
+        return;
+      }
+      body += '<div class="comp-row"><span class="cn">' + c.key.replace(/_/g,' ') + '</span>' +
+        '<span class="comp-track"><span class="comp-fill" style="width:' + c.score + '%;background:' + scoreColour(c.score) + '"></span></span>' +
+        '<span class="cv">' + c.score + '</span></div>' +
+        '<div class="comp-detail">' + c.detail + '</div>';
+    });
+    body += '</div></div>';
+    body += '<div class="call-box ' + call.verdict + '"><h3>' + call.headline + '</h3>' +
+      '<p>' + call.detail + '</p>' +
+      '<div class="call-because">Because: <ul style="margin:4px 0 0;padding-left:18px;">' +
+      call.reasons.map(r => '<li>' + r + '</li>').join('') + '</ul></div></div>';
+    html += section("Today's call",
+      'Readiness is a weighted blend of the five inputs below — every one is shown, so you can see what moved it and overrule it.',
+      body);
+  }
+
+  // Habit rings: the inputs you control, against today's targets.
+  const rings = DATA.rings;
+  if(rings){
+    html += section('Daily targets', rings.closed + ' of ' + rings.total + ' closed today.',
+      '<div class="rings">' + rings.rings.map(r =>
+        '<div class="ring">' + ringSvg(r.pct, r.pct >= 100 ? 'var(--neon)' : 'var(--blue)') +
+        '<div class="rl">' + r.label + '</div>' +
+        '<div class="rv">' + r.value + (r.unit||'') + ' / ' + r.target + (r.unit||'') + '</div></div>'
+      ).join('') + '</div>');
+  }
 
   // Today, if there's anything to say about it.
   const t = ov.today || {};
@@ -622,11 +755,439 @@ showTab(['overview','analysis','workout','training','running','sleep','nutrition
   }
   html += '</div>';
 
+  // Weekly digest closes the page: the last seven days in twenty seconds.
+  const dg = DATA.digest;
+  if(dg){
+    html += section('Week in review', fmtDate(dg.from) + ' – ' + fmtDate(dg.to),
+      '<div class="stat-grid" style="margin-bottom:14px;">' +
+        dg.stats.map(s => '<div class="stat-tile"><div class="lbl">' + s.label + '</div>' +
+          '<div class="val">' + s.value + '<span class="u">' + s.unit + '</span></div></div>').join('') +
+      '</div>' +
+      (dg.wins.length ? '<div class="finding good"><h4>Went well</h4><p>You ' + dg.wins.join(', ') + '.</p></div>' : '') +
+      (dg.watch.length ? '<div class="finding warn"><h4>Worth watching</h4><p>' +
+        dg.watch.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('. ') + '.</p></div>' : ''));
+  }
+
   wrap.innerHTML = html;
   wrap.querySelectorAll('.ov-card').forEach(btn => {
     btn.addEventListener('click', () => showTab(btn.dataset.goto));
   });
 })();
+
+// ===================== SLEEP MODULES =====================
+// Appended to the Sleep tab: architecture, circadian rhythm, recharge, debt.
+function renderSleepModules(){
+  const wrap = el('sleepModules');
+  if(!wrap) return;
+  let html = '';
+
+  const hy = DATA.hypnogram;
+  if(hy){
+    const peak = Math.max.apply(null, hy.nights.map(n => n.total_min)) || 1;
+    html += section('Sleep architecture',
+      'Every night broken into its stages. Deep sleep is where physical recovery happens; REM is cognitive. ' +
+      'Your deep sleep averages <b>' + hy.avg_deep_pct + '%</b> (' + hy.deep_verdict + ', healthy is 13–23%) and REM <b>' +
+      hy.avg_rem_pct + '%</b> (' + hy.rem_verdict + ', healthy is 18–27%).',
+      hy.nights.slice().reverse().map(n =>
+        '<div class="stack-row"><span style="color:var(--text-faint)">' + fmtDate(n.date) + '</span>' +
+        '<span class="stack-bar" title="' + n.deep_min + 'm deep · ' + n.rem_min + 'm REM · ' + n.light_min + 'm light · ' + n.awake_min + 'm awake">' +
+          '<i style="width:' + (n.deep_min/peak*100) + '%;background:#3b5bdb"></i>' +
+          '<i style="width:' + (n.rem_min/peak*100) + '%;background:#7048e8"></i>' +
+          '<i style="width:' + (n.light_min/peak*100) + '%;background:#4c6ef5;opacity:0.45"></i>' +
+          '<i style="width:' + (n.awake_min/peak*100) + '%;background:#ff6b7a;opacity:0.6"></i>' +
+        '</span><span style="text-align:right;font-weight:700">' + (n.total_min/60).toFixed(1) + 'h</span></div>'
+      ).join('') +
+      '<div class="plan-legend" style="margin-top:10px;">' +
+        '<span><i style="background:#3b5bdb"></i>Deep</span>' +
+        '<span><i style="background:#7048e8"></i>REM</span>' +
+        '<span><i style="background:#4c6ef5;opacity:0.45"></i>Light</span>' +
+        '<span><i style="background:#ff6b7a;opacity:0.6"></i>Awake</span></div>');
+  }
+
+  const ci = DATA.circadian;
+  if(ci){
+    // The clock runs 18:00 → 18:00 so a night's sleep is one unbroken block.
+    const START = 18, SPAN = 24;
+    const pos = h => ((h - START + 24) % 24) / SPAN * 100;
+    html += section('Circadian rhythm',
+      'When you sleep (blue) and when you train (orange), each row a day, clock running 6pm to 6pm. ' +
+      'Your bedtime varies by <b>' + ci.bedtime_spread_h + ' hours</b> — ' +
+      (ci.consistent ? 'consistent, which is worth more than any single long night.'
+                     : 'a wide swing. An irregular schedule blunts sleep quality on its own, because your body never settles on when to start recovering.'),
+      ci.rows.map(r => {
+        let inner = '';
+        if(r.sleep){
+          const left = pos(r.sleep.start);
+          const width = Math.min(100 - left, r.sleep.hours / SPAN * 100);
+          inner += '<span class="circ-sleep" style="left:' + left + '%;width:' + width + '%" title="' +
+            r.sleep.hours + 'h from ' + (r.sleep.start % 24).toFixed(1) + ':00"></span>';
+        }
+        r.sessions.forEach(s => {
+          inner += '<span class="circ-sess" style="left:' + pos(s.hour) + '%;width:' +
+            Math.max(1.5, s.duration_min / 60 / SPAN * 100) + '%" title="' + (s.type||'session') + ' at ' + s.hour + ':00"></span>';
+        });
+        return '<div class="circ-row"><span class="circ-lbl">' + r.dow + ' ' + fmtDate(r.date) + '</span>' +
+          '<span class="circ-track">' + inner + '</span></div>';
+      }).join('') +
+      '<div class="circ-axis"><span></span><span style="display:flex;justify-content:space-between;">' +
+        '<span>18:00</span><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span></span></div>');
+  }
+
+  const bb = DATA.body_battery;
+  if(bb){
+    const colour = v => v >= 50 ? 'var(--neon)' : v >= 35 ? 'var(--yellow)' : 'var(--red)';
+    html += section('Overnight recharge',
+      'How much body battery each night actually paid back. A good night returns 50 or more; you average <b>' +
+      bb.avg_recharge + '</b>' + (bb.poor_nights ? ', with ' + bb.poor_nights + ' night(s) under 35' : '') + '.',
+      '<div style="display:flex;align-items:flex-end;gap:3px;height:110px;">' +
+      bb.series.map(s =>
+        '<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%" title="' +
+        fmtDate(s.date) + ': +' + s.recharge + (s.hours ? ' · ' + s.hours + 'h' : '') + '">' +
+        '<div style="height:' + Math.max(2, s.recharge) + '%;background:' + colour(s.recharge) + ';border-radius:3px 3px 0 0"></div></div>'
+      ).join('') + '</div>');
+  }
+
+  const dbt = DATA.recovery_debt;
+  if(dbt){
+    const min = Math.min.apply(null, dbt.series.map(s => s.balance));
+    const range = Math.max(4, Math.abs(min));
+    html += section('Sleep debt ledger',
+      'A running balance: short nights withdraw, long nights repay at half rate, because you cannot bank sleep as ' +
+      'efficiently as you lose it. You are currently <b style="color:' +
+      (dbt.status === 'good' ? 'var(--neon)' : dbt.status === 'warn' ? 'var(--yellow)' : 'var(--red)') + '">' +
+      dbt.current_balance_h + 'h</b>, worst point ' + dbt.worst_h + 'h.',
+      '<div style="display:flex;align-items:flex-start;gap:2px;height:90px;border-top:1px dashed var(--border);">' +
+      dbt.series.map(s =>
+        '<div style="flex:1;height:100%;display:flex;flex-direction:column" title="' + fmtDate(s.date) + ': ' + s.balance + 'h">' +
+        '<div style="height:' + Math.min(100, Math.abs(Math.min(0, s.balance)) / range * 100) + '%;background:' +
+        (s.balance < -8 ? 'var(--red)' : s.balance < -3 ? 'var(--yellow)' : 'var(--blue)') +
+        ';opacity:' + (s.logged ? 1 : 0.35) + ';border-radius:0 0 2px 2px"></div></div>'
+      ).join('') + '</div>' +
+      '<div style="font-size:0.66rem;color:var(--text-faint);margin-top:5px;">Faded bars are nights with no sleep data.</div>');
+  }
+  wrap.innerHTML = html;
+}
+
+// ===================== TRAINING MODULES =====================
+function renderTrainingModules(){
+  const wrap = el('trainingModules');
+  if(!wrap) return;
+  let html = '';
+
+  const vm = DATA.volume_map;
+  if(vm){
+    html += section('Training volume by muscle',
+      'Cumulative exposure over ' + vm.weeks + ' weeks — <b>what you are actually growing</b>, as opposed to what is sore right now. ' +
+      'Roughly twice a week is the floor for a muscle to progress, which matters most while eating in a deficit.' +
+      (vm.undertrained.length ? ' Under that floor: <b>' + vm.undertrained.map(m=>m.replace(/_/g,' ')).join(', ') + '</b>.' : ''),
+      vm.muscles.map(m =>
+        '<div class="stack-row" style="grid-template-columns:96px 1fr 62px;"><span style="color:var(--text-dim);text-transform:capitalize">' +
+        m.muscle.replace(/_/g,' ') + '</span>' +
+        '<span class="comp-track" style="height:9px"><span class="comp-fill" style="width:' + (m.share*100) + '%;background:' +
+        (m.per_week >= 2 ? 'var(--neon)' : m.per_week >= 1 ? 'var(--yellow)' : 'var(--orange)') + '"></span></span>' +
+        '<span style="text-align:right;color:var(--text-faint)">' + m.per_week + '/wk</span></div>'
+      ).join(''));
+  }
+
+  const sq = DATA.streak_quality;
+  if(sq){
+    html += section('Training consistency',
+      sq.days_trained + ' of the last ' + sq.days + ' days, averaging ' + sq.avg_minutes +
+      ' minutes. Shading is session length, so a light day and a hard day no longer look identical.',
+      '<div class="streak-grid">' + sq.cells.map(c =>
+        '<div class="streak-cell" style="background:' + HEAT[c.level] + '" title="' + fmtDate(c.date) +
+        (c.minutes ? ': ' + c.minutes + ' min · ' + c.types.join(', ') : ': rest') + '"></div>'
+      ).join('') + '</div>' +
+      '<div class="plan-legend" style="margin-top:10px;"><span>Rest</span>' +
+      HEAT.slice(1).map(h => '<span><i style="background:' + h + '"></i></span>').join('') + '<span>Long session</span></div>');
+  }
+
+  const pc = DATA.punch_card;
+  if(pc){
+    html += section('When you train',
+      pc.sessions + ' sessions by day and hour. Your habitual slot is <b>' +
+      String(pc.favourite_hour).padStart(2,'0') + ':00</b>.',
+      '<div style="overflow-x:auto"><div class="pc-grid">' +
+      pc.dow_labels.map((d, di) => {
+        let row = '<div class="pc-lbl">' + d + '</div>';
+        for(let h = 0; h < 24; h++){
+          const cell = pc.cells.find(c => c.dow === di && c.hour === h);
+          const lvl = cell ? Math.min(4, Math.ceil(cell.count / pc.peak * 4)) : 0;
+          row += '<div class="pc-cell" style="background:' + HEAT[lvl] + '" title="' + d + ' ' +
+            String(h).padStart(2,'0') + ':00' + (cell ? ' — ' + cell.count + ' session(s)' : '') + '"></div>';
+        }
+        return row;
+      }).join('') +
+      '<div class="pc-lbl"></div>' + Array.from({length:24}, (_,h) =>
+        '<div class="pc-lbl" style="text-align:center">' + (h % 6 === 0 ? h : '') + '</div>').join('') +
+      '</div></div>');
+  }
+  wrap.innerHTML = html;
+}
+
+// ===================== RUNNING MODULES =====================
+function renderRunningModules(){
+  const wrap = el('runningModules');
+  if(!wrap) return;
+  let html = '';
+
+  const pcv = DATA.pace_curve;
+  if(pcv){
+    const paces = pcv.curve.map(c => c.pace_sec_per_km);
+    const lo = Math.min.apply(null, paces), hi = Math.max.apply(null, paces);
+    const W = 640, H = 200, PAD = 34;
+    const x = km => PAD + (km - 1) / 21 * (W - PAD - 12);
+    const y = p => PAD/2 + (p - lo) / Math.max(1, hi - lo) * (H - PAD);
+    const path = pcv.curve.map((c,i) => (i?'L':'M') + x(c.km).toFixed(1) + ',' + y(c.pace_sec_per_km).toFixed(1)).join(' ');
+    html += section('Your pace–distance curve',
+      'Every personal record predicts the others via the Riegel endurance model, anchored on your <b>' + pcv.anchor +
+      '</b> — your truest effort. Dots below the line are distances you over-perform at.' +
+      (pcv.projection ? ' Projected half marathon: <b>' + pcv.projection.display + '</b> at ' + pcv.projection.pace_label + '.' : ''),
+      '<div style="overflow-x:auto"><svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;min-width:420px;height:' + H + 'px">' +
+      '<path d="' + path + '" fill="none" stroke="var(--blue)" stroke-width="2"/>' +
+      pcv.prs.map(p => '<g><circle cx="' + x(p.km).toFixed(1) + '" cy="' + y(p.pace_sec_per_km).toFixed(1) +
+        '" r="5" fill="' + (p.is_anchor ? 'var(--neon)' : p.delta_pct < 0 ? 'var(--neon)' : 'var(--orange)') + '"/>' +
+        '<text x="' + x(p.km).toFixed(1) + '" y="' + (y(p.pace_sec_per_km) - 11).toFixed(1) +
+        '" text-anchor="middle" font-size="10" fill="var(--text-faint)">' + p.label + '</text></g>').join('') +
+      (pcv.projection ? '<circle cx="' + x(pcv.projection.km).toFixed(1) + '" cy="' + y(pcv.projection.seconds/pcv.projection.km).toFixed(1) +
+        '" r="5" fill="none" stroke="var(--yellow)" stroke-width="2"/>' : '') +
+      '</svg></div>');
+  }
+
+  const pw = DATA.pr_wall;
+  if(pw){
+    html += section('Personal records',
+      pw.count + ' on record.' + (pw.ripe.length
+        ? ' Garmin currently predicts you would beat <b>' + pw.ripe.join(', ') + '</b> — those are stale and there for the taking.'
+        : ' None are currently predicted to fall, so these are honest reflections of your fitness.'),
+      '<div class="stat-grid">' + pw.records.map(r =>
+        '<div class="stat-tile' + (r.ripe ? '' : '') + '"><div class="lbl">' + r.label + '</div>' +
+        '<div class="val">' + r.display + '</div>' +
+        (r.pace_label ? '<div class="delta">' + r.pace_label + '</div>' : '') +
+        (r.ripe ? '<span class="stat-chip optimal">beatable by ' + Math.round(r.beatable_by_s/60) + ' min</span>' : '') +
+        '</div>').join('') + '</div>');
+  }
+  wrap.innerHTML = html;
+}
+
+// ===================== NUTRITION MODULES =====================
+function renderNutritionModules(){
+  const wrap = el('nutritionModules');
+  if(!wrap) return;
+  let html = '';
+  const MC = {protein:'var(--blue)', carbs:'var(--orange)', fat:'var(--yellow)'};
+
+  const mp = DATA.macro_plate;
+  if(mp){
+    let acc = 0;
+    const arcs = mp.slices.map(s => {
+      const start = acc; acc += s.pct;
+      const a0 = start/100*2*Math.PI - Math.PI/2, a1 = acc/100*2*Math.PI - Math.PI/2;
+      const large = (s.pct > 50) ? 1 : 0;
+      const R = 62, cx = 70, cy = 70;
+      return '<path d="M' + cx + ',' + cy + ' L' + (cx+R*Math.cos(a0)).toFixed(1) + ',' + (cy+R*Math.sin(a0)).toFixed(1) +
+        ' A' + R + ',' + R + ' 0 ' + large + ',1 ' + (cx+R*Math.cos(a1)).toFixed(1) + ',' + (cy+R*Math.sin(a1)).toFixed(1) + ' Z" fill="' +
+        MC[s.macro] + '" stroke="var(--panel)" stroke-width="2"><title>' + s.macro + ' ' + s.pct + '%</title></path>';
+    }).join('');
+    html += section('Macro split',
+      'Your most recent logged day (' + fmtDate(mp.date) + '), split by <b>calories contributed</b> rather than grams — ' +
+      'fat carries more than twice the energy per gram, so a gram split would badly understate it.' +
+      (Math.abs(mp.unaccounted_kcal) > 100
+        ? ' Note ' + mp.unaccounted_kcal + ' kcal logged that the macros do not account for.' : ''),
+      '<div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">' +
+      '<svg viewBox="0 0 140 140" style="width:140px;height:140px;flex-shrink:0">' + arcs + '</svg>' +
+      '<div style="flex:1;min-width:200px">' + mp.slices.map(s =>
+        '<div class="analysis-row"><span class="k"><i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:' +
+        MC[s.macro] + ';margin-right:6px"></i>' + s.macro + '</span><span class="v">' + s.grams + 'g · ' + s.pct + '%' +
+        '<span style="color:var(--text-faint);font-weight:400"> vs ' + s.target_g + 'g target</span></span></div>').join('') +
+      '</div></div>');
+  }
+
+  const ef = DATA.energy_flow;
+  if(ef){
+    const w = v => (v / ef.scale_max * 100).toFixed(1);
+    html += section('Energy flow',
+      'Where the calories go across your ' + ef.days_compared + ' compared day(s). The out column is Garmin\'s measured total: ' +
+      'resting burn plus everything you actually did.',
+      '<div class="flow-col">' +
+      '<div style="font-size:0.7rem;color:var(--text-faint)">In — food</div>' +
+      '<div class="flow-bar"><i style="width:' + w(ef.intake_kcal) + '%;background:var(--blue)">' + ef.intake_kcal + ' kcal</i></div>' +
+      '<div style="font-size:0.7rem;color:var(--text-faint)">Out — resting + active</div>' +
+      '<div class="flow-bar">' +
+        '<i style="width:' + w(ef.bmr_kcal) + '%;background:var(--purple)">' + ef.bmr_kcal + '</i>' +
+        '<i style="width:' + w(ef.active_kcal) + '%;background:var(--orange)">' + ef.active_kcal + '</i>' +
+      '</div>' +
+      '<div style="margin-top:6px;font-size:0.85rem">Balance: <b style="color:' +
+        (ef.surplus ? 'var(--neon)' : 'var(--red)') + '">' + (ef.balance_kcal>0?'+':'') + ef.balance_kcal + ' kcal/day</b></div>' +
+      '</div>' +
+      '<div class="plan-legend" style="margin-top:10px;"><span><i style="background:var(--blue)"></i>Intake</span>' +
+      '<span><i style="background:var(--purple)"></i>Resting burn</span><span><i style="background:var(--orange)"></i>Active burn</span></div>');
+  }
+
+  const pd = DATA.protein_distribution;
+  if(pd){
+    const peak = Math.max.apply(null, pd.meals.map(m => m.avg_protein_g)) || 1;
+    html += section('Protein through the day',
+      'Averaging <b>' + pd.avg_daily_g + 'g</b> a day across ' + pd.days + ' logged day(s)' +
+      (pd.target_g ? ' against a ' + pd.target_g + 'g target' : '') +
+      '. Beyond about ' + pd.ceiling_g + 'g in one sitting the extra does little for muscle protein synthesis, so how it is spread matters.' +
+      (pd.concentrated ? ' Yours is <b>concentrated in ' + pd.biggest_meal + '</b> — spreading it would get more from the same total.' : ''),
+      pd.meals.map(m =>
+        '<div class="stack-row" style="grid-template-columns:80px 1fr 46px;"><span style="text-transform:capitalize;color:var(--text-dim)">' +
+        m.meal + '</span><span class="comp-track" style="height:9px"><span class="comp-fill" style="width:' +
+        (m.avg_protein_g/peak*100) + '%;background:' + (m.over_ceiling ? 'var(--orange)' : 'var(--blue)') + '"></span></span>' +
+        '<span style="text-align:right;font-weight:700">' + m.avg_protein_g + 'g</span></div>').join(''));
+  }
+  wrap.innerHTML = html;
+}
+
+// ===================== BODY MODULES =====================
+// A reusable torso+limbs outline, shared by the fat-distribution and goal-morph
+// views so both read as the same body at different states.
+function bodyOutline(scaleX, fill, stroke){
+  const sx = 'translate(50,0) scale(' + scaleX + ',1) translate(-50,0)';
+  return '<g transform="' + sx + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="0.6" stroke-linejoin="round">' +
+    '<ellipse cx="50" cy="15" rx="8.2" ry="10.5"/><path d="M45.5,23 h9 v11 h-9 z"/>' +
+    '<path d="M31,34 C27,37 25,44 25.5,52 C26,58.5 31,64.5 36,68.5 C38,71.5 39.5,74.5 40,78 C39.5,83 39.5,88 41,93 L59,93 C60.5,88 60.5,83 60,78 C60.5,74.5 62,71.5 64,68.5 C69,64.5 74,58.5 74.5,52 C75,44 73,37 69,34 Z"/>' +
+    '<path d="M31,34 C26,36 22.5,42 21,49 C19.5,56 18.5,63 18,69 C17,75 16,82 15.5,89 C15,93 15.5,96 17,97 C19,97.5 20.5,96 21,93 C22,86 23,79 24,72 C25,65 26,58 27.5,51 C28.5,44 30,38 31,34 Z"/>' +
+    '<path d="M69,34 C74,36 77.5,42 79,49 C80.5,56 81.5,63 82,69 C83,75 84,82 84.5,89 C85,93 84.5,96 83,97 C81,97.5 79.5,96 79,93 C78,86 77,79 76,72 C75,65 74,58 72.5,51 C71.5,44 70,38 69,34 Z"/>' +
+    '<path d="M36.5,93 C34,102 33,112 34,121 C34.5,127 36,131 36.5,135 C35,141 34.5,148 35.5,153 C36.5,160 38,168 38.5,176 L44,176 C44.5,168 45,160 45.5,152 C46,145 46.5,138 46.5,133 C47,124 47.5,112 47,102 C47,98 46.5,95 46,93 Z"/>' +
+    '<path d="M63.5,93 C66,102 67,112 66,121 C65.5,127 64,131 63.5,135 C65,141 65.5,148 64.5,153 C63.5,160 62,168 61.5,176 L56,176 C55.5,168 55,160 54.5,152 C54,145 53.5,138 53.5,133 C53,124 52.5,112 53,102 C53,98 53.5,95 54,93 Z"/></g>';
+}
+
+function renderBodyModules(){
+  const wrap = el('bodyModules');
+  if(!wrap) return;
+  const bv = DATA.body_view;
+  let html = '';
+
+  // --- Cardiovascular view --------------------------------------------------
+  const rhrRows = (DATA.rhr_trend||[]).filter(r=>r.rhr);
+  const vo2Rows = DATA.vo2max_trend||[];
+  const sleepRows = (DATA.sleep_trend||[]).filter(s=>s.avg_overnight_hrv);
+  if(rhrRows.length || vo2Rows.length){
+    const rhr = rhrRows.length ? rhrRows[rhrRows.length-1].rhr : null;
+    const vo2 = vo2Rows.length ? vo2Rows[vo2Rows.length-1].vo2max : null;
+    const hrv = sleepRows.length ? sleepRows[sleepRows.length-1].avg_overnight_hrv : null;
+    // Heart beats at your real resting rate — 60/rhr seconds per cycle.
+    const period = rhr ? (60/rhr).toFixed(2) : 1;
+    html += section('Cardiovascular system',
+      'Your heart, beating at its actual resting rate. Size tracks aerobic capacity, colour tracks how recovered your ' +
+      'autonomic system is — the three numbers that describe your engine.',
+      '<style>@keyframes hb{0%,100%{transform:scale(1)}12%{transform:scale(1.13)}26%{transform:scale(1.02)}38%{transform:scale(1.08)}}' +
+      '@media (prefers-reduced-motion: reduce){.heart{animation:none!important}}</style>' +
+      '<div style="display:flex;gap:26px;align-items:center;flex-wrap:wrap;justify-content:center">' +
+      '<svg viewBox="0 0 120 120" style="width:150px;height:150px">' +
+      '<g class="heart" style="transform-origin:60px 62px;animation:hb ' + period + 's ease-in-out infinite">' +
+      '<path d="M60,96 C34,74 20,60 20,44 C20,32 29,24 40,24 C48,24 55,29 60,36 C65,29 72,24 80,24 C91,24 100,32 100,44 C100,60 86,74 60,96 Z" fill="' +
+      (hrv == null ? 'var(--red)' : hrv >= 55 ? 'var(--neon)' : hrv >= 40 ? 'var(--yellow)' : 'var(--red)') + '" opacity="0.85"/></g></svg>' +
+      '<div class="stat-grid" style="flex:1;min-width:230px">' +
+        (rhr!=null ? '<div class="stat-tile"><div class="lbl">Resting HR</div><div class="val">' + rhr + '<span class="u">bpm</span></div><div class="why">Falls as aerobic fitness rises.</div></div>':'') +
+        (vo2!=null ? '<div class="stat-tile"><div class="lbl">VO2 max</div><div class="val">' + vo2 + '</div><div class="why">Engine size — the best single endurance predictor.</div></div>':'') +
+        (hrv!=null ? '<div class="stat-tile"><div class="lbl">Overnight HRV</div><div class="val">' + hrv + '<span class="u">ms</span></div><div class="why">Autonomic recovery capacity.</div></div>':'') +
+      '</div></div>');
+  }
+
+  if(bv && bv.fat_mass_kg != null){
+    const lat = bv.latest;
+    // --- Fat distribution ---------------------------------------------------
+    const visc = lat.visceral_fat, sub = lat.subcutaneous_fat_pct;
+    if(visc != null || sub != null){
+      html += section('Where the fat sits',
+        'Your scale separates fat around the organs from fat under the skin. Visceral is the one that carries metabolic ' +
+        'risk; subcutaneous is the visible kind and far less medically loaded.',
+        '<div style="display:flex;gap:26px;align-items:center;flex-wrap:wrap;justify-content:center">' +
+        '<svg viewBox="0 0 100 190" style="width:130px;height:247px">' +
+        bodyOutline(1, 'rgba(255,255,255,0.06)', 'rgba(255,255,255,0.16)') +
+        (sub != null ? '<path d="M31,34 C27,37 25,44 25.5,52 C26,58.5 31,64.5 36,68.5 C38,71.5 39.5,74.5 40,78 C39.5,83 39.5,88 41,93 L59,93 C60.5,88 60.5,83 60,78 C60.5,74.5 62,71.5 64,68.5 C69,64.5 74,58.5 74.5,52 C75,44 73,37 69,34 Z" fill="var(--yellow)" opacity="' +
+          Math.min(0.5, sub/40).toFixed(2) + '"/>' : '') +
+        (visc != null ? '<ellipse cx="50" cy="72" rx="' + (7 + visc*0.8).toFixed(1) + '" ry="' + (9 + visc*0.7).toFixed(1) +
+          '" fill="' + (visc < 10 ? 'var(--orange)' : 'var(--red)') + '" opacity="0.75"><title>Visceral fat ' + visc + '</title></ellipse>' : '') +
+        '</svg>' +
+        '<div class="stat-grid" style="flex:1;min-width:220px">' +
+          (visc!=null ? '<div class="stat-tile"><div class="lbl">Visceral fat</div><div class="val">' + visc + '</div><span class="stat-chip ' +
+            (visc<10?'normal':'high') + '">' + (visc<10?'Healthy range':'Elevated') + '</span><div class="why">Around the organs. Under 10 is where you want it.</div></div>':'') +
+          (sub!=null ? '<div class="stat-tile"><div class="lbl">Subcutaneous</div><div class="val">' + sub + '<span class="u">%</span></div><div class="why">Under the skin — the visible kind.</div></div>':'') +
+          '<div class="stat-tile"><div class="lbl">Total fat mass</div><div class="val">' + bv.fat_mass_kg + '<span class="u">kg</span></div><div class="why">Of ' + lat.weight_kg + 'kg bodyweight.</div></div>' +
+        '</div></div>');
+    }
+
+    // --- Goal-state morph ---------------------------------------------------
+    const fl = DATA.fat_loss;
+    if(fl && fl.fat_to_lose_kg > 0){
+      // Width scales with the cube root of mass, the way a solid body does.
+      const ratio = Math.pow(fl.target_weight_kg / lat.weight_kg, 1/3);
+      html += section('Now and at target',
+        'Same body at ' + lat.weight_kg + 'kg and at your ' + fl.target_body_fat_pct + '% goal of ' + fl.target_weight_kg +
+        'kg. Width scales with the cube root of mass, the way a solid actually shrinks — the difference is ' +
+        fl.fat_to_lose_kg + 'kg of fat, with all ' + fl.lean_mass_kg + 'kg of muscle kept.',
+        '<div style="display:flex;gap:34px;justify-content:center;flex-wrap:wrap;text-align:center">' +
+        '<div><svg viewBox="0 0 100 190" style="width:120px;height:228px">' +
+          bodyOutline(1, 'rgba(255,159,90,0.22)', 'var(--orange)') + '</svg>' +
+          '<div style="font-size:0.76rem;margin-top:4px">Now — ' + lat.weight_kg + 'kg · ' + lat.body_fat_pct + '%</div></div>' +
+        '<div><svg viewBox="0 0 100 190" style="width:120px;height:228px">' +
+          bodyOutline(1, 'rgba(255,255,255,0.04)', 'rgba(255,255,255,0.12)') +
+          bodyOutline(ratio, 'rgba(61,220,151,0.22)', 'var(--neon)') + '</svg>' +
+          '<div style="font-size:0.76rem;margin-top:4px">Target — ' + fl.target_weight_kg + 'kg · ' + fl.target_body_fat_pct + '%</div></div>' +
+        '</div>');
+    }
+  }
+  wrap.innerHTML = html;
+}
+
+// ===================== BENCHMARKS + MATRIX =====================
+function renderAnalysisModules(){
+  const wrap = el('analysisModules');
+  if(!wrap) return;
+  let html = '';
+
+  const bm = DATA.benchmarks;
+  if(bm){
+    html += section('How you compare',
+      'Against published norms for adult men. You sit at roughly the <b>' + bm.average_percentile +
+      'th percentile</b> on average — strongest on ' + bm.strongest + ', weakest on ' + bm.weakest +
+      '. Percentiles are interpolated from reference bands, so treat them as orientation rather than precision.',
+      bm.metrics.map(m =>
+        '<div class="bm-row"><div class="bm-head"><span>' + m.label + ' — <b>' + m.value + m.unit + '</b></span>' +
+        '<span style="color:' + (m.status==='good'?'var(--neon)':m.status==='warn'?'var(--yellow)':'var(--text-dim)') + '">' +
+        m.verdict + ' (' + m.percentile + 'th)</span></div>' +
+        '<div class="bm-track"><div class="bm-pin" style="left:calc(' + m.percentile + '% - 1px)"></div></div>' +
+        '<div class="bm-note">' + m.note + '</div></div>').join(''));
+  }
+
+  const cm = DATA.correlation_matrix;
+  if(cm){
+    const n = cm.labels.length;
+    const colour = c => {
+      if(c.r == null) return '#151a23';
+      const a = Math.min(1, Math.abs(c.r));
+      return c.r > 0 ? 'rgba(61,220,151,' + (0.15 + a*0.75) + ')' : 'rgba(255,107,122,' + (0.15 + a*0.75) + ')';
+    };
+    let grid = '<div class="cm-grid" style="grid-template-columns:96px repeat(' + n + ', minmax(22px,1fr));">';
+    grid += '<div></div>' + cm.labels.map(l => '<div class="cm-axis" style="writing-mode:vertical-rl;transform:rotate(180deg);height:74px">' + l.label + '</div>').join('');
+    for(let y = 0; y < n; y++){
+      grid += '<div class="cm-axis" style="text-align:right;padding-right:6px">' + cm.labels[y].label + '</div>';
+      for(let x = 0; x < n; x++){
+        if(x === y){ grid += '<div class="cm-cell" style="background:#232936"></div>'; continue; }
+        const cell = cm.cells.find(c => (c.x===Math.min(x,y) && c.y===Math.max(x,y)));
+        grid += '<div class="cm-cell" style="background:' + (cell?colour(cell):'#151a23') + '" title="' +
+          cm.labels[y].label + ' vs ' + cm.labels[x].label +
+          (cell && cell.r != null ? ': r=' + cell.r + ' (n=' + cell.n + ', ' + cell.confidence + ')' : ': not enough overlapping days') + '"></div>';
+      }
+    }
+    grid += '</div>';
+    html += section('Correlation matrix',
+      'Every daily metric against every other, across ' + cm.metrics_compared + ' metrics. Green is a positive relationship, ' +
+      'red negative, blank means too few overlapping days to compute. This is the blunt instrument — it looks everywhere, so it ' +
+      'will also surface coincidences. Hover any cell for the sample size.',
+      '<div class="cm-wrap">' + grid + '</div>' +
+      (cm.strongest.length ? '<div style="margin-top:14px"><b style="font-size:0.82rem">Strongest relationships</b>' +
+        cm.strongest.map(c => '<div class="analysis-row"><span class="k">' + c.a + ' ↔ ' + c.b +
+        '</span><span class="v">r = ' + c.r + ' <span style="color:var(--text-faint);font-weight:400">n=' + c.n + '</span></span></div>').join('') +
+        '</div>' : ''));
+  }
+  wrap.innerHTML = html;
+}
 
 // ===================== ANALYSIS TAB =====================
 function daysAgo(n){
@@ -1832,6 +2393,13 @@ function statTile(m){
 }
 
 __RUNNING_TAB_SCRIPT__
+
+renderSleepModules();
+renderTrainingModules();
+renderRunningModules();
+renderNutritionModules();
+renderAnalysisModules();
+renderBodyModules();
 
 el('appFooter').textContent = 'Updated ' + DATA.generated_at_time;
 </script>
