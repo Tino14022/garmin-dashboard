@@ -138,5 +138,25 @@
     "protein_g": 0,
     "carbs_g": 19,
     "fat_g": 0
+  },
+  {
+    "date": "2026-08-15",
+    "meal": "snack",
+    "description": "Banana bread (100g)",
+    "grams": 100,
+    "calories": 330,
+    "protein_g": 4,
+    "carbs_g": 50,
+    "fat_g": 13
+  },
+  {
+    "date": "2026-08-15",
+    "meal": "snack",
+    "description": "Protein shake (350ml milk, 1 tbsp honey, 1 banana, protein powder)",
+    "grams": null,
+    "calories": 481,
+    "protein_g": 35,
+    "carbs_g": 62,
+    "fat_g": 11
   }
 ]
