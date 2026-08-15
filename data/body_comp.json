@@ -1,1 +1,11 @@
-[]
+[
+  {
+    "date": "2026-08-15",
+    "weight_kg": 98.9,
+    "body_fat_pct": 20.3,
+    "muscle_mass_kg": 74.9,
+    "water_pct": 49.9,
+    "visceral_fat": 8,
+    "bmr": 2175
+  }
+]
