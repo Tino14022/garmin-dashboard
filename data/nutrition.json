@@ -102,12 +102,12 @@
   {
     "date": "2026-08-15",
     "meal": "lunch",
-    "description": "Pastrmalija with pork (400g pork on flatbread dough base)",
-    "grams": 580,
-    "calories": 1370,
-    "protein_g": 120,
-    "carbs_g": 95,
-    "fat_g": 53
+    "description": "Pastrmalija with pork (~300g, scaled from a traditional recipe: yeast dough + pork, serves ~580g/1453kcal)",
+    "grams": 300,
+    "calories": 750,
+    "protein_g": 44,
+    "carbs_g": 93,
+    "fat_g": 21
   },
   {
     "date": "2026-08-15",
