@@ -5,5 +5,19 @@
     "alcohol_drinks": null,
     "cannabis_used": true,
     "notes": "7-8 cigarettes"
+  },
+  {
+    "date": "2026-08-14",
+    "cigarettes_level": null,
+    "alcohol_drinks": null,
+    "cannabis_used": true,
+    "notes": null
+  },
+  {
+    "date": "2026-08-15",
+    "cigarettes_level": null,
+    "alcohol_drinks": null,
+    "cannabis_used": true,
+    "notes": "third consecutive night"
   }
 ]
