@@ -1,9 +1,33 @@
 """Nutrition aggregation: intake vs Garmin's measured burn."""
 from __future__ import annotations
 
+import statistics
 from datetime import date, timedelta
 
 from .formatting import iso, parse_iso
+
+# Garmin reports a day's basal burn as it accrues, so a day the watch did not
+# cover end to end arrives with a short BMR. Counting such a day as complete
+# understates burn and can invert the whole surplus/deficit verdict, so days
+# below this share of the athlete's typical full-day BMR are treated as partial.
+COMPLETE_DAY_BMR_RATIO = 0.9
+
+
+def typical_daily_bmr(calorie_trend: list[dict]) -> float | None:
+    """Median full-day basal burn, used as the yardstick for completeness.
+
+    Median rather than mean so the partial days this exists to detect cannot
+    drag the threshold down far enough to admit themselves.
+    """
+    values = [c["bmr_kcal"] for c in calorie_trend if c.get("bmr_kcal")]
+    return statistics.median(values) if values else None
+
+
+def is_complete_day(entry: dict, typical_bmr: float | None) -> bool:
+    bmr = entry.get("bmr_kcal")
+    if not typical_bmr or not bmr:
+        return True  # nothing to judge against; assume usable
+    return bmr >= typical_bmr * COMPLETE_DAY_BMR_RATIO
 
 
 def build_nutrition_view(
@@ -43,11 +67,26 @@ def build_nutrition_view(
         intake_by_date[d] = intake_by_date.get(d, 0) + (n.get("calories") or 0)
         protein_by_date[d] = protein_by_date.get(d, 0) + (n.get("protein_g") or 0)
 
-    burn_by_date = {
-        c["date"]: c["total_kcal"]
+    typical_bmr = typical_daily_bmr(calorie_trend)
+    in_window = [
+        c
         for c in calorie_trend
         if c.get("date") and week_ago <= date.fromisoformat(c["date"]) <= yesterday
+    ]
+    burn_by_date = {
+        c["date"]: c["total_kcal"] for c in in_window if is_complete_day(c, typical_bmr)
     }
+    active_by_date = {
+        c["date"]: (c.get("active_kcal") or 0)
+        for c in in_window
+        if is_complete_day(c, typical_bmr)
+    }
+    bmr_by_date = {
+        c["date"]: (c.get("bmr_kcal") or 0)
+        for c in in_window
+        if is_complete_day(c, typical_bmr)
+    }
+    partial_days = [c["date"] for c in in_window if not is_complete_day(c, typical_bmr)]
 
     # Only compare days where we actually know both sides of the equation.
     common_dates = sorted(set(intake_by_date) & set(burn_by_date))
@@ -95,11 +134,26 @@ def build_nutrition_view(
     today_protein = sum(
         n.get("protein_g") or 0 for n in nutrition if n.get("date") == today_iso
     )
-    today_burn_so_far = next(
-        (c["total_kcal"] for c in calorie_trend if c.get("date") == today_iso), None
-    )
+    today_entry = next((c for c in calorie_trend if c.get("date") == today_iso), None)
+    today_burn_so_far = today_entry.get("total_kcal") if today_entry else None
+
+    def _avg(source):
+        return (
+            round(sum(source.get(d, 0) for d in common_dates) / len(common_dates))
+            if common_dates
+            else None
+        )
 
     return {
+        # Burn is Garmin's total = basal + active. Both halves are reported so
+        # the page can show that active work is in there rather than leaving it
+        # looking like a bare BMR figure.
+        "week_avg_active_kcal": _avg(active_by_date),
+        "week_avg_bmr_kcal": _avg(bmr_by_date),
+        "today_active_kcal": today_entry.get("active_kcal") if today_entry else None,
+        "today_bmr_kcal": today_entry.get("bmr_kcal") if today_entry else None,
+        "partial_days_excluded": partial_days,
+        "typical_bmr_kcal": round(typical_bmr) if typical_bmr else None,
         "protein_target_g": protein_target_g,
         "protein_g_per_kg": protein_g_per_kg,
         "latest_weight_kg": latest_weight,

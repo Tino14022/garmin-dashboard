@@ -281,32 +281,33 @@ __RUNNING_TAB_STYLE__
   .plan-legend span{ display:flex; align-items:center; gap:5px; }
   .plan-legend i{ width:9px; height:9px; border-radius:2px; display:block; }
 
-  /* ---- Logging forms ---- */
-  .log-form{ display:grid; grid-template-columns:repeat(auto-fit, minmax(120px,1fr)); gap:10px; margin-top:6px; }
-  .log-form label{ display:flex; flex-direction:column; gap:4px; font-size:0.7rem; color:var(--text-faint); }
-  .log-form input, .log-form select{
-    background:var(--panel-2); border:1px solid var(--border); border-radius:8px; color:var(--text);
-    padding:9px 10px; font-size:0.85rem; font-family:inherit; width:100%; min-width:0;
-  }
-  .log-form input:focus, .log-form select:focus{ outline:none; border-color:var(--neon); }
-  .log-form .wide{ grid-column:1 / -1; }
-  .log-actions{ display:flex; gap:10px; align-items:center; margin-top:12px; flex-wrap:wrap; }
-  .log-btn{
-    padding:10px 20px; border-radius:10px; border:none; background:var(--neon); color:#06170d;
-    font-weight:800; font-size:0.85rem; cursor:pointer; font-family:inherit;
-  }
-  .log-btn:disabled{ opacity:0.5; cursor:default; }
-  .log-status{ font-size:0.78rem; }
-  .log-status.ok{ color:var(--neon); }
-  .log-status.err{ color:var(--red); }
-  .log-status.busy{ color:var(--text-faint); }
-  .log-hint{ font-size:0.76rem; color:var(--text-faint); margin-top:8px; }
-  .settings-btn{
-    margin-left:auto; background:none; border:1px solid var(--border); color:var(--text-dim);
-    border-radius:999px; padding:8px 14px; font-size:0.85rem; cursor:pointer; white-space:nowrap; font-family:inherit;
-  }
-  .settings-panel{ display:none; }
-  .settings-panel.show{ display:block; }
+  /* ---- Stat grid + findings ---- */
+  .stat-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:10px; }
+  .stat-tile{ background:var(--panel-2); border:1px solid var(--border); border-radius:12px; padding:12px 14px; position:relative; }
+  .stat-tile .lbl{ font-size:0.7rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.04em; }
+  .stat-tile .val{ font-size:1.35rem; font-weight:700; margin:4px 0 2px; }
+  .stat-tile .val .u{ font-size:0.8rem; font-weight:600; color:var(--text-faint); margin-left:2px; }
+  .stat-tile .delta{ font-size:0.7rem; color:var(--text-faint); }
+  .stat-chip{ display:inline-block; font-size:0.65rem; font-weight:700; padding:2px 8px; border-radius:999px; }
+  .stat-chip.optimal, .stat-chip.good{ background:rgba(61,220,151,0.16); color:var(--green); }
+  .stat-chip.normal{ background:rgba(91,140,255,0.16); color:var(--blue); }
+  .stat-chip.fair{ background:rgba(255,209,102,0.16); color:var(--yellow); }
+  .stat-chip.low, .stat-chip.high{ background:rgba(255,159,90,0.18); color:var(--orange); }
+  .stat-chip.very_high{ background:rgba(255,107,122,0.18); color:var(--red); }
+  .stat-tile .why{ font-size:0.72rem; color:var(--text-dim); line-height:1.5; margin-top:8px; }
+
+  .finding{ border-left:3px solid var(--border); padding:2px 0 2px 14px; margin-bottom:16px; }
+  .finding.warn{ border-left-color:var(--yellow); }
+  .finding.good{ border-left-color:var(--neon); }
+  .finding.info{ border-left-color:var(--blue); }
+  .finding h4{ margin:0 0 5px; font-size:0.88rem; font-weight:700; }
+  .finding p{ margin:0; font-size:0.82rem; color:var(--text-dim); line-height:1.6; }
+  .finding .meta{ margin-top:6px; font-size:0.68rem; color:var(--text-faint); display:flex; gap:10px; flex-wrap:wrap; }
+  .domain-tag{ background:var(--panel-2); border:1px solid var(--border); border-radius:999px; padding:1px 8px; }
+  .conf{ font-weight:700; }
+  .conf.solid{ color:var(--green); }
+  .conf.tentative{ color:var(--yellow); }
+  .conf.early{ color:var(--text-faint); }
 
   footer{color:var(--text-faint); font-size:0.75rem; text-align:center; padding:20px 0 10px;}
 </style>
@@ -321,28 +322,9 @@ __RUNNING_TAB_STYLE__
   <button class="tabbtn" data-tab="sleep">😴 Sleep</button>
   <button class="tabbtn" data-tab="nutrition">🍽️ Nutrition</button>
   <button class="tabbtn" data-tab="body">⚖️ Body</button>
-  <button class="settings-btn" id="settingsBtn" title="Logging settings">⚙️</button>
 </div>
 
 <div class="health-banner" id="healthBanner"></div>
-
-<div class="section settings-panel" id="settingsPanel">
-  <h2>Logging Settings</h2>
-  <div class="desc">Where this device sends entries you log. Stored on this device only, so set it once per phone or laptop. See <code>worker/README.md</code> for how to deploy the endpoint.</div>
-  <div class="log-form">
-    <label class="wide">Worker URL
-      <input type="url" id="setWorkerUrl" placeholder="https://garmin-dashboard-logger.<you>.workers.dev" autocomplete="off">
-    </label>
-    <label class="wide">App token
-      <input type="password" id="setAppToken" placeholder="the APP_TOKEN you set on the Worker" autocomplete="off">
-    </label>
-  </div>
-  <div class="log-actions">
-    <button class="log-btn" id="saveSettingsBtn">Save</button>
-    <button class="copy-btn" id="clearSettingsBtn">Clear</button>
-    <span class="log-status" id="settingsStatus"></span>
-  </div>
-</div>
 
 <!-- ===================== ANALYSIS TAB ===================== -->
 <div class="tab-panel" id="tab-analysis">
@@ -530,93 +512,6 @@ tabButtons.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)
 const ICONS = {gym:'🏋️', run:'🏃', padel:'🏓', football:'⚽', hike:'🥾', tennis:'🎾', basketball:'🏀', bike:'🚴', swim:'🏊', walk:'🚶', yoga:'🧘', other:'✳️'};
 
 showTab(['analysis','workout','training','running','sleep','nutrition','body'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'analysis');
-
-// ===================== LOGGING =====================
-// The site is static and cannot write, so entries go to a Worker that commits
-// them to the repo. Settings live per-device; the GitHub token never comes near
-// the browser (see worker/README.md).
-const Logger = (function(){
-  const URL_KEY = 'loggerWorkerUrl', TOKEN_KEY = 'loggerAppToken';
-  const read = k => { try{ return localStorage.getItem(k) || ''; }catch(e){ return ''; } };
-  const write = (k,v) => { try{ v ? localStorage.setItem(k,v) : localStorage.removeItem(k); }catch(e){} };
-
-  function configured(){ return !!(read(URL_KEY) && read(TOKEN_KEY)); }
-
-  async function send(kind, entry){
-    if(!configured()) throw new Error('Logging is not set up on this device — open ⚙️ in the top bar.');
-    const res = await fetch(read(URL_KEY), {
-      method: 'POST',
-      headers: {'Content-Type':'application/json', 'Authorization':'Bearer ' + read(TOKEN_KEY)},
-      body: JSON.stringify({kind, entry}),
-    });
-    let body = {};
-    try{ body = await res.json(); }catch(e){}
-    if(!res.ok) throw new Error(body.error || ('request failed (' + res.status + ')'));
-    return body;
-  }
-
-  return {
-    configured, send,
-    url: () => read(URL_KEY),
-    token: () => read(TOKEN_KEY),
-    save: (url, token) => { write(URL_KEY, url.trim().replace(/\/+$/,'')); write(TOKEN_KEY, token.trim()); },
-    clear: () => { write(URL_KEY,''); write(TOKEN_KEY,''); },
-  };
-})();
-
-// Shared helper: wire a form's submit button to the Logger with inline status.
-function wireLogForm(opts){
-  const btn = el(opts.button), status = el(opts.status);
-  if(!btn) return;
-  btn.addEventListener('click', async () => {
-    const built = opts.build();
-    if(built.error){ status.className = 'log-status err'; status.textContent = built.error; return; }
-    btn.disabled = true;
-    status.className = 'log-status busy';
-    status.textContent = 'Saving…';
-    try{
-      await Logger.send(opts.kind, built.entry);
-      status.className = 'log-status ok';
-      status.textContent = 'Saved — it appears on the site after the next rebuild.';
-      if(opts.onSaved) opts.onSaved();
-    }catch(e){
-      status.className = 'log-status err';
-      status.textContent = e.message;
-    }finally{
-      btn.disabled = false;
-    }
-  });
-}
-
-(function(){
-  const panel = el('settingsPanel'), status = el('settingsStatus');
-  el('settingsBtn').addEventListener('click', () => {
-    panel.classList.toggle('show');
-    if(panel.classList.contains('show')){
-      el('setWorkerUrl').value = Logger.url();
-      el('setAppToken').value = Logger.token();
-      panel.scrollIntoView({block:'nearest'});
-    }
-  });
-  el('saveSettingsBtn').addEventListener('click', () => {
-    const url = el('setWorkerUrl').value.trim();
-    if(url && !/^https:\/\//i.test(url)){
-      status.className = 'log-status err';
-      status.textContent = 'The Worker URL must start with https://';
-      return;
-    }
-    Logger.save(url, el('setAppToken').value);
-    status.className = 'log-status ok';
-    status.textContent = Logger.configured() ? 'Saved on this device.' : 'Cleared — both fields are needed.';
-  });
-  el('clearSettingsBtn').addEventListener('click', () => {
-    Logger.clear();
-    el('setWorkerUrl').value = '';
-    el('setAppToken').value = '';
-    status.className = 'log-status ok';
-    status.textContent = 'Cleared from this device.';
-  });
-})();
 
 // ===================== BUILD HEALTH =====================
 // A build that lost some of its Garmin data still deploys — silently, before
@@ -933,15 +828,38 @@ function renderAnalysis(period){
 
   html += '</div>';
 
+  // Full cross-domain analysis. Computed server-side over the whole tracked
+  // window, so it doesn't change with the period selector above — a correlation
+  // read off three days would not be worth printing.
+  const ins = DATA.insights || {findings:[], counts:{}};
+  if(ins.findings.length){
+    const c = ins.counts || {};
+    html += '<div class="section"><h2>Cross-Domain Analysis</h2>' +
+      '<div class="desc">What each domain does to the others — sleep against training, fuelling against weight, ' +
+      'load against recovery. Read over the full tracked window, not the period above. Each finding shows how much ' +
+      'data it rests on, because most of these need weeks before they mean anything.</div>';
+
+    html += '<div class="stat-grid" style="margin-bottom:18px;">' +
+      '<div class="stat-tile"><div class="lbl">Findings</div><div class="val">' + (c.total||0) + '</div></div>' +
+      '<div class="stat-tile"><div class="lbl">Worth acting on</div><div class="val" style="color:var(--yellow)">' + (c.warn||0) + '</div></div>' +
+      '<div class="stat-tile"><div class="lbl">Going well</div><div class="val" style="color:var(--neon)">' + (c.good||0) + '</div></div>' +
+      '</div>';
+
+    html += ins.findings.map(findingHtml).join('');
+    html += '</div>';
+  } else {
+    html += '<div class="section"><h2>Cross-Domain Analysis</h2>' +
+      '<div class="empty">Not enough overlapping data yet. This fills in as sleep, training, nutrition and ' +
+      'body-comp history build up alongside each other.</div></div>';
+  }
+
   if(period !== 'daily'){
     const signals = crossDomainSignals(period, start, end);
-    html += '<div class="section"><h2>Cross-Domain Signals</h2><div class="desc">Actual correlations found across sleep, training, nutrition, and body data — not just each domain reported separately.</div>';
     if(signals.length){
-      html += '<ul class="sleep-tip-list">' + signals.map(s => '<li>' + s + '</li>').join('') + '</ul>';
-    } else {
-      html += '<div class="empty">Not enough overlapping data yet to find real correlations — this fills in as sleep, training, nutrition, and body-comp logging build up history together.</div>';
+      html += '<div class="section"><h2>This period specifically</h2>' +
+        '<div class="desc">Signals limited to the ' + period + ' window selected above.</div>' +
+        '<ul class="sleep-tip-list">' + signals.map(s => '<li>' + s + '</li>').join('') + '</ul></div>';
     }
-    html += '</div>';
   }
 
   if(neglected.length && period !== 'daily'){
@@ -1029,40 +947,10 @@ const training = DATA.training || {sessions:[], muscle_scores:{}, streak_weeks:0
     return lines.join('\n');
   }
 
-  // Which muscles this session hit, from the plan's name — so a logged workout
-  // shows up on the recovery model straight away instead of waiting for the
-  // watch to sync and the name to be re-inferred server-side.
-  function musclesFromPlanName(){
-    const splits = DATA.gym_splits || {};
-    const merged = {};
-    (plan.name || '').toLowerCase().replace(/[+\/]/g, ' ').split(/\s+/).forEach(word => {
-      const group = splits[word];
-      if(!group) return;
-      Object.keys(group).forEach(muscle => {
-        if(group[muscle] > (merged[muscle] || 0)) merged[muscle] = group[muscle];
-      });
-    });
-    return merged;
-  }
-
-  function subtypeFromPlanName(){
-    const splits = DATA.gym_splits || {};
-    return (plan.name || '').toLowerCase().replace(/[+\/]/g, ' ').split(/\s+/).find(w => splits[w]) || null;
-  }
-
   function renderSummaryBox(){
     const summary = buildSummary();
     const box = el('workoutSummaryBox');
-    const logged = localStorage.getItem(storageKey + '_logged') === '1';
-    box.innerHTML =
-      '<div class="log-actions">' +
-        (logged
-          ? '<span class="log-status ok">Logged to the site ✓</span>'
-          : '<button class="log-btn" id="logWorkoutBtn">Log this workout</button>') +
-        '<span class="log-status" id="logWorkoutStatus"></span>' +
-      '</div>' +
-      (Logger.configured() || logged ? '' : '<div class="log-hint">Or set up ⚙️ logging to save it without copy-pasting.</div>') +
-      '<div class="workout-summary-box"><textarea readonly id="workoutSummaryText"></textarea><br>' +
+    box.innerHTML = '<div class="workout-summary-box"><textarea readonly id="workoutSummaryText"></textarea><br>' +
       '<button class="copy-btn" id="copySummaryBtn">Copy to clipboard</button></div>';
     el('workoutSummaryText').value = summary;
     el('copySummaryBtn').addEventListener('click', () => {
@@ -1070,27 +958,6 @@ const training = DATA.training || {sessions:[], muscle_scores:{}, streak_weeks:0
         navigator.clipboard.writeText(summary).then(() => { el('copySummaryBtn').textContent = 'Copied!'; }).catch(() => {});
       }
     });
-    if(!logged){
-      wireLogForm({
-        kind: 'training',
-        button: 'logWorkoutBtn',
-        status: 'logWorkoutStatus',
-        build: () => ({entry: {
-          date: plan.date,
-          type: 'gym',
-          subtype: subtypeFromPlanName(),
-          // No duration_min: that makes this an annotation, which merges with
-          // the Garmin activity for the same day rather than double-counting it.
-          muscle_groups: musclesFromPlanName(),
-          notes: (plan.name || 'Workout') + ' — ' + plan.exercises.map((ex, i) =>
-            ex.name + ' ' + (progress[i] || 0) + '/' + ex.target_sets + 'x' + ex.target_reps).join(', '),
-        }}),
-        onSaved: () => {
-          try{ localStorage.setItem(storageKey + '_logged', '1'); }catch(e){}
-          render();
-        },
-      });
-    }
   }
 
   function render(){
@@ -1668,12 +1535,13 @@ if(training.sessions.length){
     '<div class="analysis-row"><span class="k">Protein</span><span class="v">' + (nv.today_protein_g ?? 0) + 'g <span style="color:var(--text-faint)">/ ' + nv.protein_target_g + 'g target</span></span></div>' +
     '</div>' +
     '<div class="analysis-card"><h3>Burned so far (Garmin)</h3>' +
-    '<div class="analysis-row"><span class="k">Today</span><span class="v">' + (nv.today_burn_so_far_kcal != null ? Math.round(nv.today_burn_so_far_kcal) + ' kcal' : 'not synced yet') + '</span></div>' +
-    (nv.latest_bmr ? '<div class="analysis-row"><span class="k">BMR (Mi Scale)</span><span class="v">' + nv.latest_bmr + ' kcal</span></div>' : '') +
+    '<div class="analysis-row"><span class="k">Total today</span><span class="v">' + (nv.today_burn_so_far_kcal != null ? Math.round(nv.today_burn_so_far_kcal) + ' kcal' : 'not synced yet') + '</span></div>' +
+    (nv.today_bmr_kcal != null ? '<div class="analysis-row"><span class="k">└ resting</span><span class="v">' + Math.round(nv.today_bmr_kcal) + ' kcal</span></div>' : '') +
+    (nv.today_active_kcal != null ? '<div class="analysis-row"><span class="k">└ active</span><span class="v">' + Math.round(nv.today_active_kcal) + ' kcal</span></div>' : '') +
     '</div></div></div>';
 
   html += '<div class="section"><h2>Weekly Energy Balance</h2>' +
-    '<div class="desc">Burn is Garmin\'s device-measured daily total (heart-rate based), not a generic BMR formula. Only complete days count — today is excluded, and only days with both food logged and Garmin data synced are compared.</div>';
+    '<div class="desc">Burn is Garmin\'s device-measured daily total — resting <b>plus</b> active calories, heart-rate based, not a formula. Only complete days count: today is excluded, days without food logged are excluded, and so are days the watch didn\'t cover end to end.</div>';
 
   if(nv.week_days_compared > 0){
     const info = CLASSIFICATION_INFO[nv.classification] || {label:'-', color:'var(--text-dim)', desc:''};
@@ -1682,6 +1550,8 @@ if(training.sessions.length){
       '<div class="analysis-card"><h3>Last ' + nv.week_days_compared + ' complete day' + (nv.week_days_compared===1?'':'s') + '</h3>' +
       '<div class="analysis-row"><span class="k">Avg intake</span><span class="v">' + nv.week_avg_intake_kcal + ' kcal</span></div>' +
       '<div class="analysis-row"><span class="k">Avg burn (Garmin)</span><span class="v">' + nv.week_avg_burn_kcal + ' kcal</span></div>' +
+      (nv.week_avg_bmr_kcal != null ? '<div class="analysis-row"><span class="k">└ resting</span><span class="v">' + nv.week_avg_bmr_kcal + ' kcal</span></div>' : '') +
+      (nv.week_avg_active_kcal != null ? '<div class="analysis-row"><span class="k">└ active</span><span class="v">' + nv.week_avg_active_kcal + ' kcal</span></div>' : '') +
       '<div class="analysis-row"><span class="k">Balance</span><span class="v" style="color:' + (nv.week_balance_kcal>0?'#3ddc97':'#ff6b7a') + '">' + balanceStr + ' kcal/day</span></div>' +
       '<div class="analysis-row"><span class="k">Avg protein</span><span class="v">' + nv.week_avg_protein_g + 'g <span style="color:var(--text-faint)">/ ' + nv.protein_target_g + 'g target</span></span></div>' +
       '</div>' +
@@ -1689,20 +1559,26 @@ if(training.sessions.length){
       '<p style="font-size:0.82rem;color:var(--text-dim);margin:0;">' + info.desc + '</p></div>' +
       '</div>';
   } else {
-    html += '<div class="empty">No complete days to compare yet — this fills in automatically once today ends and tomorrow\'s rebuild runs. Nothing to log for past days; tracking just starts from today.</div>';
+    html += '<div class="empty">No complete days to compare yet — a day needs both food logged and a full day of Garmin data. This fills in as those line up.</div>';
+  }
+
+  // Days the watch didn't cover end to end come back with a short basal burn.
+  // Averaging them in understates burn badly, so they are named rather than hidden.
+  if((nv.partial_days_excluded||[]).length){
+    html += '<div class="log-hint" style="margin-top:12px;color:var(--yellow);font-size:0.78rem;">' +
+      'Excluded as incomplete: ' + nv.partial_days_excluded.map(fmtDate).join(', ') +
+      ' — the watch logged less than a full day of resting burn (typical is ' + (nv.typical_bmr_kcal||'?') +
+      ' kcal), so counting them would understate your burn.</div>';
   }
   html += '<div class="desc" style="margin-top:12px;">Protein target: <b>' + (nv.protein_target_g||'-') + 'g/day</b> (' + (nv.protein_g_per_kg||'-') + 'g/kg × ' + (nv.latest_weight_kg||'-') + 'kg bodyweight)' +
     (DATA.body_comp && DATA.body_comp.length ? '' : ' — using the default weight since no Mi Scale reading is logged yet.') + '</div>' +
     '</div>';
 
-  html += foodFormHtml();
-
   if(!nutrition.length){
     html += '<div class="placeholder"><div class="big">🍽️</div>' +
       '<p><b>No meals logged yet.</b></p>' +
-      '<p>Add one above, or tell me what you ate and I\'ll estimate the macros for you.</p></div>';
+      '<p>Tell me what you ate — "one plate of lasagna for lunch" or exact grams — and I\'ll estimate the macros and start tracking them here.</p></div>';
     el('nutritionContent').innerHTML = html;
-    wireFoodForm();
     return;
   }
 
@@ -1710,7 +1586,6 @@ if(training.sessions.length){
   html += '<div class="section"><h2>Daily Nutrition</h2><div class="desc">Calories and macros (P/C/F in grams) per day.</div><div id="nutriCalWrap"></div></div>';
   html += '<div class="section"><h2>Food Log</h2><div id="foodTableWrap"></div></div>';
   el('nutritionContent').innerHTML = html;
-  wireFoodForm();
   el('nutriCalWrap').innerHTML = buildCalendar([], dayTotals);
   const rows = nutrition.slice().reverse().slice(0,25).map(n =>
     '<tr><td>' + fmtDate(n.date) + '</td><td>' + (n.meal||'-') + '</td><td>' + n.description + '</td>' +
@@ -1719,129 +1594,102 @@ if(training.sessions.length){
   el('foodTableWrap').innerHTML = '<div class="table-scroll"><table><thead><tr><th>Date</th><th>Meal</th><th>Description</th><th>Cal</th><th>P</th><th>C</th><th>F</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
 })();
 
-function foodFormHtml(){
-  const meals = ['breakfast','lunch','dinner','snack'];
-  const hour = new Date().getHours();
-  const guess = hour < 11 ? 'breakfast' : hour < 15 ? 'lunch' : hour < 21 ? 'dinner' : 'snack';
-  return '<div class="section"><h2>Add Food</h2>' +
-    '<div class="desc">Logs straight to the site. Leave macros blank if you don\'t know them — an entry with just a description is still worth having.</div>' +
-    '<div class="log-form">' +
-      '<label>Date<input type="date" id="foodDate" value="' + DATA.generated_at + '"></label>' +
-      '<label>Meal<select id="foodMeal">' +
-        meals.map(m => '<option value="' + m + '"' + (m === guess ? ' selected' : '') + '>' + m + '</option>').join('') +
-      '</select></label>' +
-      '<label class="wide">Description<input type="text" id="foodDesc" placeholder="Chicken curry with rice, ~400g"></label>' +
-      '<label>Calories<input type="number" id="foodCal" min="0" inputmode="numeric" placeholder="820"></label>' +
-      '<label>Protein (g)<input type="number" id="foodP" min="0" inputmode="numeric" placeholder="55"></label>' +
-      '<label>Carbs (g)<input type="number" id="foodC" min="0" inputmode="numeric" placeholder="94"></label>' +
-      '<label>Fat (g)<input type="number" id="foodF" min="0" inputmode="numeric" placeholder="23"></label>' +
-    '</div>' +
-    '<div class="log-actions"><button class="log-btn" id="foodSaveBtn">Save entry</button>' +
-    '<span class="log-status" id="foodStatus"></span></div>' +
-    (Logger.configured() ? '' : '<div class="log-hint">Logging isn\'t set up on this device yet — open ⚙️ in the top bar.</div>') +
-    '</div>';
-}
-
-function wireFoodForm(){
-  const num = id => { const v = el(id).value.trim(); return v === '' ? undefined : Number(v); };
-  wireLogForm({
-    kind: 'food',
-    button: 'foodSaveBtn',
-    status: 'foodStatus',
-    build: () => {
-      const description = el('foodDesc').value.trim();
-      if(!description) return {error: 'Add a description first.'};
-      return {entry: {
-        date: el('foodDate').value,
-        meal: el('foodMeal').value,
-        description,
-        calories: num('foodCal'),
-        protein_g: num('foodP'),
-        carbs_g: num('foodC'),
-        fat_g: num('foodF'),
-      }};
-    },
-    onSaved: () => {
-      ['foodDesc','foodCal','foodP','foodC','foodF'].forEach(id => { el(id).value = ''; });
-    },
-  });
-}
-
 // ===================== BODY TAB =====================
 const bodyComp = DATA.body_comp || [];
+const bodyView = DATA.body_view;
 
-function bodyFormHtml(){
-  return '<div class="section"><h2>Add Weigh-in</h2>' +
-    '<div class="desc">Straight off the Mi Scale. Weight alone is enough — it feeds your protein target and the energy-balance maths, which fall back to a fixed 95kg until something real is logged.</div>' +
-    '<div class="log-form">' +
-      '<label>Date<input type="date" id="bodyDate" value="' + DATA.generated_at + '"></label>' +
-      '<label>Weight (kg)<input type="number" step="0.1" min="0" id="bodyWeight" inputmode="decimal" placeholder="93.4"></label>' +
-      '<label>Body fat %<input type="number" step="0.1" min="0" id="bodyFat" inputmode="decimal" placeholder="22.5"></label>' +
-      '<label>Muscle mass (kg)<input type="number" step="0.1" min="0" id="bodyMuscle" inputmode="decimal" placeholder="68.2"></label>' +
-      '<label>Water %<input type="number" step="0.1" min="0" id="bodyWater" inputmode="decimal" placeholder="55.0"></label>' +
-      '<label>Visceral fat<input type="number" step="0.1" min="0" id="bodyVisceral" inputmode="decimal" placeholder="9"></label>' +
-      '<label>BMR (kcal)<input type="number" min="0" id="bodyBmr" inputmode="numeric" placeholder="2050"></label>' +
-    '</div>' +
-    '<div class="log-actions"><button class="log-btn" id="bodySaveBtn">Save weigh-in</button>' +
-    '<span class="log-status" id="bodyStatus"></span></div>' +
-    (Logger.configured() ? '' : '<div class="log-hint">Logging isn\'t set up on this device yet — open ⚙️ in the top bar.</div>') +
+function findingHtml(f){
+  const meta = [];
+  if(f.domains) meta.push(f.domains.map(d => '<span class="domain-tag">' + d + '</span>').join(' '));
+  if(f.confidence) meta.push('<span class="conf ' + f.confidence + '">' + f.confidence + '</span> evidence · n=' + f.n);
+  if(f.r != null) meta.push('r = ' + f.r);
+  return '<div class="finding ' + (f.severity||'info') + '">' +
+    '<h4>' + (f.headline || f.title) + '</h4>' +
+    '<p>' + (f.detail||'') + '</p>' +
+    (meta.length ? '<div class="meta">' + meta.join('') + '</div>' : '') +
     '</div>';
 }
 
-function wireBodyForm(){
-  const num = id => { const v = el(id).value.trim(); return v === '' ? undefined : Number(v); };
-  wireLogForm({
-    kind: 'body',
-    button: 'bodySaveBtn',
-    status: 'bodyStatus',
-    build: () => {
-      const entry = {
-        date: el('bodyDate').value,
-        weight_kg: num('bodyWeight'),
-        body_fat_pct: num('bodyFat'),
-        muscle_mass_kg: num('bodyMuscle'),
-        water_pct: num('bodyWater'),
-        visceral_fat: num('bodyVisceral'),
-        bmr: num('bodyBmr'),
-      };
-      const hasMeasurement = Object.keys(entry).some(k => k !== 'date' && entry[k] !== undefined);
-      if(!hasMeasurement) return {error: 'Fill in at least one measurement.'};
-      return {entry};
-    },
-    onSaved: () => {
-      ['bodyWeight','bodyFat','bodyMuscle','bodyWater','bodyVisceral','bodyBmr'].forEach(id => { el(id).value = ''; });
-    },
-  });
-}
-
-if(!bodyComp.length){
-  el('bodyContent').innerHTML = bodyFormHtml() +
+if(!bodyView){
+  el('bodyContent').innerHTML =
     '<div class="placeholder"><div class="big">⚖️</div>' +
     '<p><b>No body composition data yet.</b></p>' +
-    '<p>Add a weigh-in above and the weight and body-fat trend starts charting here.</p></div>';
-  wireBodyForm();
+    '<p>Send me your Mi Scale readings after you weigh in and the full breakdown appears here.</p></div>';
 } else {
-  let html = bodyFormHtml();
-  html += '<div class="section"><h2>Weight & Body Fat</h2><div class="chart-wrap"><canvas id="bodyChart"></canvas></div></div>';
-  html += '<div class="section"><h2>Measurements</h2><div id="bodyTableWrap"></div></div>';
+  const v = bodyView;
+  let html = '';
+
+  // Headline: the composition split, which is what the numbers are really about.
+  html += '<div class="section"><h2>Composition</h2>' +
+    '<div class="desc">Measured ' + fmtDate(v.measured_on) + (v.latest.time ? ' at ' + v.latest.time : '') +
+    ' · ' + v.entry_count + ' reading' + (v.entry_count === 1 ? '' : 's') + ' on record</div>';
+  if(v.lean_mass_kg != null){
+    const leanPct = Math.round(v.lean_mass_kg / v.latest.weight_kg * 100);
+    html += '<div class="workout-progress-bar" style="height:22px;border-radius:6px;display:flex;">' +
+      '<div style="width:' + leanPct + '%;background:var(--neon);"></div>' +
+      '<div style="width:' + (100-leanPct) + '%;background:var(--orange);"></div></div>' +
+      '<div class="plan-legend" style="margin-top:8px;">' +
+        '<span><i style="background:var(--neon)"></i>Lean mass ' + v.lean_mass_kg + ' kg (' + leanPct + '%)</span>' +
+        '<span><i style="background:var(--orange)"></i>Fat mass ' + v.fat_mass_kg + ' kg (' + (100-leanPct) + '%)</span>' +
+      '</div>';
+  }
+  html += '</div>';
+
+  // Anything outside its reference band, first.
+  if(v.attention.length){
+    html += '<div class="section"><h2>Needs attention</h2><div class="stat-grid">' +
+      v.attention.map(statTile).join('') + '</div></div>';
+  }
+
+  html += '<div class="section"><h2>All measurements</h2>' +
+    '<div class="desc">Every metric the scale reports, graded against adult-male reference ranges.</div>' +
+    '<div class="stat-grid">' + v.metrics.map(statTile).join('') + '</div></div>';
+
+  if(v.findings.length){
+    html += '<div class="section"><h2>What this means</h2>' +
+      v.findings.map(f => findingHtml({severity:f.severity, headline:f.title, detail:f.detail})).join('') +
+      '</div>';
+  }
+
+  if(bodyComp.length > 1){
+    html += '<div class="section"><h2>Trend</h2><div class="chart-wrap"><canvas id="bodyChart"></canvas></div></div>';
+  }
+  html += '<div class="section"><h2>History</h2><div id="bodyTableWrap"></div></div>';
   el('bodyContent').innerHTML = html;
-  wireBodyForm();
-  new Chart(el('bodyChart'), {
-    data:{
-      labels: bodyComp.map(b=>fmtDate(b.date)),
-      datasets:[
-        {type:'line', label:'Weight (kg)', data: bodyComp.map(b=>b.weight_kg), borderColor:'#5b8cff', yAxisID:'y', pointRadius:3, tension:0.3},
-        {type:'line', label:'Body Fat %', data: bodyComp.map(b=>b.body_fat_pct), borderColor:'#ff9f5a', yAxisID:'y1', pointRadius:3, tension:0.3},
-      ]
-    },
-    options:{ responsive:true, maintainAspectRatio:false,
-      scales:{ y:{position:'left', grid:{color:'#1b212c'}}, y1:{position:'right', grid:{display:false}} } }
-  });
+
+  if(bodyComp.length > 1){
+    new Chart(el('bodyChart'), {
+      data:{
+        labels: bodyComp.map(b=>fmtDate(b.date)),
+        datasets:[
+          {type:'line', label:'Weight (kg)', data: bodyComp.map(b=>b.weight_kg), borderColor:'#5b8cff', yAxisID:'y', pointRadius:3, tension:0.3},
+          {type:'line', label:'Body Fat %', data: bodyComp.map(b=>b.body_fat_pct), borderColor:'#ff9f5a', yAxisID:'y1', pointRadius:3, tension:0.3},
+          {type:'line', label:'Muscle (kg)', data: bodyComp.map(b=>b.muscle_mass_kg), borderColor:'#3ddc97', yAxisID:'y', pointRadius:3, tension:0.3},
+        ]
+      },
+      options:{ responsive:true, maintainAspectRatio:false,
+        scales:{ y:{position:'left', grid:{color:'#1b212c'}}, y1:{position:'right', grid:{display:false}} } }
+    });
+  }
+  const cols = ['weight_kg','body_fat_pct','muscle_mass_kg','skeletal_muscle_kg','water_pct','visceral_fat','bmr'];
+  const heads = ['Date','Weight','Body fat','Muscle','Skeletal','Water','Visceral','BMR'];
   const rows = bodyComp.slice().reverse().map(b =>
-    '<tr><td>' + fmtDate(b.date) + '</td><td>' + (b.weight_kg??'-') + ' kg</td><td>' + (b.body_fat_pct??'-') + '%</td>' +
-    '<td>' + (b.muscle_mass_kg??'-') + ' kg</td><td>' + (b.water_pct??'-') + '%</td><td>' + (b.visceral_fat??'-') + '</td></tr>'
+    '<tr><td>' + fmtDate(b.date) + '</td>' + cols.map(c => '<td>' + (b[c] ?? '-') + '</td>').join('') + '</tr>'
   ).join('');
-  el('bodyTableWrap').innerHTML = '<div class="table-scroll"><table><thead><tr><th>Date</th><th>Weight</th><th>Body Fat</th><th>Muscle</th><th>Water</th><th>Visceral</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  el('bodyTableWrap').innerHTML = '<div class="table-scroll"><table><thead><tr>' +
+    heads.map(h => '<th>' + h + '</th>').join('') + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+}
+
+function statTile(m){
+  const delta = m.delta != null && m.delta !== 0
+    ? '<div class="delta">' + (m.delta > 0 ? '▲ +' : '▼ ') + m.delta + ' since last</div>' : '';
+  return '<div class="stat-tile">' +
+    '<div class="lbl">' + m.label + '</div>' +
+    '<div class="val">' + m.value + (m.unit ? '<span class="u">' + m.unit + '</span>' : '') + '</div>' +
+    (m.status_label ? '<span class="stat-chip ' + m.status + '">' + m.status_label + '</span>' : '') +
+    delta +
+    '<div class="why">' + m.meaning + '</div>' +
+    '</div>';
 }
 
 __RUNNING_TAB_SCRIPT__

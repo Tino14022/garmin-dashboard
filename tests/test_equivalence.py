@@ -17,7 +17,7 @@ from garmin_dashboard.pipeline import build_payload
 from garmin_dashboard.sources.garmin import GarminSource
 from garmin_dashboard.storage import DictDataStore
 
-NEW_KEYS = {"race_plan", "build_health", "generated_at_iso", "gym_splits"}
+NEW_KEYS = {"race_plan", "build_health", "generated_at_iso", "body_view", "insights"}
 
 
 def legacy_payload(api, data_files, today):
@@ -134,7 +134,6 @@ def test_only_expected_keys_were_added(payloads):
         "body_comp",
         "muscle_group_list",
         "calorie_trend",
-        "nutrition_view",
         "lifestyle",
         "workout_plan",
     ],
@@ -151,6 +150,15 @@ def test_value_is_identical(payloads, key):
 def test_training_view_is_identical(payloads, key):
     old, new = payloads
     assert new["training"][key] == old["training"][key]
+
+
+def test_nutrition_view_keeps_every_legacy_field(payloads):
+    """nutrition_view deliberately gained fields (the active/basal split, and
+    partial-day exclusion). Every value the legacy build produced must still
+    agree; the additions are pinned in test_nutrition_completeness.py."""
+    old, new = payloads
+    for key, value in old["nutrition_view"].items():
+        assert new["nutrition_view"][key] == value, f"nutrition_view.{key} changed"
 
 
 def test_training_view_produced_real_data(payloads):

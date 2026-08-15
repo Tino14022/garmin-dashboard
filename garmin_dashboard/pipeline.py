@@ -9,8 +9,10 @@ import time
 from datetime import date, datetime, timedelta, timezone
 
 from .config import Settings
+from .domain.body import build_body_view
 from .domain.formatting import iso
 from .domain.health import FetchLog
+from .domain.insights import build_insights
 from .domain.nutrition import build_nutrition_view
 from .domain.plan import build_race_plan
 from .domain.training import (
@@ -88,7 +90,7 @@ def build_payload(
     )
 
     days_remaining = (settings.race.date - today).days
-    return {
+    payload = {
         "generated_at": today.isoformat(),
         "generated_at_time": generated_at_time
         or time.strftime("%Y-%m-%d %H:%M %Z"),
@@ -124,9 +126,6 @@ def build_payload(
         "nutrition": nutrition,
         "body_comp": body_comp,
         "muscle_group_list": presets.get("muscle_groups", []),
-        # Exposed so the page can label a finished workout with the right
-        # muscles at log time, rather than waiting for the watch to sync.
-        "gym_splits": presets.get("gym_splits", {}),
         "calorie_trend": calorie_trend,
         "nutrition_view": nutrition_view,
         "lifestyle": lifestyle,
@@ -134,3 +133,11 @@ def build_payload(
         "race_plan": race_plan,
         "build_health": log.to_payload(),
     }
+
+    # These read the assembled payload rather than the raw sources, so they see
+    # exactly what the page sees and cannot drift from it.
+    payload["body_view"] = build_body_view(
+        body_comp, height_cm=settings.athlete.height_cm, today=today
+    )
+    payload["insights"] = build_insights(payload, today)
+    return payload

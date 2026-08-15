@@ -1,11 +1,18 @@
 [
   {
     "date": "2026-08-15",
+    "time": "09:42",
     "weight_kg": 98.9,
+    "bmi": 27.1,
     "body_fat_pct": 20.3,
     "muscle_mass_kg": 74.9,
+    "skeletal_muscle_kg": 38.2,
     "water_pct": 49.9,
+    "protein_pct": 21.9,
+    "bone_mass_kg": 4.0,
     "visceral_fat": 8,
-    "bmr": 2175
+    "subcutaneous_fat_pct": 15.3,
+    "bmr": 2175,
+    "body_score": 87
   }
 ]
