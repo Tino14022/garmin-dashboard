@@ -128,5 +128,15 @@
     "protein_g": 12,
     "carbs_g": 33,
     "fat_g": 11
+  },
+  {
+    "date": "2026-08-15",
+    "meal": "dinner",
+    "description": "Fuzetea (400ml)",
+    "grams": 400,
+    "calories": 80,
+    "protein_g": 0,
+    "carbs_g": 19,
+    "fat_g": 0
   }
 ]
