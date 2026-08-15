@@ -399,6 +399,36 @@ __RUNNING_TAB_STYLE__
   .cm-cell{ aspect-ratio:1; border-radius:2px; min-width:22px; }
   .cm-axis{ font-size:0.58rem; color:var(--text-faint); white-space:nowrap; }
 
+  /* ---- Expanders: food by day, sessions by workout ---- */
+  details.day, details.sess{ border-bottom:1px solid var(--border); }
+  details.day:last-child, details.sess:last-child{ border-bottom:none; }
+  details.day > summary, details.sess > summary{
+    list-style:none; cursor:pointer; padding:11px 4px; display:flex; align-items:center;
+    gap:10px; flex-wrap:wrap; user-select:none;
+  }
+  details.day > summary::-webkit-details-marker, details.sess > summary::-webkit-details-marker{ display:none; }
+  details.day > summary::before, details.sess > summary::before{
+    content:'▸'; color:var(--text-faint); font-size:0.7rem; transition:transform 0.15s; flex-shrink:0;
+  }
+  details.day[open] > summary::before, details.sess[open] > summary::before{ transform:rotate(90deg); }
+  details.day > summary:hover, details.sess > summary:hover{ background:rgba(255,255,255,0.02); }
+  .day-date, .sess-date{ font-weight:700; font-size:0.85rem; min-width:56px; }
+  .day-kcal{ font-weight:700; font-size:0.85rem; color:var(--neon); }
+  .day-macros{ font-size:0.72rem; color:var(--text-faint); display:flex; gap:8px; align-items:center; }
+  .day-vs{ color:var(--yellow); }
+  .day-vs.hit{ color:var(--neon); }
+  .day-count{ margin-left:auto; font-size:0.7rem; color:var(--text-faint); }
+  .sess-title{ font-weight:600; font-size:0.85rem; }
+  .sess-dur{ margin-left:auto; font-size:0.75rem; color:var(--text-faint); }
+  .sess-body{ padding:2px 4px 14px 20px; }
+  .sess-pre{ font-size:0.78rem; color:var(--text-dim); margin-bottom:9px; line-height:1.5; }
+  .sess-ex{ background:var(--panel-2); border-radius:10px; padding:4px 12px; }
+  .sess-row{ display:flex; justify-content:space-between; gap:12px; padding:6px 0; font-size:0.8rem; border-bottom:1px solid var(--border); }
+  .sess-row:last-child{ border-bottom:none; }
+  .sess-row b{ color:var(--neon); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .sess-muscles{ margin-top:10px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .sess-muscles .lbl{ font-size:0.7rem; color:var(--text-faint); margin-right:2px; }
+
   footer{color:var(--text-faint); font-size:0.75rem; text-align:center; padding:20px 0 10px;}
 </style>
 </head>
@@ -1925,16 +1955,58 @@ const muscleTabBar = el('muscleTabBar');
 });
 renderMuscleDetail('All');
 
-// Recent sessions table
+// Recent sessions. The row shows a short label; the exercise detail lives
+// inside the expander, because a full set-by-set list in a table cell made the
+// list unreadable and pushed every other column off screen.
+function sessionTitle(s){
+  if(s.subtype) return s.subtype.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+  if(s.type === 'run' && s.notes) return s.notes.split(' @')[0];
+  return (s.type || 'session').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// Notes are written as "<preamble>: A 4/4x8-10, B 3/3x8-10". Split them back
+// into individual exercises where that shape holds, and fall back to the raw
+// text where it doesn't.
+function sessionDetail(s){
+  let html = '';
+  const notes = s.notes || '';
+  const colon = notes.indexOf(':');
+  const listPart = colon > -1 ? notes.slice(colon + 1) : '';
+  const items = listPart.split(',').map(x => x.trim()).filter(x => /\d+\s*\/\s*\d+\s*x|\dx\d/i.test(x));
+
+  if(items.length){
+    const preamble = notes.slice(0, colon).replace(/\s*[—-]\s*full workout completed$/i, '').trim();
+    if(preamble) html += '<div class="sess-pre">' + preamble + '</div>';
+    html += '<div class="sess-ex">' + items.map(it => {
+      const m = it.match(/^(.*?)\s+(\d+\s*\/\s*\d+\s*x\s*[\d\-–]+)$/i);
+      return m
+        ? '<div class="sess-row"><span>' + m[1] + '</span><b>' + m[2].replace(/\s+/g,'') + '</b></div>'
+        : '<div class="sess-row"><span>' + it + '</span></div>';
+    }).join('') + '</div>';
+  } else if(notes){
+    html += '<div class="sess-pre">' + notes + '</div>';
+  }
+
+  const muscles = Object.entries(s.muscle_groups || {}).sort((a,b) => b[1]-a[1]);
+  if(muscles.length){
+    html += '<div class="sess-muscles"><span class="lbl">Worked</span>' +
+      muscles.map(([m, i]) =>
+        '<span class="neglect-tag" style="opacity:' + (0.45 + i*0.55).toFixed(2) + '">' +
+        m.replace(/_/g,' ') + '</span>').join('') + '</div>';
+  }
+  return html || '<div class="sess-pre">No detail recorded for this session.</div>';
+}
+
 const sessWrap = el('sessionsTableWrap');
 if(training.sessions.length){
-  const rows = training.sessions.slice(0, 15).map(s =>
-    '<tr><td>' + fmtDate(s.date) + '</td><td>' + (ICONS[s.type]||'') + ' ' + s.type + (s.subtype ? ' · ' + s.subtype : '') +
-    (s.garmin_synced === false ? '<span class="sync-pending">⏳ pending sync</span>' : '') + '</td>' +
-    '<td>' + (s.duration_min ? s.duration_min + ' min' : '-') + '</td>' +
-    '<td>' + (s.notes || '-') + '</td></tr>'
+  sessWrap.innerHTML = training.sessions.slice(0, 20).map(s =>
+    '<details class="sess"><summary>' +
+      '<span class="sess-date">' + fmtDate(s.date) + '</span>' +
+      '<span class="sess-title">' + (ICONS[s.type]||'') + ' ' + sessionTitle(s) + '</span>' +
+      (s.garmin_synced === false ? '<span class="sync-pending">⏳ pending</span>' : '') +
+      '<span class="sess-dur">' + (s.duration_min ? s.duration_min + ' min' : '') + '</span>' +
+    '</summary><div class="sess-body">' + sessionDetail(s) + '</div></details>'
   ).join('');
-  sessWrap.innerHTML = '<div class="table-scroll"><table><thead><tr><th>Date</th><th>Type</th><th>Duration</th><th>Notes</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
 } else {
   sessWrap.innerHTML = '<div class="empty">No manually-logged sessions yet.</div>';
 }
@@ -2253,11 +2325,39 @@ if(training.sessions.length){
   html += '<div class="section"><h2>Food Log</h2><div id="foodTableWrap"></div></div>';
   el('nutritionContent').innerHTML = html;
   el('nutriCalWrap').innerHTML = buildCalendar([], dayTotals);
-  const rows = nutrition.slice().reverse().slice(0,25).map(n =>
-    '<tr><td>' + fmtDate(n.date) + '</td><td>' + (n.meal||'-') + '</td><td>' + n.description + '</td>' +
-    '<td>' + (n.calories||'-') + '</td><td>' + (n.protein_g||'-') + 'g</td><td>' + (n.carbs_g||'-') + 'g</td><td>' + (n.fat_g||'-') + 'g</td></tr>'
-  ).join('');
-  el('foodTableWrap').innerHTML = '<div class="table-scroll"><table><thead><tr><th>Date</th><th>Meal</th><th>Description</th><th>Cal</th><th>P</th><th>C</th><th>F</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+
+  // Grouped by day rather than one flat list: a continuous stream of entries
+  // hides where one day ends and the next begins, which is the only boundary
+  // that matters when reading intake. Today opens by default.
+  const MEAL_ORDER = {breakfast:0, lunch:1, dinner:2, snack:3};
+  const byDay = {};
+  nutrition.forEach(n => { (byDay[n.date] = byDay[n.date] || []).push(n); });
+  const days = Object.keys(byDay).sort().reverse();
+  const target = nv.protein_target_g;
+
+  el('foodTableWrap').innerHTML = days.map((d, idx) => {
+    const entries = byDay[d].slice().sort((a,b) =>
+      (MEAL_ORDER[a.meal] ?? 9) - (MEAL_ORDER[b.meal] ?? 9));
+    const t = dayTotals[d] || {calories:0, protein:0, carbs:0, fat:0};
+    const rows = entries.map(n =>
+      '<tr><td style="color:var(--text-faint);text-transform:capitalize">' + (n.meal||'-') + '</td>' +
+      '<td>' + n.description + '</td>' +
+      '<td style="text-align:right">' + (n.calories||'-') + '</td>' +
+      '<td style="text-align:right">' + (n.protein_g||0) + 'g</td>' +
+      '<td style="text-align:right">' + (n.carbs_g||0) + 'g</td>' +
+      '<td style="text-align:right">' + (n.fat_g||0) + 'g</td></tr>').join('');
+    return '<details class="day"' + (idx === 0 ? ' open' : '') + '><summary>' +
+      '<span class="day-date">' + fmtDate(d) + '</span>' +
+      '<span class="day-kcal">' + Math.round(t.calories) + ' kcal</span>' +
+      '<span class="day-macros">P' + Math.round(t.protein) + ' C' + Math.round(t.carbs) + ' F' + Math.round(t.fat) +
+        (target ? '<span class="day-vs' + (t.protein >= target ? ' hit' : '') + '">' +
+          Math.round(t.protein/target*100) + '% protein</span>' : '') + '</span>' +
+      '<span class="day-count">' + entries.length + ' item' + (entries.length===1?'':'s') + '</span>' +
+      '</summary><div class="table-scroll"><table><thead><tr><th>Meal</th><th>Description</th>' +
+      '<th style="text-align:right">Cal</th><th style="text-align:right">P</th>' +
+      '<th style="text-align:right">C</th><th style="text-align:right">F</th></tr></thead><tbody>' +
+      rows + '</tbody></table></div></details>';
+  }).join('');
 })();
 
 // ===================== BODY TAB =====================
