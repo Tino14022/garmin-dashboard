@@ -118,5 +118,15 @@
     "protein_g": 8,
     "carbs_g": 63,
     "fat_g": 22
+  },
+  {
+    "date": "2026-08-15",
+    "meal": "dinner",
+    "description": "Pesto pasta leftovers (400g, half of the full ordered portion: wholewheat spaghetti, pesto, low-cal white sauce, parmesan, onion)",
+    "grams": 400,
+    "calories": 271,
+    "protein_g": 12,
+    "carbs_g": 33,
+    "fat_g": 11
   }
 ]
