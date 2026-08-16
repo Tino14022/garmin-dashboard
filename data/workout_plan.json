@@ -1,12 +1,9 @@
 {
   "date": "2026-08-16",
-  "name": "Pull Day",
+  "name": "Bodyweight Circuit",
   "exercises": [
-    {"name": "Lat Pulldown", "target_sets": 4, "target_reps": "8-10"},
-    {"name": "Seated Cable Row", "target_sets": 3, "target_reps": "8-10"},
-    {"name": "Lat Pulldown (Circular Machine)", "target_sets": 3, "target_reps": "10-12"},
-    {"name": "45° Back Extension", "target_sets": 3, "target_reps": "12-15"},
-    {"name": "Bicep Curl (Machine)", "target_sets": 3, "target_reps": "10-12"},
-    {"name": "Hammer Curl", "target_sets": 3, "target_reps": "10-12"}
+    {"name": "Push-Up", "target_sets": 10, "target_reps": "20"},
+    {"name": "Bodyweight Squat", "target_sets": 10, "target_reps": "20"},
+    {"name": "Leg Raise", "target_sets": 10, "target_reps": "15"}
   ]
 }
