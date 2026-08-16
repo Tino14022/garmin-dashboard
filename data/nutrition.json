@@ -158,5 +158,75 @@
     "protein_g": 35,
     "carbs_g": 62,
     "fat_g": 11
+  },
+  {
+    "date": "2026-08-16",
+    "meal": "breakfast",
+    "description": "Eggs (4, ~200g)",
+    "grams": 200,
+    "calories": 288,
+    "protein_g": 25.2,
+    "carbs_g": 1.6,
+    "fat_g": 19.2
+  },
+  {
+    "date": "2026-08-16",
+    "meal": "breakfast",
+    "description": "Banana (1, ~118g)",
+    "grams": 118,
+    "calories": 105,
+    "protein_g": 1.3,
+    "carbs_g": 27,
+    "fat_g": 0.4
+  },
+  {
+    "date": "2026-08-16",
+    "meal": "breakfast",
+    "description": "Bread (4 slices, 160g)",
+    "grams": 160,
+    "calories": 397,
+    "protein_g": 27.8,
+    "carbs_g": 59.2,
+    "fat_g": 4.3
+  },
+  {
+    "date": "2026-08-16",
+    "meal": "breakfast",
+    "description": "Edam cheese (50g)",
+    "grams": 50,
+    "calories": 156,
+    "protein_g": 12,
+    "carbs_g": 0,
+    "fat_g": 12
+  },
+  {
+    "date": "2026-08-16",
+    "meal": "breakfast",
+    "description": "Smoked ham, Black Forest (30g)",
+    "grams": 30,
+    "calories": 70,
+    "protein_g": 7.8,
+    "carbs_g": 0.3,
+    "fat_g": 4.2
+  },
+  {
+    "date": "2026-08-16",
+    "meal": "breakfast",
+    "description": "Chicken breast, Pekabesko (20g)",
+    "grams": 20,
+    "calories": 17,
+    "protein_g": 2.8,
+    "carbs_g": 0.9,
+    "fat_g": 0.2
+  },
+  {
+    "date": "2026-08-16",
+    "meal": "breakfast",
+    "description": "Yogurt drink (200ml)",
+    "grams": 200,
+    "calories": 82,
+    "protein_g": 6.6,
+    "carbs_g": 8,
+    "fat_g": 1.8
   }
 ]
