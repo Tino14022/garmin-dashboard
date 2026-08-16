@@ -228,5 +228,15 @@
     "protein_g": 6.6,
     "carbs_g": 8,
     "fat_g": 1.8
+  },
+  {
+    "date": "2026-08-16",
+    "meal": "snack",
+    "description": "Smoothie (300ml milk, protein powder, banana, salt, 1 tbsp honey)",
+    "grams": null,
+    "calories": 453,
+    "protein_g": 34,
+    "carbs_g": 60,
+    "fat_g": 10
   }
 ]
