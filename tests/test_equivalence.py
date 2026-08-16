@@ -22,6 +22,7 @@ NEW_KEYS = {
     "fat_loss", "overview", "readiness", "todays_call", "recovery_debt",
     "circadian", "hypnogram", "body_battery", "punch_card", "streak_quality",
     "volume_map", "pace_curve", "pr_wall", "macro_plate", "protein_distribution", "benchmarks", "correlation_matrix", "rings", "digest", "week_starts_on",
+    "eating_budget",
 }
 
 

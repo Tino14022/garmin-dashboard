@@ -10,8 +10,10 @@ from datetime import date, timedelta
 
 import pytest
 
+from garmin_dashboard.config import FatLossGoal
 from garmin_dashboard.domain.benchmarks import build_benchmarks
 from garmin_dashboard.domain.fuelling import (
+    build_eating_budget,
     build_macro_plate,
     build_protein_distribution,
 )
@@ -282,6 +284,8 @@ def test_pr_wall_tolerates_unparseable_values():
 def test_fuelling_modules_return_none_without_data():
     assert build_macro_plate({}, TODAY) is None
     assert build_protein_distribution({}, TODAY) is None
+    assert build_eating_budget({}, TODAY, FatLossGoal()) is None
+    assert build_eating_budget({"calorie_trend": [{"date": iso(1), "total_kcal": 2500}]}, TODAY, None) is None
 
 
 def test_macro_plate_splits_by_calories_not_grams():
@@ -317,6 +321,39 @@ def test_protein_distribution_flags_a_single_dominant_meal():
     assert dist["biggest_meal"] == "dinner"
     assert dist["concentrated"] is True
     assert next(m for m in dist["meals"] if m["meal"] == "dinner")["over_ceiling"] is True
+
+
+def test_eating_budget_benchmarks_off_the_trailing_average_not_today():
+    payload = {
+        "calorie_trend": [
+            {"date": iso(3), "total_kcal": 2800, "bmr_kcal": 2400, "active_kcal": 400},
+            {"date": iso(2), "total_kcal": 2900, "bmr_kcal": 2400, "active_kcal": 500},
+            {"date": iso(1), "total_kcal": 2900, "bmr_kcal": 2400, "active_kcal": 500},
+            # Today is mid-day and heavily partial — must not pull the average down.
+            {"date": iso(0), "total_kcal": 900, "bmr_kcal": 800, "active_kcal": 100},
+        ],
+        "nutrition_view": {"today_intake_kcal": 1500},
+    }
+    budget = build_eating_budget(payload, TODAY, FatLossGoal(weekly_rate_kg=0.4))
+    assert budget["benchmark_days"] == 3
+    assert budget["benchmark_kcal"] == round((2800 + 2900 + 2900) / 3)
+    assert budget["daily_deficit_kcal"] == 440
+    assert budget["daily_budget_kcal"] == budget["benchmark_kcal"] - 440
+    assert budget["eaten_today_kcal"] == 1500
+    assert budget["remaining_kcal"] == budget["daily_budget_kcal"] - 1500
+    assert budget["over_budget"] is False
+
+
+def test_eating_budget_flags_going_over():
+    payload = {
+        "calorie_trend": [{"date": iso(1), "total_kcal": 2400, "bmr_kcal": 2400, "active_kcal": 0}],
+        "nutrition_view": {"today_intake_kcal": 3000},
+    }
+    budget = build_eating_budget(payload, TODAY, FatLossGoal(weekly_rate_kg=0.4))
+    assert budget["daily_budget_kcal"] == 2400 - 440
+    assert budget["remaining_kcal"] == (2400 - 440) - 3000
+    assert budget["over_budget"] is True
+    assert budget["rank"] == "bad"
 
 
 # ---------------------------------------------------------------- benchmarks

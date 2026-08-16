@@ -2290,6 +2290,7 @@ if(training.sessions.length){
 (function(){
   const nutrition = DATA.nutrition || [];
   const nv = DATA.nutrition_view || {};
+  const eb = DATA.eating_budget;
 
   const CLASSIFICATION_INFO = {
     surplus_adequate_protein: {label: 'Likely building muscle', color:'#3ddc97', desc: 'Eating more than you\'re burning, with enough protein to support it — classic lean-bulk conditions, assuming the strength training keeps up.'},
@@ -2312,6 +2313,21 @@ if(training.sessions.length){
     (nv.today_bmr_kcal != null ? '<div class="analysis-row"><span class="k">└ resting</span><span class="v">' + Math.round(nv.today_bmr_kcal) + ' kcal</span></div>' : '') +
     (nv.today_active_kcal != null ? '<div class="analysis-row"><span class="k">└ active</span><span class="v">' + Math.round(nv.today_active_kcal) + ' kcal</span></div>' : '') +
     '</div></div></div>';
+
+  if(eb){
+    const barPct = Math.max(0, Math.min(eb.pct_used ?? 0, 100));
+    const colour = rankColour(eb.rank);
+    html += '<div class="section"><h2>Eating Budget</h2>' +
+      '<div class="desc">Benchmark is your own trailing ' + eb.benchmark_days + '-day average total burn (the same figure Garmin Connect\'s "Avg Total" widget shows), minus the ' + eb.daily_deficit_kcal + ' kcal/day the cut needs. Moves with your data — not a fixed number.</div>' +
+      '<div class="analysis-card">' +
+      '<div class="analysis-row"><span class="k">Benchmark burn (avg)</span><span class="v">' + eb.benchmark_kcal + ' kcal</span></div>' +
+      '<div class="analysis-row"><span class="k">Deficit target</span><span class="v">-' + eb.daily_deficit_kcal + ' kcal</span></div>' +
+      '<div class="analysis-row"><span class="k">Daily budget</span><span class="v">' + eb.daily_budget_kcal + ' kcal</span></div>' +
+      '<div class="workout-progress-bar" style="height:10px;margin-top:12px;"><div class="workout-progress-fill" style="width:' + barPct + '%;background:' + colour + '"></div></div>' +
+      '<div class="analysis-row" style="margin-top:12px;"><span class="k">Eaten so far</span><span class="v">' + eb.eaten_today_kcal + ' kcal</span></div>' +
+      '<div class="analysis-row"><span class="k">' + (eb.over_budget ? 'Over budget by' : 'Left to eat today') + '</span><span class="v" style="color:' + colour + ';font-weight:700;">' + (eb.over_budget ? Math.abs(eb.remaining_kcal) : eb.remaining_kcal) + ' kcal</span></div>' +
+      '</div></div>';
+  }
 
   html += '<div class="section"><h2>Weekly Energy Balance</h2>' +
     '<div class="desc">Burn is Garmin\'s device-measured daily total — resting <b>plus</b> active calories, heart-rate based, not a formula. Only complete days count: today is excluded, days without food logged are excluded, and so are days the watch didn\'t cover end to end.</div>';

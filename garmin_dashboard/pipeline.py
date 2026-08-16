@@ -12,7 +12,11 @@ from .config import Settings
 from .domain.benchmarks import build_benchmarks
 from .domain.body import build_body_view
 from .domain.formatting import iso
-from .domain.fuelling import build_macro_plate, build_protein_distribution
+from .domain.fuelling import (
+    build_eating_budget,
+    build_macro_plate,
+    build_protein_distribution,
+)
 from .domain.goals import build_fat_loss_view
 from .domain.health import FetchLog
 from .domain.insights import build_insights
@@ -170,6 +174,7 @@ def build_payload(
     payload["fat_loss"] = build_fat_loss_view(
         body_comp, nutrition_view, settings.goal, today, race_date=settings.race.date
     )
+    payload["eating_budget"] = build_eating_budget(payload, today, settings.goal)
     payload["insights"] = build_insights(payload, today)
 
     # Presentation modules. Each reads the assembled payload rather than the raw
