@@ -43,6 +43,12 @@ ALLOWED = {
         "fields": {"date", "meal", "description", "grams", "calories",
                    "protein_g", "carbs_g", "fat_g"},
     },
+    "trainings": {
+        "kind": "list",
+        "required": {"date", "type"},
+        "fields": {"date", "type", "subtype", "notes", "duration_min",
+                   "muscle_groups", "exercises"},
+    },
     "lifestyle": {
         "kind": "list",
         "required": {"date"},
@@ -73,7 +79,7 @@ def apply(name: str, entry: dict, path: Path) -> str:
     entry = validate(name, entry)
 
     if spec["kind"] == "object":
-        path.write_text(json.dumps(entry, indent=2) + "\n", encoding="utf-8")
+        path.write_text(json.dumps(entry, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         return f"wrote {path.name}: {entry.get('name', entry['date'])}"
 
     rows = []
@@ -100,7 +106,7 @@ def apply(name: str, entry: dict, path: Path) -> str:
         action = "appended"
     rows.append(entry)
     rows.sort(key=lambda r: (r.get("date") or "", r.get("time") or ""))
-    path.write_text(json.dumps(rows, indent=2) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(rows, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return f"{action} {name} for {entry['date']} ({len(rows)} total)"
 
 

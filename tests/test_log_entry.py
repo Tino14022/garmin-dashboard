@@ -131,3 +131,37 @@ def test_every_real_data_file_field_is_accepted(tmp_path):
 
 def test_cli_rejects_an_unknown_target(capsys):
     assert log_entry.main(["log_entry.py", "not_a_file"]) == 2
+
+
+def test_training_annotations_can_be_logged(tmp_path):
+    """Sessions are logged often enough that agents need this target too."""
+    p = tmp_path / "trainings.json"
+    run("trainings", {
+        "date": "2026-08-16", "type": "gym", "subtype": "full_body",
+        "notes": "Bodyweight Circuit", "muscle_groups": {"chest": 0.65},
+    }, p)
+    assert json.loads(p.read_text())[0]["subtype"] == "full_body"
+
+
+def test_several_sessions_on_one_day_are_all_kept(tmp_path):
+    """A gym session and a run on the same day are two entries, not a merge."""
+    p = tmp_path / "trainings.json"
+    run("trainings", {"date": "2026-08-16", "type": "gym"}, p)
+    run("trainings", {"date": "2026-08-16", "type": "run"}, p)
+    assert [r["type"] for r in json.loads(p.read_text())] == ["gym", "run"]
+
+
+def test_a_training_entry_without_a_type_is_rejected(tmp_path):
+    with pytest.raises(ValueError, match="missing required"):
+        run("trainings", {"date": "2026-08-16"}, tmp_path / "trainings.json")
+
+
+def test_non_ascii_notes_are_stored_readably(tmp_path):
+    """Notes routinely contain em-dashes. Escaping them is valid JSON but makes
+    every diff on these data files unreadable."""
+    dash = "—"
+    p = tmp_path / "trainings.json"
+    run("trainings", {"date": "2026-08-16", "type": "gym", "notes": f"Circuit {dash} cut short"}, p)
+    raw = p.read_text(encoding="utf-8")
+    assert dash in raw
+    assert "u2014" not in raw

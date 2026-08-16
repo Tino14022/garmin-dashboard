@@ -3,28 +3,69 @@
     "date": "2026-08-10",
     "type": "gym",
     "subtype": "push",
-    "muscle_groups": {"chest": 1.0, "front_delts": 0.8, "side_delts": 0.6, "triceps": 0.9, "abs": 0.4, "obliques": 0.4},
+    "muscle_groups": {
+      "chest": 1.0,
+      "front_delts": 0.8,
+      "side_delts": 0.6,
+      "triceps": 0.9,
+      "abs": 0.4,
+      "obliques": 0.4
+    },
     "notes": "Push day"
   },
   {
     "date": "2026-08-11",
     "type": "gym",
     "subtype": "pull",
-    "muscle_groups": {"lats": 1.0, "upper_back": 0.8, "traps": 0.5, "rear_delts": 0.5, "biceps": 0.9, "forearms": 0.5, "lower_back": 0.3},
+    "muscle_groups": {
+      "lats": 1.0,
+      "upper_back": 0.8,
+      "traps": 0.5,
+      "rear_delts": 0.5,
+      "biceps": 0.9,
+      "forearms": 0.5,
+      "lower_back": 0.3
+    },
     "notes": "Pull day"
   },
   {
     "date": "2026-08-12",
     "type": "gym",
     "subtype": "legs",
-    "muscle_groups": {"quads": 1.0, "hamstrings": 0.8, "glutes": 0.8, "calves": 0.6},
+    "muscle_groups": {
+      "quads": 1.0,
+      "hamstrings": 0.8,
+      "glutes": 0.8,
+      "calves": 0.6
+    },
     "notes": "Leg day"
   },
   {
     "date": "2026-08-14",
     "type": "gym",
     "subtype": "push",
-    "muscle_groups": {"chest": 0.9, "front_delts": 0.8, "side_delts": 0.7, "triceps": 0.9},
+    "muscle_groups": {
+      "chest": 0.9,
+      "front_delts": 0.8,
+      "side_delts": 0.7,
+      "triceps": 0.9
+    },
     "notes": "Push day, no bench — full workout completed: Incline DB Press 4/4x8-10, Shoulder Press 3/3x8-10, Flat DB Press/Cable Crossover 3/3x10-12, Chest Flyes (machine) 3/3x12-15, Lateral Raises 4/4x12-15, Triceps Pushdown 3/3x10-12, Triceps Overhead Extension 3/3x10-12"
+  },
+  {
+    "date": "2026-08-16",
+    "type": "gym",
+    "subtype": "full_body",
+    "notes": "Bodyweight Circuit â€” cut short, 7 of 10 rounds: Push-Up 7/10x20, Bodyweight Squat 7/10x20, Leg Raise 7/10x15",
+    "muscle_groups": {
+      "chest": 0.65,
+      "triceps": 0.55,
+      "front_delts": 0.45,
+      "quads": 0.6,
+      "glutes": 0.5,
+      "hamstrings": 0.3,
+      "abs": 0.7,
+      "obliques": 0.35
+    }
   }
 ]
