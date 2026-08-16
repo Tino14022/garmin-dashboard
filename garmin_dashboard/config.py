@@ -65,8 +65,8 @@ class Settings:
     # so constructing ZoneInfo at import time makes the module unimportable
     # there even for code paths that never ask what day it is.
     timezone_name: str = "Europe/Warsaw"
-    # Account's first day of week, as Python weekday numbers (Mon=0 .. Sun=6).
-    week_starts_on: int = 6
+    # First day of the week, as Python weekday numbers (Mon=0 .. Sun=6).
+    week_starts_on: int = 0
 
     def tzinfo(self):
         try:

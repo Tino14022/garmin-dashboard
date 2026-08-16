@@ -12,7 +12,6 @@ import pytest
 
 from garmin_dashboard.domain.benchmarks import build_benchmarks
 from garmin_dashboard.domain.fuelling import (
-    build_energy_flow,
     build_macro_plate,
     build_protein_distribution,
 )
@@ -282,7 +281,6 @@ def test_pr_wall_tolerates_unparseable_values():
 # ------------------------------------------------------------------ fuelling
 def test_fuelling_modules_return_none_without_data():
     assert build_macro_plate({}, TODAY) is None
-    assert build_energy_flow({}, TODAY) is None
     assert build_protein_distribution({}, TODAY) is None
 
 
@@ -305,17 +303,6 @@ def test_macro_plate_reports_calories_the_macros_do_not_explain():
         "nutrition_view": {"protein_target_g": 198},
     }
     assert build_macro_plate(payload, TODAY)["unaccounted_kcal"] == 2500 - 1250
-
-
-def test_energy_flow_splits_burn_into_resting_and_active():
-    payload = {"nutrition_view": {
-        "week_avg_intake_kcal": 2400, "week_avg_bmr_kcal": 2466,
-        "week_avg_active_kcal": 354, "week_days_compared": 5,
-    }}
-    flow = build_energy_flow(payload, TODAY)
-    assert flow["burn_kcal"] == 2820
-    assert flow["balance_kcal"] == -420
-    assert flow["surplus"] is False
 
 
 def test_protein_distribution_flags_a_single_dominant_meal():

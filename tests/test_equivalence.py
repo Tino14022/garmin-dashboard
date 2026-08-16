@@ -6,7 +6,7 @@ adds (race_plan, build_health) are asserted separately in their own tests.
 """
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import date, timedelta
 
 import pytest
 
@@ -21,8 +21,7 @@ NEW_KEYS = {
     "race_plan", "build_health", "generated_at_iso", "body_view", "insights",
     "fat_loss", "overview", "readiness", "todays_call", "recovery_debt",
     "circadian", "hypnogram", "body_battery", "punch_card", "streak_quality",
-    "volume_map", "pace_curve", "pr_wall", "macro_plate", "energy_flow",
-    "protein_distribution", "benchmarks", "correlation_matrix", "rings", "digest",
+    "volume_map", "pace_curve", "pr_wall", "macro_plate", "protein_distribution", "benchmarks", "correlation_matrix", "rings", "digest", "week_starts_on",
 }
 
 
@@ -133,7 +132,6 @@ def test_only_expected_keys_were_added(payloads):
         "hrv_trend",
         "rhr_trend",
         "sleep_trend",
-        "weekly_mileage",
         "recent_runs",
         "pace_panel",
         "nutrition",
@@ -151,7 +149,7 @@ def test_value_is_identical(payloads, key):
 
 @pytest.mark.parametrize(
     "key",
-    ["sessions", "muscle_scores", "muscle_detail", "streak_weeks", "week_count", "gamification"],
+    ["sessions", "muscle_scores", "muscle_detail", "gamification"],
 )
 def test_training_view_is_identical(payloads, key):
     old, new = payloads
@@ -185,3 +183,33 @@ def test_training_view_produced_real_data(payloads):
     assert new["training"]["muscle_scores"]
     assert new["recent_runs"]
     assert new["calorie_trend"]
+
+
+# The week now starts on Monday rather than Sunday, so everything bucketed by
+# week legitimately differs from the legacy build: weekly_mileage boundaries,
+# streak_weeks and week_count. Pinned below rather than compared field-by-field.
+WEEK_ALIGNED_KEYS = {"weekly_mileage"}
+WEEK_ALIGNED_TRAINING_KEYS = {"streak_weeks", "week_count"}
+
+
+def test_weekly_buckets_start_on_monday(payloads):
+    _, new = payloads
+    for bucket in new["weekly_mileage"]:
+        assert date.fromisoformat(bucket["week_start"]).weekday() == 0, (
+            f"{bucket['week_start']} is not a Monday"
+        )
+
+
+def test_weekly_buckets_are_still_contiguous_weeks(payloads):
+    _, new = payloads
+    starts = [date.fromisoformat(b["week_start"]) for b in new["weekly_mileage"]]
+    for a, b in zip(starts, starts[1:]):
+        assert (b - a).days == 7
+
+
+def test_week_aligned_totals_are_still_present_and_sane(payloads):
+    """They differ from the Sunday-start build on purpose, but must stay real."""
+    _, new = payloads
+    assert new["training"]["week_count"] >= 0
+    assert new["training"]["streak_weeks"] >= 0
+    assert sum(b["km"] for b in new["weekly_mileage"]) > 0

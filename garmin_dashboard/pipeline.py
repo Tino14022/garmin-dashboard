@@ -12,11 +12,7 @@ from .config import Settings
 from .domain.benchmarks import build_benchmarks
 from .domain.body import build_body_view
 from .domain.formatting import iso
-from .domain.fuelling import (
-    build_energy_flow,
-    build_macro_plate,
-    build_protein_distribution,
-)
+from .domain.fuelling import build_macro_plate, build_protein_distribution
 from .domain.goals import build_fat_loss_view
 from .domain.health import FetchLog
 from .domain.insights import build_insights
@@ -122,6 +118,8 @@ def build_payload(
     days_remaining = (settings.race.date - today).days
     payload = {
         "generated_at": today.isoformat(),
+        # Mon=0 .. Sun=6, so the calendars and the weekly buckets agree.
+        "week_starts_on": settings.week_starts_on,
         "generated_at_time": generated_at_time
         or time.strftime("%Y-%m-%d %H:%M %Z"),
         # Machine-readable build time so the page can work out for itself how
@@ -189,7 +187,6 @@ def build_payload(
     payload["pace_curve"] = build_pace_curve(payload)
     payload["pr_wall"] = build_pr_wall(payload)
     payload["macro_plate"] = build_macro_plate(payload, today)
-    payload["energy_flow"] = build_energy_flow(payload, today)
     payload["protein_distribution"] = build_protein_distribution(payload, today)
     payload["benchmarks"] = build_benchmarks(payload)
     payload["correlation_matrix"] = build_matrix(payload)

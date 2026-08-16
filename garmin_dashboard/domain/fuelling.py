@@ -69,31 +69,6 @@ def build_macro_plate(payload: dict, today: date) -> dict | None:
     }
 
 
-def build_energy_flow(payload: dict, today: date) -> dict | None:
-    """Where the calories go: in from food, out via resting burn and activity."""
-    nv = payload.get("nutrition_view") or {}
-    intake = nv.get("week_avg_intake_kcal")
-    bmr = nv.get("week_avg_bmr_kcal")
-    active = nv.get("week_avg_active_kcal")
-    if intake is None or bmr is None or active is None:
-        return None
-    burn = bmr + active
-    balance = intake - burn
-    return {
-        "intake_kcal": intake,
-        "bmr_kcal": bmr,
-        "active_kcal": active,
-        "burn_kcal": burn,
-        "balance_kcal": balance,
-        "days_compared": nv.get("week_days_compared"),
-        # Shares of the larger side, so the two columns are drawn on one scale.
-        "scale_max": max(intake, burn),
-        "bmr_share": round(bmr / max(intake, burn) * 100, 1),
-        "active_share": round(active / max(intake, burn) * 100, 1),
-        "surplus": balance > 0,
-    }
-
-
 def build_protein_distribution(payload: dict, today: date, *, days: int = 7) -> dict | None:
     """Protein by meal — a daily total landing in one sitting is not the same
     as the same total spread across the day."""

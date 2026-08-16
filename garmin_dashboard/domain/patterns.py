@@ -11,12 +11,15 @@ from datetime import date, timedelta
 
 from .formatting import parse_iso, week_start
 
-DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+WEEKDAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+# Default first day of the week, Mon=0 .. Sun=6. Matches Settings.week_starts_on.
+WEEK_STARTS_ON = 0
+DOW = WEEKDAY_NAMES[WEEK_STARTS_ON:] + WEEKDAY_NAMES[:WEEK_STARTS_ON]
 
 
-def _dow_index(d: date) -> int:
-    """Sunday-first index, matching the calendars elsewhere in the app."""
-    return (d.weekday() + 1) % 7
+def _dow_index(d: date, week_starts_on: int = WEEK_STARTS_ON) -> int:
+    """Column index for `d`, counting from the configured first weekday."""
+    return (d.weekday() - week_starts_on) % 7
 
 
 def build_circadian(payload: dict, today: date, *, days: int = 28) -> dict | None:

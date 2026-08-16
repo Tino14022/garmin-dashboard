@@ -114,6 +114,10 @@ __RUNNING_TAB_STYLE__
      align-items:start keeps each card the height of its own content — otherwise a
      one-row card stretches to match a five-row neighbour and shows dead space. */
   .analysis-grid{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px; align-items:start; }
+  /* Cards presented as a matched pair share a height; the four-card summary
+     row deliberately does not, since there it would only add dead space. */
+  .analysis-grid.paired{ align-items:stretch; }
+  .analysis-grid.paired .analysis-card{ display:flex; flex-direction:column; }
   @media (max-width:560px){ .analysis-grid{ grid-template-columns:minmax(0,1fr); } }
   @media (min-width:1000px){ .analysis-grid{ grid-template-columns:repeat(4, minmax(0,1fr)); } }
   .analysis-card{ background:var(--panel-2); border:1px solid var(--border); border-radius:14px; padding:16px 18px; }
@@ -428,6 +432,13 @@ __RUNNING_TAB_STYLE__
   .sess-row b{ color:var(--neon); font-variant-numeric:tabular-nums; white-space:nowrap; }
   .sess-muscles{ margin-top:10px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
   .sess-muscles .lbl{ font-size:0.7rem; color:var(--text-faint); margin-right:2px; }
+
+  .cal-cell.clickable{ cursor:pointer; }
+  .cal-cell.clickable:hover{ border-color:var(--text-faint); }
+  .cal-cell.selected{ border-color:var(--neon); box-shadow:0 0 0 1px var(--neon); }
+  .day-detail{ margin-top:18px; border-top:1px solid var(--border); padding-top:16px; }
+  .dd-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:0.95rem; }
+  .dd-close{ margin-top:0; }
 
   footer{color:var(--text-faint); font-size:0.75rem; text-align:center; padding:20px 0 10px;}
 </style>
@@ -1031,27 +1042,6 @@ function renderNutritionModules(){
         MC[s.macro] + ';margin-right:6px"></i>' + s.macro + '</span><span class="v">' + s.grams + 'g · ' + s.pct + '%' +
         '<span style="color:var(--text-faint);font-weight:400"> vs ' + s.target_g + 'g target</span></span></div>').join('') +
       '</div></div>');
-  }
-
-  const ef = DATA.energy_flow;
-  if(ef){
-    const w = v => (v / ef.scale_max * 100).toFixed(1);
-    html += section('Energy flow',
-      'Where the calories go across your ' + ef.days_compared + ' compared day(s). The out column is Garmin\'s measured total: ' +
-      'resting burn plus everything you actually did.',
-      '<div class="flow-col">' +
-      '<div style="font-size:0.7rem;color:var(--text-faint)">In — food</div>' +
-      '<div class="flow-bar"><i style="width:' + w(ef.intake_kcal) + '%;background:var(--blue)">' + ef.intake_kcal + ' kcal</i></div>' +
-      '<div style="font-size:0.7rem;color:var(--text-faint)">Out — resting + active</div>' +
-      '<div class="flow-bar">' +
-        '<i style="width:' + w(ef.bmr_kcal) + '%;background:var(--purple)">' + ef.bmr_kcal + '</i>' +
-        '<i style="width:' + w(ef.active_kcal) + '%;background:var(--orange)">' + ef.active_kcal + '</i>' +
-      '</div>' +
-      '<div style="margin-top:6px;font-size:0.85rem">Balance: <b style="color:' +
-        (ef.surplus ? 'var(--neon)' : 'var(--red)') + '">' + (ef.balance_kcal>0?'+':'') + ef.balance_kcal + ' kcal/day</b></div>' +
-      '</div>' +
-      '<div class="plan-legend" style="margin-top:10px;"><span><i style="background:var(--blue)"></i>Intake</span>' +
-      '<span><i style="background:var(--purple)"></i>Resting burn</span><span><i style="background:var(--orange)"></i>Active burn</span></div>');
   }
 
   const pd = DATA.protein_distribution;
@@ -1741,13 +1731,15 @@ function buildCalendar(sessions, nutritionByDate){
   const today = new Date(DATA.generated_at + 'T00:00:00');
   const start = new Date(today);
   start.setDate(start.getDate() - 34);
-  while(start.getDay() !== 0) start.setDate(start.getDate() - 1);
+  // Python counts Mon=0..Sun=6, JS counts Sun=0..Sat=6, hence the shift.
+  const FIRST_DAY = ((DATA.week_starts_on == null ? 0 : DATA.week_starts_on) + 1) % 7;
+  while(start.getDay() !== FIRST_DAY) start.setDate(start.getDate() - 1);
 
   // First pass: collect each cell's data (including whether it's an active training day).
   const cells = [];
   const cur = new Date(start);
   const todayStr = DATA.generated_at;
-  while(cur <= today || cur.getDay() !== 0){
+  while(cur <= today || cur.getDay() !== FIRST_DAY){
     const iso = localIso(cur);
     let inner, active = false, title = '';
     if(isNutrition){
@@ -1775,29 +1767,31 @@ function buildCalendar(sessions, nutritionByDate){
       inner = '<span class="icons">' + types.map(t => ICONS[t] || '✳️').join('') + '</span>';
       active = types.length > 0;
     }
-    cells.push({ day: cur.getDate(), dow: cur.getDay(), isToday: iso === todayStr, inner, active, title });
+    cells.push({ day: cur.getDate(), iso, dow: cur.getDay(), isToday: iso === todayStr, inner, active, title });
     cur.setDate(cur.getDate() + 1);
-    if(cur > today && cur.getDay() === 0) break;
+    if(cur > today && cur.getDay() === FIRST_DAY) break;
   }
 
   // Second pass: flag horizontal runs of active days so adjacent cells in the same
   // calendar row can be rendered as one connected green block instead of separate tiles.
   cells.forEach((c, i) => {
-    c.connectLeft = c.active && c.dow !== 0 && i > 0 && cells[i - 1].active;
+    c.connectLeft = c.active && c.dow !== FIRST_DAY && i > 0 && cells[i - 1].active;
   });
   cells.forEach((c, i) => {
     c.connectRight = i < cells.length - 1 && cells[i + 1].connectLeft;
   });
 
   let html = '<div class="cal-grid' + (isNutrition ? ' nutrition-grid' : '') + '">';
-  ['S','M','T','W','T','F','S'].forEach(d => html += '<div class="cal-dow">' + d + '</div>');
+  const DAY_LETTERS = ['S','M','T','W','T','F','S'];
+  for(let i = 0; i < 7; i++){ html += '<div class="cal-dow">' + DAY_LETTERS[(FIRST_DAY + i) % 7] + '</div>'; }
   cells.forEach(c => {
     let cls = 'cal-cell';
     if(c.isToday) cls += ' today';
     if(c.active) cls += ' active';
     if(c.connectLeft) cls += ' connect-left';
     if(c.connectRight) cls += ' connect-right';
-    html += '<div class="' + cls + '"' + (c.title ? ' title="' + c.title + '"' : '') +
+    if(isNutrition && c.inner) cls += ' clickable';
+    html += '<div class="' + cls + '" data-date="' + c.iso + '"' + (c.title ? ' title="' + c.title + '"' : '') +
       '><span class="daynum">' + c.day + '</span>' + c.inner + '</div>';
   });
   html += '</div>';
@@ -2261,7 +2255,7 @@ if(training.sessions.length){
   // Today is still in progress — show it, but never blend it into the "daily average".
   let html = '<div class="section"><h2>Today So Far</h2>' +
     '<div class="desc">Not included in the weekly average below — the day isn\'t over, so intake and burn are both still partial.</div>' +
-    '<div class="analysis-grid">' +
+    '<div class="analysis-grid paired">' +
     '<div class="analysis-card"><h3>Logged today</h3>' +
     '<div class="analysis-row"><span class="k">Calories</span><span class="v">' + (nv.today_intake_kcal ?? 0) + ' kcal</span></div>' +
     '<div class="analysis-row"><span class="k">Protein</span><span class="v">' + (nv.today_protein_g ?? 0) + 'g <span style="color:var(--text-faint)">/ ' + nv.protein_target_g + 'g target</span></span></div>' +
@@ -2278,7 +2272,7 @@ if(training.sessions.length){
   if(nv.week_days_compared > 0){
     const info = CLASSIFICATION_INFO[nv.classification] || {label:'-', color:'var(--text-dim)', desc:''};
     const balanceStr = (nv.week_balance_kcal > 0 ? '+' : '') + nv.week_balance_kcal;
-    html += '<div class="analysis-grid">' +
+    html += '<div class="analysis-grid paired">' +
       '<div class="analysis-card"><h3>Last ' + nv.week_days_compared + ' complete day' + (nv.week_days_compared===1?'':'s') + '</h3>' +
       '<div class="analysis-row"><span class="k">Avg intake</span><span class="v">' + nv.week_avg_intake_kcal + ' kcal</span></div>' +
       '<div class="analysis-row"><span class="k">Avg burn (Garmin)</span><span class="v">' + nv.week_avg_burn_kcal + ' kcal</span></div>' +
@@ -2328,10 +2322,97 @@ if(training.sessions.length){
   }
 
   const dayTotals = dailyNutritionTotals(nutrition);
-  html += '<div class="section"><h2>Daily Nutrition</h2><div class="desc">Calories and macros (P/C/F in grams) per day.</div><div id="nutriCalWrap"></div></div>';
+  html += '<div class="section"><h2>Daily Nutrition</h2><div class="desc">Calories and macros per day. <b>Tap any day</b> for the full breakdown — eaten, burned, the difference, and where the macros landed.</div><div id="nutriCalWrap"></div><div id="nutriDayDetail"></div></div>';
   html += '<div class="section"><h2>Food Log</h2><div id="foodTableWrap"></div></div>';
   el('nutritionContent').innerHTML = html;
   el('nutriCalWrap').innerHTML = buildCalendar([], dayTotals);
+
+  // Tap a day for the full picture. A calendar cell only has room for the
+  // headline number; everything worth comparing against it lives here.
+  const burnByDate = {};
+  (DATA.calorie_trend || []).forEach(c => { if(c.date) burnByDate[c.date] = c; });
+  const MEAL_SORT = {breakfast:0, lunch:1, dinner:2, snack:3};
+
+  function showDay(iso){
+    const t = dayTotals[iso];
+    const box = el('nutriDayDetail');
+    if(!t){ box.innerHTML = ''; return; }
+    const burn = burnByDate[iso];
+    const macroKcal = t.protein*4 + t.carbs*4 + t.fat*9;
+    const balance = burn ? Math.round(t.calories - burn.total_kcal) : null;
+    const entries = nutrition.filter(n => n.date === iso)
+      .sort((a,b) => (MEAL_SORT[a.meal] ?? 9) - (MEAL_SORT[b.meal] ?? 9));
+    const share = kcal => macroKcal ? kcal / macroKcal * 100 : 0;
+
+    let h = '<div class="day-detail"><div class="dd-head"><b>' + fmtDate(iso) + '</b>' +
+      '<button class="copy-btn dd-close" id="ddClose">Close</button></div>';
+
+    h += '<div class="stat-grid" style="margin-bottom:14px;">' +
+      '<div class="stat-tile"><div class="lbl">Eaten</div><div class="val">' + Math.round(t.calories) + '<span class="u">kcal</span></div>' +
+      '<div class="why">' + entries.length + ' item' + (entries.length === 1 ? '' : 's') + ' logged</div></div>' +
+      (burn
+        ? '<div class="stat-tile"><div class="lbl">Burned</div><div class="val">' + Math.round(burn.total_kcal) + '<span class="u">kcal</span></div>' +
+          '<div class="why">' + Math.round(burn.bmr_kcal||0) + ' resting + ' + Math.round(burn.active_kcal||0) + ' active</div></div>'
+        : '<div class="stat-tile"><div class="lbl">Burned</div><div class="val">—</div><div class="why">No Garmin data synced for this day.</div></div>') +
+      (balance != null
+        ? '<div class="stat-tile"><div class="lbl">Difference</div><div class="val" style="color:' +
+          (balance > 0 ? 'var(--orange)' : 'var(--neon)') + '">' + (balance > 0 ? '+' : '') + balance + '<span class="u">kcal</span></div>' +
+          '<div class="why">' + (balance > 0 ? 'Ate more than you burned.' : 'Burned more than you ate.') + '</div></div>'
+        : '') +
+      '<div class="stat-tile"><div class="lbl">Protein</div><div class="val">' + Math.round(t.protein) + '<span class="u">g</span></div>' +
+      '<div class="why">' + (nv.protein_target_g ? Math.round(t.protein / nv.protein_target_g * 100) + '% of the ' + nv.protein_target_g + 'g target' : '') + '</div></div>' +
+      '</div>';
+
+    h += '<div class="stack-row" style="grid-template-columns:60px 1fr 84px;margin-bottom:14px;">' +
+      '<span style="color:var(--text-faint)">Macros</span>' +
+      '<span class="stack-bar" style="height:18px">' +
+        '<i style="width:' + share(t.protein*4) + '%;background:var(--blue)"></i>' +
+        '<i style="width:' + share(t.carbs*4) + '%;background:var(--orange)"></i>' +
+        '<i style="width:' + share(t.fat*9) + '%;background:var(--yellow)"></i>' +
+      '</span><span style="text-align:right;color:var(--text-faint)">' + Math.round(macroKcal) + ' kcal</span></div>';
+
+    h += '<div class="analysis-grid paired" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:14px;">' +
+      [['Protein', t.protein, 4, 'var(--blue)'], ['Carbs', t.carbs, 4, 'var(--orange)'], ['Fat', t.fat, 9, 'var(--yellow)']]
+        .map(function(m){
+          const label = m[0], grams = m[1], perGram = m[2], colour = m[3];
+          return '<div class="analysis-card"><h3><i style="display:inline-block;width:9px;height:9px;border-radius:2px;background:' +
+            colour + ';margin-right:6px"></i>' + label + '</h3>' +
+            '<div class="analysis-row"><span class="k">Grams</span><span class="v">' + Math.round(grams) + 'g</span></div>' +
+            '<div class="analysis-row"><span class="k">Calories</span><span class="v">' + Math.round(grams*perGram) + '</span></div>' +
+            '<div class="analysis-row"><span class="k">Share</span><span class="v">' + Math.round(share(grams*perGram)) + '%</span></div></div>';
+        }).join('') +
+      '</div>';
+
+    // A gap here means some entries carried calories but no macro breakdown.
+    if(Math.abs(t.calories - macroKcal) > 100){
+      h += '<div class="log-hint" style="color:var(--yellow);margin-bottom:10px;">' +
+        Math.round(t.calories - macroKcal) + ' kcal logged that the macros do not account for — some entries have calories but no macro split.</div>';
+    }
+
+    h += '<div class="table-scroll"><table><thead><tr><th>Meal</th><th>Description</th>' +
+      '<th style="text-align:right">Cal</th><th style="text-align:right">P</th><th style="text-align:right">C</th><th style="text-align:right">F</th></tr></thead><tbody>' +
+      entries.map(n => '<tr><td style="color:var(--text-faint);text-transform:capitalize">' + (n.meal||'-') + '</td>' +
+        '<td>' + n.description + '</td><td style="text-align:right">' + (n.calories||'-') + '</td>' +
+        '<td style="text-align:right">' + (n.protein_g||0) + 'g</td><td style="text-align:right">' + (n.carbs_g||0) + 'g</td>' +
+        '<td style="text-align:right">' + (n.fat_g||0) + 'g</td></tr>').join('') +
+      '</tbody></table></div></div>';
+
+    box.innerHTML = h;
+    el('ddClose').addEventListener('click', () => {
+      box.innerHTML = '';
+      document.querySelectorAll('#nutriCalWrap .cal-cell.selected').forEach(c => c.classList.remove('selected'));
+    });
+  }
+
+  el('nutriCalWrap').querySelectorAll('.cal-cell.clickable').forEach(cell => {
+    cell.addEventListener('click', () => {
+      const already = cell.classList.contains('selected');
+      el('nutriCalWrap').querySelectorAll('.cal-cell.selected').forEach(c => c.classList.remove('selected'));
+      if(already){ el('nutriDayDetail').innerHTML = ''; return; }
+      cell.classList.add('selected');
+      showDay(cell.dataset.date);
+    });
+  });
 
   // Grouped by day rather than one flat list: a continuous stream of entries
   // hides where one day ends and the next begins, which is the only boundary
