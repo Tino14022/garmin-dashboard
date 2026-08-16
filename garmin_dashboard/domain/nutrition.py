@@ -7,10 +7,19 @@ from datetime import date, timedelta
 from .formatting import iso, parse_iso
 
 # Garmin reports a day's basal burn as it accrues, so a day the watch did not
-# cover end to end arrives with a short BMR. Counting such a day as complete
-# understates burn and can invert the whole surplus/deficit verdict, so days
-# below this share of the athlete's typical full-day BMR are treated as partial.
+# cover end to end arrives with a short BMR. Above this share of the athlete's
+# typical full-day BMR the day is taken as complete and used as measured.
 COMPLETE_DAY_BMR_RATIO = 0.9
+
+# Between the two thresholds the day is repaired rather than discarded. Basal
+# metabolism does not stop when the watch comes off, so the missing basal is
+# imputed from the athlete's own median; the measured active calories are kept
+# as they are. Active burn during the unworn window is unknowable, but a watch
+# is usually off while sleeping or showering, so assuming none is conservative
+# — it understates burn slightly, which is the safe direction for a deficit.
+# Throwing the day away instead is worse: it silently deletes real evidence and
+# can leave a single outlier day standing as the entire week.
+MIN_USABLE_BMR_RATIO = 0.6
 
 # A single day is a meal, not a trend. Calling one logged day a surplus and
 # concluding "likely building muscle" from it is how this panel embarrassed
@@ -33,6 +42,36 @@ def is_complete_day(entry: dict, typical_bmr: float | None) -> bool:
     if not typical_bmr or not bmr:
         return True  # nothing to judge against; assume usable
     return bmr >= typical_bmr * COMPLETE_DAY_BMR_RATIO
+
+
+def day_coverage(entry: dict, typical_bmr: float | None) -> float | None:
+    """How much of a normal day's basal burn the watch actually recorded."""
+    bmr = entry.get("bmr_kcal")
+    if not typical_bmr or not bmr:
+        return None
+    return bmr / typical_bmr
+
+
+def repair_day(entry: dict, typical_bmr: float | None) -> dict | None:
+    """Return the day with its missing basal burn filled in.
+
+    None means the day is too sparsely covered to be worth repairing — at that
+    point the measured active calories are not representative either.
+    """
+    coverage = day_coverage(entry, typical_bmr)
+    if coverage is None or coverage >= COMPLETE_DAY_BMR_RATIO:
+        return dict(entry, adjusted=False)
+    if coverage < MIN_USABLE_BMR_RATIO:
+        return None
+    missing = typical_bmr - entry["bmr_kcal"]
+    return dict(
+        entry,
+        bmr_kcal=typical_bmr,
+        total_kcal=(entry.get("total_kcal") or 0) + missing,
+        adjusted=True,
+        imputed_bmr_kcal=round(missing),
+        coverage=round(coverage, 3),
+    )
 
 
 def build_nutrition_view(
@@ -78,20 +117,25 @@ def build_nutrition_view(
         for c in calorie_trend
         if c.get("date") and week_ago <= date.fromisoformat(c["date"]) <= yesterday
     ]
-    burn_by_date = {
-        c["date"]: c["total_kcal"] for c in in_window if is_complete_day(c, typical_bmr)
-    }
-    active_by_date = {
-        c["date"]: (c.get("active_kcal") or 0)
-        for c in in_window
-        if is_complete_day(c, typical_bmr)
-    }
-    bmr_by_date = {
-        c["date"]: (c.get("bmr_kcal") or 0)
-        for c in in_window
-        if is_complete_day(c, typical_bmr)
-    }
-    partial_days = [c["date"] for c in in_window if not is_complete_day(c, typical_bmr)]
+    burn_by_date: dict[str, float] = {}
+    active_by_date: dict[str, float] = {}
+    bmr_by_date: dict[str, float] = {}
+    partial_days: list[str] = []
+    adjusted_days: list[dict] = []
+    for c in in_window:
+        repaired = repair_day(c, typical_bmr)
+        if repaired is None:
+            partial_days.append(c["date"])
+            continue
+        burn_by_date[c["date"]] = repaired["total_kcal"]
+        active_by_date[c["date"]] = repaired.get("active_kcal") or 0
+        bmr_by_date[c["date"]] = repaired.get("bmr_kcal") or 0
+        if repaired["adjusted"]:
+            adjusted_days.append({
+                "date": c["date"],
+                "coverage_pct": round(repaired["coverage"] * 100),
+                "imputed_kcal": repaired["imputed_bmr_kcal"],
+            })
 
     # Only compare days where we actually know both sides of the equation.
     common_dates = sorted(set(intake_by_date) & set(burn_by_date))
@@ -158,6 +202,8 @@ def build_nutrition_view(
         "today_active_kcal": today_entry.get("active_kcal") if today_entry else None,
         "today_bmr_kcal": today_entry.get("bmr_kcal") if today_entry else None,
         "partial_days_excluded": partial_days,
+        # Days kept but topped up with the basal the watch missed.
+        "adjusted_days": adjusted_days,
         "typical_bmr_kcal": round(typical_bmr) if typical_bmr else None,
         # True when there are numbers but too few days to draw a conclusion from.
         "too_few_days_for_verdict": bool(

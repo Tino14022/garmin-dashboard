@@ -2301,12 +2301,19 @@ if(training.sessions.length){
   }
 
   // Days the watch didn't cover end to end come back with a short basal burn.
-  // Averaging them in understates burn badly, so they are named rather than hidden.
+  // Rather than discard them, the missing basal is added back — your metabolism
+  // doesn't stop when the watch is off — and the adjustment is stated openly.
+  if((nv.adjusted_days||[]).length){
+    html += '<div class="log-hint" style="margin-top:12px;font-size:0.78rem;">' +
+      nv.adjusted_days.map(a => 'Topped up <b>' + fmtDate(a.date) + '</b> by ' + a.imputed_kcal +
+        ' kcal — the watch covered ' + a.coverage_pct + '% of the day, so the missing resting burn was added back ' +
+        '(typical full day is ' + (nv.typical_bmr_kcal||'?') + ' kcal). Measured active calories are used as recorded.').join('<br>') +
+      '</div>';
+  }
   if((nv.partial_days_excluded||[]).length){
     html += '<div class="log-hint" style="margin-top:12px;color:var(--yellow);font-size:0.78rem;">' +
-      'Excluded as incomplete: ' + nv.partial_days_excluded.map(fmtDate).join(', ') +
-      ' — the watch logged less than a full day of resting burn (typical is ' + (nv.typical_bmr_kcal||'?') +
-      ' kcal), so counting them would understate your burn.</div>';
+      'Excluded: ' + nv.partial_days_excluded.map(fmtDate).join(', ') +
+      ' — the watch covered too little of the day for even the active calories to be representative.</div>';
   }
   html += '<div class="desc" style="margin-top:12px;">Protein target: <b>' + (nv.protein_target_g||'-') + 'g/day</b> (' + (nv.protein_g_per_kg||'-') + 'g/kg × ' + (nv.latest_weight_kg||'-') + 'kg bodyweight)' +
     (DATA.body_comp && DATA.body_comp.length ? '' : ' — using the default weight since no Mi Scale reading is logged yet.') + '</div>' +

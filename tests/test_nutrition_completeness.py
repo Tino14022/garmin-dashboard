@@ -60,7 +60,9 @@ def test_day_with_no_bmr_reported_is_assumed_usable():
     assert is_complete_day({"total_kcal": 2600}, FULL_BMR) is True
 
 
-def test_partial_day_is_excluded_from_the_average(week):
+def test_partial_day_is_repaired_rather_than_discarded(week):
+    """Basal metabolism does not stop when the watch comes off, so the missing
+    basal is imputed and the day kept. Discarding it deletes real evidence."""
     intake = [
         {"date": (TODAY - timedelta(days=n)).isoformat(), "calories": 2500, "protein_g": 150}
         for n in range(1, 8)
@@ -68,10 +70,45 @@ def test_partial_day_is_excluded_from_the_average(week):
     view = build_nutrition_view(
         intake, week, [], TODAY, default_weight_kg=98.9, protein_g_per_kg=1.8
     )
-    assert view["partial_days_excluded"] == [(TODAY - timedelta(days=1)).isoformat()]
-    assert view["week_days_compared"] == 6
-    # The partial day's 2171 would have dragged this down had it counted.
+    partial_date = (TODAY - timedelta(days=1)).isoformat()
+    assert view["partial_days_excluded"] == []
+    assert view["week_days_compared"] == 7
+    assert [a["date"] for a in view["adjusted_days"]] == [partial_date]
+    # 1899 of a typical 2466 is 77% covered; the missing 567 kcal is added back.
+    adjusted = view["adjusted_days"][0]
+    assert adjusted["coverage_pct"] == 77
+    assert adjusted["imputed_kcal"] == 567
+    # The raw 2171 would have dragged the average down had it counted as-is.
     assert view["week_avg_burn_kcal"] > 2600
+
+
+def test_a_barely_covered_day_is_still_thrown_out():
+    """Below 60% coverage the measured active calories are not representative
+    either, so there is nothing worth repairing."""
+    rows = [day(n, active=434, bmr=FULL_BMR) for n in range(2, 8)]
+    rows.append(day(1, active=20, bmr=900))  # 36% of a normal day
+    intake = [
+        {"date": r["date"], "calories": 2500, "protein_g": 150} for r in rows
+    ]
+    view = build_nutrition_view(
+        intake, rows, [], TODAY, default_weight_kg=98.9, protein_g_per_kg=1.8
+    )
+    assert view["partial_days_excluded"] == [(TODAY - timedelta(days=1)).isoformat()]
+    assert view["adjusted_days"] == []
+
+
+def test_a_day_just_under_the_complete_threshold_is_not_binned(week):
+    """89% coverage missing the cutoff by one point used to delete the day,
+    which left a single outlier standing as the whole week."""
+    rows = [day(n, active=434, bmr=FULL_BMR) for n in range(2, 8)]
+    rows.append(day(1, active=112, bmr=2193))  # 89% — the real 2026-08-15
+    intake = [{"date": r["date"], "calories": 2600, "protein_g": 150} for r in rows]
+    view = build_nutrition_view(
+        intake, rows, [], TODAY, default_weight_kg=98.9, protein_g_per_kg=1.8
+    )
+    assert view["partial_days_excluded"] == []
+    assert view["week_days_compared"] == 7
+    assert view["adjusted_days"][0]["coverage_pct"] == 89
 
 
 def test_the_shipped_case_no_longer_invents_a_surplus():
@@ -83,12 +120,15 @@ def test_the_shipped_case_no_longer_invents_a_surplus():
     view = build_nutrition_view(
         intake, complete + [partial], [], TODAY, default_weight_kg=98.9, protein_g_per_kg=1.8
     )
-    # With the only logged day excluded there is nothing honest to compare, and
-    # saying so beats reporting a +2414 surplus off a truncated day.
-    assert view["week_days_compared"] == 0
-    assert view["week_balance_kcal"] is None
+    # The day is repaired and used, but one day is still not a pattern: the
+    # verdict is withheld until three days are logged, so no "+2414 surplus,
+    # likely building muscle" can be printed off a single meal.
+    assert view["week_days_compared"] == 1
     assert view["classification"] is None
-    assert partial["date"] in view["partial_days_excluded"]
+    assert view["too_few_days_for_verdict"] is True
+    assert partial["date"] not in view["partial_days_excluded"]
+    # Burn counts the imputed basal rather than the truncated 2171.
+    assert view["week_avg_burn_kcal"] == 2738
 
 
 def test_one_logged_day_reports_numbers_but_refuses_a_verdict():
