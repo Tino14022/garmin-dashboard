@@ -10,6 +10,8 @@ band edges rather than a real distribution — treat them as approximate.
 """
 from __future__ import annotations
 
+from . import rank as rank_scale
+
 # Each band: (upper_bound, percentile_at_that_bound). Lower is better where
 # `lower_is_better`, so the bands read in the direction of improvement.
 NORMS = {
@@ -116,6 +118,7 @@ def build_benchmarks(payload: dict) -> dict | None:
             "value": value,
             "percentile": pct,
             "status": status,
+            "rank": rank_scale.from_percentile(pct),
             "verdict": label,
             "note": spec["note"],
             "lower_is_better": spec["lower_is_better"],

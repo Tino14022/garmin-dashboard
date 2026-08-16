@@ -10,6 +10,7 @@ from __future__ import annotations
 import statistics
 from datetime import date, timedelta
 
+from . import rank as rank_scale
 from .formatting import parse_iso
 
 # Weights sum to 1.0. HRV and sleep dominate because they are the two signals
@@ -30,6 +31,7 @@ def _component(label, score, detail, available=True):
     return {
         "key": label,
         "score": round(score) if score is not None else None,
+        "rank": rank_scale.from_score(score),
         "detail": detail,
         "available": available,
     }
@@ -136,6 +138,7 @@ def build_readiness(payload: dict, today: date) -> dict | None:
     return {
         "score": score,
         "band": band,
+        "rank": rank_scale.from_score(score),
         "label": label,
         "components": components,
         "limiter": limiter["key"] if limiter["score"] < score else None,
@@ -197,6 +200,8 @@ def build_todays_call(payload: dict, readiness: dict | None, today: date) -> dic
 
     return {
         "verdict": verdict,
+        # A rest call is not a failure, so it ranks as fair rather than bad.
+        "rank": {"hard": rank_scale.GOOD, "easy": rank_scale.FAIR, "rest": rank_scale.BAD}[verdict],
         "headline": {"hard": "Train hard", "easy": "Train easy", "rest": "Rest"}[verdict],
         "detail": detail,
         "reasons": reasons,
@@ -231,6 +236,7 @@ def build_recovery_debt(payload: dict, today: date, *, days: int = 28) -> dict |
         "series": series,
         "current_balance_h": round(current, 1),
         "status": status,
+        "rank": {"good": rank_scale.GOOD, "warn": rank_scale.FAIR, "bad": rank_scale.BAD}[status],
         "worst_h": round(min(s["balance"] for s in series), 1),
         "nights_logged": sum(1 for s in series if s["logged"]),
     }

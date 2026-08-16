@@ -25,6 +25,17 @@ __RUNNING_TAB_STYLE__
     --text:#e8ebf1; --text-dim:#8b93a3; --text-faint:#5b6472;
     --blue:#5b8cff; --orange:#ff9f5a; --green:#3ddc97; --red:#ff6b7a;
     --purple:#b98bff; --cyan:#4fd6e8; --yellow:#ffd166; --neon:#39ff8f;
+
+    /* One status scale for the whole app. Every graded thing — body metrics,
+       benchmarks, readiness, findings, overview cards — resolves to one of
+       these five, so the same quality never appears in two colours.
+       Orange rather than yellow for `fair`, because yellow is the fat macro
+       in charts and a status colour must not collide with a data colour. */
+    --rank-excellent:#39ff8f;
+    --rank-good:#3ddc97;
+    --rank-fair:#ff9f5a;
+    --rank-bad:#ff6b7a;
+    --rank-terrible:#c2334d;
   }
   *{box-sizing:border-box;}
   body{
@@ -293,11 +304,11 @@ __RUNNING_TAB_STYLE__
   .stat-tile .val .u{ font-size:0.8rem; font-weight:600; color:var(--text-faint); margin-left:2px; }
   .stat-tile .delta{ font-size:0.7rem; color:var(--text-faint); }
   .stat-chip{ display:inline-block; font-size:0.65rem; font-weight:700; padding:2px 8px; border-radius:999px; }
-  .stat-chip.optimal, .stat-chip.good{ background:rgba(61,220,151,0.16); color:var(--green); }
-  .stat-chip.normal{ background:rgba(91,140,255,0.16); color:var(--blue); }
-  .stat-chip.fair{ background:rgba(255,209,102,0.16); color:var(--yellow); }
-  .stat-chip.low, .stat-chip.high{ background:rgba(255,159,90,0.18); color:var(--orange); }
-  .stat-chip.very_high{ background:rgba(255,107,122,0.18); color:var(--red); }
+  .stat-chip.optimal{ background:rgba(57,255,143,0.16); color:var(--rank-excellent); }
+  .stat-chip.good, .stat-chip.normal{ background:rgba(61,220,151,0.16); color:var(--rank-good); }
+  .stat-chip.fair{ background:rgba(255,159,90,0.18); color:var(--rank-fair); }
+  .stat-chip.low, .stat-chip.high{ background:rgba(255,107,122,0.18); color:var(--rank-bad); }
+  .stat-chip.very_high{ background:rgba(194,51,77,0.24); color:#ff7d94; }
   .stat-tile .why{ font-size:0.72rem; color:var(--text-dim); line-height:1.5; margin-top:8px; }
 
   .finding{ border-left:3px solid var(--border); padding:2px 0 2px 14px; margin-bottom:16px; }
@@ -439,6 +450,29 @@ __RUNNING_TAB_STYLE__
   .day-detail{ margin-top:18px; border-top:1px solid var(--border); padding-top:16px; }
   .dd-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:0.95rem; }
   .dd-close{ margin-top:0; }
+
+  /* ---- Shared rank scale ---- */
+  .rk-excellent{ color:var(--rank-excellent); }
+  .rk-good{ color:var(--rank-good); }
+  .rk-fair{ color:var(--rank-fair); }
+  .rk-bad{ color:var(--rank-bad); }
+  .rk-terrible{ color:var(--rank-terrible); }
+  .chip-excellent{ background:rgba(57,255,143,0.16); color:var(--rank-excellent); }
+  .chip-good{ background:rgba(61,220,151,0.16); color:var(--rank-good); }
+  .chip-fair{ background:rgba(255,159,90,0.18); color:var(--rank-fair); }
+  .chip-bad{ background:rgba(255,107,122,0.18); color:var(--rank-bad); }
+  .chip-terrible{ background:rgba(194,51,77,0.24); color:#ff7d94; }
+  .finding.rank-excellent{ border-left-color:var(--rank-excellent); }
+  .finding.rank-good{ border-left-color:var(--rank-good); }
+  .finding.rank-fair{ border-left-color:var(--rank-fair); }
+  .finding.rank-bad{ border-left-color:var(--rank-bad); }
+  .finding.rank-terrible{ border-left-color:var(--rank-terrible); }
+  .ov-card.rank-excellent{ border-left-color:var(--rank-excellent); }
+  .ov-card.rank-good{ border-left-color:var(--rank-good); }
+  .ov-card.rank-fair{ border-left-color:var(--rank-fair); }
+  .ov-card.rank-bad{ border-left-color:var(--rank-bad); }
+  .ov-card.rank-terrible{ border-left-color:var(--rank-terrible); }
+  .ov-card.rank-bad .age, .ov-card.rank-terrible .age{ color:var(--rank-bad); }
 
   footer{color:var(--text-faint); font-size:0.75rem; text-align:center; padding:20px 0 10px;}
 </style>
@@ -699,7 +733,15 @@ function ringSvg(pct, colour, size, stroke){
     '<circle cx="' + size/2 + '" cy="' + size/2 + '" r="' + r + '" fill="none" stroke="' + colour + '" stroke-width="' + stroke +
     '" stroke-linecap="round" stroke-dasharray="' + (c * Math.min(1, pct/100)).toFixed(1) + ' ' + c.toFixed(1) + '"/></svg>';
 }
-function scoreColour(v){ return v >= 75 ? 'var(--neon)' : v >= 55 ? 'var(--yellow)' : 'var(--red)'; }
+// Every graded value on the page resolves through here, so one scale governs.
+const RANK_BANDS = [[85,'excellent'],[70,'good'],[50,'fair'],[30,'bad']];
+function rankOf(score){
+  if(score == null) return 'fair';
+  for(const [t, r] of RANK_BANDS){ if(score >= t) return r; }
+  return 'terrible';
+}
+function rankColour(rank){ return 'var(--rank-' + (rank || 'fair') + ')'; }
+function scoreColour(v){ return rankColour(rankOf(v)); }
 function section(title, desc, body){
   return '<div class="section"><h2>' + title + '</h2>' +
     (desc ? '<div class="desc">' + desc + '</div>' : '') + body + '</div>';
@@ -771,7 +813,7 @@ function section(title, desc, body){
     html += '<div class="section"><h2>Needs attention</h2>' +
       '<div class="desc">The ' + Math.min(ov.priorities.length, ov.priority_count) + ' of ' + ov.priority_count +
       ' open flags worth acting on first. Full reasoning on the Analysis and Body tabs.</div>' +
-      ov.priorities.map(p => findingHtml({severity:p.severity, headline:p.title, detail:p.detail})).join('') +
+      ov.priorities.map(p => findingHtml({severity:p.severity, rank:p.rank, headline:p.title, detail:p.detail})).join('') +
       '</div>';
   }
 
@@ -779,7 +821,7 @@ function section(title, desc, body){
     '<div class="desc">Most recent entry in each area. Tap any card to open it.</div>' +
     '<div class="ov-grid">' +
     ov.cards.map((c, i) =>
-      '<button class="ov-card ' + c.status + '" data-goto="' + c.tab + '" data-i="' + i + '">' +
+      '<button class="ov-card ' + c.status + ' rank-' + (c.rank||'fair') + '" data-goto="' + c.tab + '" data-i="' + i + '">' +
         '<div class="head">' + c.icon + ' ' + c.title + '</div>' +
         '<div class="val">' + c.value + (c.unit ? '<span class="u">' + c.unit + '</span>' : '') + '</div>' +
         (c.sub ? '<div class="sub">' + c.sub + '</div>' : '') +
@@ -804,8 +846,8 @@ function section(title, desc, body){
         dg.stats.map(s => '<div class="stat-tile"><div class="lbl">' + s.label + '</div>' +
           '<div class="val">' + s.value + '<span class="u">' + s.unit + '</span></div></div>').join('') +
       '</div>' +
-      (dg.wins.length ? '<div class="finding good"><h4>Went well</h4><p>You ' + dg.wins.join(', ') + '.</p></div>' : '') +
-      (dg.watch.length ? '<div class="finding warn"><h4>Worth watching</h4><p>' +
+      (dg.wins.length ? '<div class="finding good rank-good"><h4>Went well</h4><p>You ' + dg.wins.join(', ') + '.</p></div>' : '') +
+      (dg.watch.length ? '<div class="finding warn rank-bad"><h4>Worth watching</h4><p>' +
         dg.watch.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('. ') + '.</p></div>' : ''));
   }
 
@@ -876,7 +918,7 @@ function renderSleepModules(){
 
   const bb = DATA.body_battery;
   if(bb){
-    const colour = v => v >= 50 ? 'var(--neon)' : v >= 35 ? 'var(--yellow)' : 'var(--red)';
+    const colour = v => rankColour(v >= 50 ? 'good' : v >= 35 ? 'fair' : 'bad');
     html += section('Overnight recharge',
       'How much body battery each night actually paid back. A good night returns 50 or more; you average <b>' +
       bb.avg_recharge + '</b>' + (bb.poor_nights ? ', with ' + bb.poor_nights + ' night(s) under 35' : '') + '.',
@@ -895,13 +937,13 @@ function renderSleepModules(){
     html += section('Sleep debt ledger',
       'A running balance: short nights withdraw, long nights repay at half rate, because you cannot bank sleep as ' +
       'efficiently as you lose it. You are currently <b style="color:' +
-      (dbt.status === 'good' ? 'var(--neon)' : dbt.status === 'warn' ? 'var(--yellow)' : 'var(--red)') + '">' +
+      rankColour(dbt.rank) + '">' +
       dbt.current_balance_h + 'h</b>, worst point ' + dbt.worst_h + 'h.',
       '<div style="display:flex;align-items:flex-start;gap:2px;height:90px;border-top:1px dashed var(--border);">' +
       dbt.series.map(s =>
         '<div style="flex:1;height:100%;display:flex;flex-direction:column" title="' + fmtDate(s.date) + ': ' + s.balance + 'h">' +
         '<div style="height:' + Math.min(100, Math.abs(Math.min(0, s.balance)) / range * 100) + '%;background:' +
-        (s.balance < -8 ? 'var(--red)' : s.balance < -3 ? 'var(--yellow)' : 'var(--blue)') +
+        (s.balance < -8 ? rankColour('bad') : s.balance < -3 ? rankColour('fair') : 'var(--blue)') +
         ';opacity:' + (s.logged ? 1 : 0.35) + ';border-radius:0 0 2px 2px"></div></div>'
       ).join('') + '</div>' +
       '<div style="font-size:0.66rem;color:var(--text-faint);margin-top:5px;">Faded bars are nights with no sleep data.</div>');
@@ -925,7 +967,7 @@ function renderTrainingModules(){
         '<div class="stack-row" style="grid-template-columns:96px 1fr 62px;"><span style="color:var(--text-dim);text-transform:capitalize">' +
         m.muscle.replace(/_/g,' ') + '</span>' +
         '<span class="comp-track" style="height:9px"><span class="comp-fill" style="width:' + (m.share*100) + '%;background:' +
-        (m.per_week >= 2 ? 'var(--neon)' : m.per_week >= 1 ? 'var(--yellow)' : 'var(--orange)') + '"></span></span>' +
+        rankColour(m.per_week >= 2 ? 'good' : m.per_week >= 1 ? 'fair' : 'bad') + '"></span></span>' +
         '<span style="text-align:right;color:var(--text-faint)">' + m.per_week + '/wk</span></div>'
       ).join(''));
   }
@@ -1169,7 +1211,7 @@ function renderAnalysisModules(){
       '. Percentiles are interpolated from reference bands, so treat them as orientation rather than precision.',
       bm.metrics.map(m =>
         '<div class="bm-row"><div class="bm-head"><span>' + m.label + ' — <b>' + m.value + m.unit + '</b></span>' +
-        '<span style="color:' + (m.status==='good'?'var(--neon)':m.status==='warn'?'var(--yellow)':'var(--text-dim)') + '">' +
+        '<span class="rk-' + (m.rank||'fair') + '">' +
         m.verdict + ' (' + m.percentile + 'th)</span></div>' +
         '<div class="bm-track"><div class="bm-pin" style="left:calc(' + m.percentile + '% - 1px)"></div></div>' +
         '<div class="bm-note">' + m.note + '</div></div>').join(''));
@@ -2101,10 +2143,15 @@ if(training.sessions.length){
   miniLine('sleepSpo2Chart', sleep.map(s=>s.spo2), sleep.map(s=>fmtDate(s.date)), '#4fd6e8', '%');
 
   // Recent nights table
-  const rows = sleep.slice().reverse().slice(0, 21).map(s =>
-    '<tr><td>' + fmtDate(s.date) + '</td><td>' + fmt1(s.hours) + 'h</td><td>' + (s.score ?? '-') + ' (' + (s.quality||'-').toLowerCase() + ')</td>' +
-    '<td>' + (s.resting_hr ?? '-') + ' bpm</td><td>' + fmt1(s.respiration) + '</td><td>' + fmt1(s.spo2) + '%</td></tr>'
-  ).join('');
+  // Garmin's own quality word maps straight onto the shared rank scale, so the
+  // score column is coloured by the same five levels as everything else.
+  const QUALITY_RANK = {EXCELLENT:'excellent', GOOD:'good', FAIR:'fair', POOR:'bad', VERY_POOR:'terrible'};
+  const rows = sleep.slice().reverse().slice(0, 21).map(s => {
+    const rk = QUALITY_RANK[(s.quality||'').toUpperCase()] || rankOf(s.score);
+    return '<tr><td>' + fmtDate(s.date) + '</td><td>' + fmt1(s.hours) + 'h</td>' +
+      '<td class="rk-' + rk + '"><b>' + (s.score ?? '-') + '</b> ' + (s.quality||'-').toLowerCase() + '</td>' +
+      '<td>' + (s.resting_hr ?? '-') + ' bpm</td><td>' + fmt1(s.respiration) + '</td><td>' + fmt1(s.spo2) + '%</td></tr>';
+  }).join('');
   el('sleepTableWrap').innerHTML = '<div class="table-scroll"><table><thead><tr><th>Date</th><th>Duration</th><th>Score</th><th>Resting HR</th><th>Respiration</th><th>SpO2</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
 
   // ---- Ongoing sleep analysis (recomputed every rebuild as new nights land) ----
@@ -2278,7 +2325,7 @@ if(training.sessions.length){
       '<div class="analysis-row"><span class="k">Avg burn (Garmin)</span><span class="v">' + nv.week_avg_burn_kcal + ' kcal</span></div>' +
       (nv.week_avg_bmr_kcal != null ? '<div class="analysis-row"><span class="k">└ resting</span><span class="v">' + nv.week_avg_bmr_kcal + ' kcal</span></div>' : '') +
       (nv.week_avg_active_kcal != null ? '<div class="analysis-row"><span class="k">└ active</span><span class="v">' + nv.week_avg_active_kcal + ' kcal</span></div>' : '') +
-      '<div class="analysis-row"><span class="k">Balance</span><span class="v" style="color:' + (nv.week_balance_kcal>0?'#3ddc97':'#ff6b7a') + '">' + balanceStr + ' kcal/day</span></div>' +
+      '<div class="analysis-row"><span class="k">Balance</span><span class="v" style="color:' + rankColour(nv.week_balance_kcal>0?'fair':'good') + '">' + balanceStr + ' kcal/day</span></div>' +
       '<div class="analysis-row"><span class="k">Avg protein</span><span class="v">' + nv.week_avg_protein_g + 'g <span style="color:var(--text-faint)">/ ' + nv.protein_target_g + 'g target</span></span></div>' +
       '</div>' +
       '<div class="analysis-card"><h3>Read</h3>' +
@@ -2356,7 +2403,7 @@ if(training.sessions.length){
         : '<div class="stat-tile"><div class="lbl">Burned</div><div class="val">—</div><div class="why">No Garmin data synced for this day.</div></div>') +
       (balance != null
         ? '<div class="stat-tile"><div class="lbl">Difference</div><div class="val" style="color:' +
-          (balance > 0 ? 'var(--orange)' : 'var(--neon)') + '">' + (balance > 0 ? '+' : '') + balance + '<span class="u">kcal</span></div>' +
+          rankColour(balance > 0 ? 'fair' : 'good') + '">' + (balance > 0 ? '+' : '') + balance + '<span class="u">kcal</span></div>' +
           '<div class="why">' + (balance > 0 ? 'Ate more than you burned.' : 'Burned more than you ate.') + '</div></div>'
         : '') +
       '<div class="stat-tile"><div class="lbl">Protein</div><div class="val">' + Math.round(t.protein) + '<span class="u">g</span></div>' +
@@ -2457,7 +2504,7 @@ function findingHtml(f){
   if(f.domains) meta.push(f.domains.map(d => '<span class="domain-tag">' + d + '</span>').join(' '));
   if(f.confidence) meta.push('<span class="conf ' + f.confidence + '">' + f.confidence + '</span> evidence · n=' + f.n);
   if(f.r != null) meta.push('r = ' + f.r);
-  return '<div class="finding ' + (f.severity||'info') + '">' +
+  return '<div class="finding ' + (f.severity||'info') + ' rank-' + (f.rank||'fair') + '">' +
     '<h4>' + (f.headline || f.title) + '</h4>' +
     '<p>' + (f.detail||'') + '</p>' +
     (meta.length ? '<div class="meta">' + meta.join('') + '</div>' : '') +
@@ -2497,13 +2544,13 @@ if(!bodyView){
     if(fl.actual){
       const a = fl.actual;
       html += '<div class="stat-grid" style="margin-top:16px;">' +
-        '<div class="stat-tile"><div class="lbl">Fat change</div><div class="val" style="color:' + (a.fat_change_kg<=0?'var(--neon)':'var(--orange)') + '">' + (a.fat_change_kg>0?'+':'') + a.fat_change_kg + '<span class="u">kg</span></div><div class="delta">over ' + a.days + ' days</div></div>' +
-        '<div class="stat-tile"><div class="lbl">Lean change</div><div class="val" style="color:' + (a.lean_change_kg>=-0.3?'var(--neon)':'var(--red)') + '">' + (a.lean_change_kg>0?'+':'') + a.lean_change_kg + '<span class="u">kg</span></div><div class="delta">muscle retention</div></div>' +
+        '<div class="stat-tile"><div class="lbl">Fat change</div><div class="val" style="color:' + rankColour(a.fat_change_kg<=0?'good':'fair') + '">' + (a.fat_change_kg>0?'+':'') + a.fat_change_kg + '<span class="u">kg</span></div><div class="delta">over ' + a.days + ' days</div></div>' +
+        '<div class="stat-tile"><div class="lbl">Lean change</div><div class="val" style="color:' + rankColour(a.lean_change_kg>=-0.3?'good':'bad') + '">' + (a.lean_change_kg>0?'+':'') + a.lean_change_kg + '<span class="u">kg</span></div><div class="delta">muscle retention</div></div>' +
         '<div class="stat-tile"><div class="lbl">Actual rate</div><div class="val">' + Math.abs(a.fat_rate_kg_per_week) + '<span class="u">kg/wk</span></div><div class="delta">target ' + fl.target_weekly_rate_kg + '</div></div>' +
         '</div>';
     }
 
-    html += fl.findings.map(f => findingHtml({severity:f.severity, headline:f.title, detail:f.detail})).join('');
+    html += fl.findings.map(f => findingHtml({severity:f.severity, rank:f.rank, headline:f.title, detail:f.detail})).join('');
     html += '</div>';
   }
 
@@ -2535,7 +2582,7 @@ if(!bodyView){
 
   if(v.findings.length){
     html += '<div class="section"><h2>What this means</h2>' +
-      v.findings.map(f => findingHtml({severity:f.severity, headline:f.title, detail:f.detail})).join('') +
+      v.findings.map(f => findingHtml({severity:f.severity, rank:f.rank, headline:f.title, detail:f.detail})).join('') +
       '</div>';
   }
 
@@ -2574,7 +2621,7 @@ function statTile(m){
   return '<div class="stat-tile">' +
     '<div class="lbl">' + m.label + '</div>' +
     '<div class="val">' + m.value + (m.unit ? '<span class="u">' + m.unit + '</span>' : '') + '</div>' +
-    (m.status_label ? '<span class="stat-chip ' + m.status + '">' + m.status_label + '</span>' : '') +
+    (m.status_label ? '<span class="stat-chip chip-' + (m.rank||'fair') + '">' + m.status_label + '</span>' : '') +
     delta +
     '<div class="why">' + m.meaning + '</div>' +
     '</div>';

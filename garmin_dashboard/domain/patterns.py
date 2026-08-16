@@ -9,6 +9,7 @@ from __future__ import annotations
 import statistics
 from datetime import date, timedelta
 
+from . import rank as rank_scale
 from .formatting import parse_iso, week_start
 
 WEEKDAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -176,6 +177,8 @@ def build_hypnogram(payload: dict, *, nights: int = 21) -> dict | None:
         "avg_rem_pct": round(rem_avg),
         "deep_verdict": "low" if deep_avg < 13 else "high" if deep_avg > 23 else "normal",
         "rem_verdict": "low" if rem_avg < 18 else "high" if rem_avg > 27 else "normal",
+        "deep_rank": rank_scale.FAIR if deep_avg < 13 or deep_avg > 23 else rank_scale.GOOD,
+        "rem_rank": rank_scale.FAIR if rem_avg < 18 or rem_avg > 27 else rank_scale.GOOD,
     }
 
 
@@ -206,6 +209,7 @@ def build_body_battery(payload: dict, *, days: int = 21) -> dict | None:
         "best": max(values),
         "worst": min(values),
         "verdict": "good" if avg >= 50 else "warn" if avg >= 35 else "bad",
+        "rank": rank_scale.GOOD if avg >= 50 else rank_scale.FAIR if avg >= 35 else rank_scale.BAD,
         "poor_nights": sum(1 for v in values if v < 35),
     }
 

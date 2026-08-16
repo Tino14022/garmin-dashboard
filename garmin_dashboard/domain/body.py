@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from datetime import date
 
+from . import rank as rank_scale
 from .formatting import parse_iso
 
 # status ordering, worst first, for sorting attention
@@ -166,6 +167,7 @@ def build_body_view(body_comp: list[dict], *, height_cm: int, today: date) -> di
             "value": value,
             "status": status,
             "status_label": status_label,
+            "rank": rank_scale.from_status(status),
             "meaning": meaning,
             "delta": delta,
         })
@@ -177,13 +179,16 @@ def build_body_view(body_comp: list[dict], *, height_cm: int, today: date) -> di
         lean_mass = round(weight - fat_mass, 1)
 
     findings = _analyse(latest, previous, metrics, fat_mass, lean_mass, height_cm, entries)
+    for f in findings:
+        f["rank"] = rank_scale.from_severity(f["severity"])
 
     return {
         "latest": latest,
         "measured_on": latest.get("date"),
         "entry_count": len(entries),
         "metrics": metrics,
-        "attention": [m for m in metrics if m["status"] in ("low", "high", "very_high")],
+        "attention": [m for m in metrics if m["rank"] in (rank_scale.BAD, rank_scale.TERRIBLE)],
+        "worst_rank": rank_scale.worst([m["rank"] for m in metrics]),
         "fat_mass_kg": fat_mass,
         "lean_mass_kg": lean_mass,
         "findings": findings,

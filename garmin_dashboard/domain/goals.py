@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+from . import rank as rank_scale
 from .formatting import parse_iso
 
 KCAL_PER_KG_FAT = 7700
@@ -93,6 +94,8 @@ def build_fat_loss_view(
         goal, actual, nutrition_view, fat_to_lose, eta, race_date, today,
         daily_deficit, too_soon,
     )
+    for f in findings:
+        f["rank"] = rank_scale.from_severity(f["severity"])
 
     return {
         "target_body_fat_pct": goal.target_body_fat_pct,

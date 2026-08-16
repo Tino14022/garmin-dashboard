@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from datetime import date
 
+from . import rank as rank_scale
 from .formatting import parse_iso
 
 # Past this many days a domain is treated as not being kept up, and says so.
@@ -39,6 +40,7 @@ def _ago(days: int | None) -> str:
 
 def _card(domain, icon, title, value, unit=None, sub=None, status="info", age=None, tab=None):
     stale = age is not None and age > STALE_AFTER.get(domain, 99)
+    final_status = "warn" if stale else status
     return {
         "domain": domain,
         "icon": icon,
@@ -46,7 +48,8 @@ def _card(domain, icon, title, value, unit=None, sub=None, status="info", age=No
         "value": value,
         "unit": unit,
         "sub": sub,
-        "status": "warn" if stale else status,
+        "status": final_status,
+        "rank": rank_scale.from_severity(final_status),
         "age_days": age,
         "age_label": _ago(age),
         "stale": stale,
@@ -224,6 +227,8 @@ def build_overview(payload: dict, today: date) -> dict:
         if f["severity"] == "warn":
             priorities.append({**f, "tab": "body"})
 
+    for p in priorities:
+        p["rank"] = rank_scale.from_severity(p.get("severity"))
     stale = [c for c in cards if c["stale"]]
 
     return {

@@ -15,6 +15,7 @@ from __future__ import annotations
 import statistics
 from datetime import date, timedelta
 
+from . import rank as rank_scale
 from .formatting import parse_iso
 
 # Below this many paired observations, a correlation is noise.
@@ -66,6 +67,7 @@ def finding(id_, domains, headline, detail, *, n, severity="info", r=None):
         "n": n,
         "confidence": confidence(n),
         "severity": severity,
+        "rank": rank_scale.from_severity(severity),
         "r": round(r, 2) if r is not None else None,
     }
 
