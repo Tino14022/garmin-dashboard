@@ -14,6 +14,13 @@ from .formatting import parse_iso
 
 KCAL_PER_KG_FAT = 7700
 
+# Day-to-day scale readings are dominated by water, glycogen and gut contents,
+# not tissue. Two readings a day apart showing -0.55kg extrapolate to "-3.9% of
+# bodyweight per week", which would fire a too-fast warning off pure noise —
+# real tissue loss that fast is not physiologically possible at these deficits.
+# Below this span the change is reported but no rate is computed from it.
+MIN_DAYS_FOR_RATE = 5
+
 
 def _split(entry: dict) -> tuple[float, float] | None:
     w, bf = entry.get("weight_kg"), entry.get("body_fat_pct")
@@ -53,12 +60,22 @@ def build_fat_loss_view(
     weeks_needed = round(fat_to_lose / goal.weekly_rate_kg, 1) if goal.weekly_rate_kg else None
     eta = today + timedelta(weeks=weeks_needed) if weeks_needed and weeks_needed > 0 else None
 
-    # Measured progress, only once there is a second reading to measure against.
+    # Measured progress, only once the readings span enough time to mean anything.
     actual = None
+    too_soon = None
     if len(entries) > 1:
         d0, d1 = parse_iso(first["date"]), parse_iso(latest["date"])
         days = (d1 - d0).days
-        if days > 0:
+        if 0 < days < MIN_DAYS_FOR_RATE:
+            fat_first, lean_first = _split(first)
+            too_soon = {
+                "days": days,
+                "needed": MIN_DAYS_FOR_RATE,
+                "weight_change_kg": round(weight_now - first["weight_kg"], 2),
+                "fat_change_kg": round(fat_now - fat_first, 2),
+                "lean_change_kg": round(lean_now - lean_first, 2),
+            }
+        if days >= MIN_DAYS_FOR_RATE:
             fat_first, lean_first = _split(first)
             weeks = days / 7
             actual = {
@@ -72,7 +89,10 @@ def build_fat_loss_view(
                 ),
             }
 
-    findings = _assess(goal, actual, nutrition_view, fat_to_lose, eta, race_date, today, daily_deficit)
+    findings = _assess(
+        goal, actual, nutrition_view, fat_to_lose, eta, race_date, today,
+        daily_deficit, too_soon,
+    )
 
     return {
         "target_body_fat_pct": goal.target_body_fat_pct,
@@ -91,11 +111,14 @@ def build_fat_loss_view(
         "achievable_by_race": bool(eta and race_date and eta <= race_date),
         "readings": len(entries),
         "actual": actual,
+        "too_soon": too_soon,
+        "min_days_for_rate": MIN_DAYS_FOR_RATE,
         "findings": findings,
     }
 
 
-def _assess(goal, actual, nutrition_view, fat_to_lose, eta, race_date, today, daily_deficit) -> list[dict]:
+def _assess(goal, actual, nutrition_view, fat_to_lose, eta, race_date, today,
+            daily_deficit, too_soon=None) -> list[dict]:
     out: list[dict] = []
 
     if fat_to_lose <= 0:
@@ -147,15 +170,29 @@ def _assess(goal, actual, nutrition_view, fat_to_lose, eta, race_date, today, da
         })
 
     if actual is None:
-        out.append({
-            "severity": "info",
-            "title": "One reading so far — no rate to judge yet",
-            "detail": (
-                "Fat loss is only visible as a trend. Weigh in two or three times a week on the same routine "
-                "(waking, before food or drink) and this panel starts showing whether the weight coming off is "
-                "fat or muscle, which is the only question that matters."
-            ),
-        })
+        if too_soon:
+            out.append({
+                "severity": "info",
+                "title": f"{too_soon['days']} day(s) between readings — too soon for a rate",
+                "detail": (
+                    f"Weight moved {too_soon['weight_change_kg']:+}kg, of which the scale attributes "
+                    f"{too_soon['fat_change_kg']:+}kg to fat and {too_soon['lean_change_kg']:+}kg to lean mass. "
+                    "Do not read any of that as tissue: over a day or two the scale is mostly measuring water, "
+                    "glycogen and gut contents. Losing half a kilo of actual fat takes roughly a 3,800 kcal "
+                    f"deficit, which is not what happened. A real rate needs about {too_soon['needed']} days "
+                    "between readings, and a trustworthy one needs two to three weeks."
+                ),
+            })
+        else:
+            out.append({
+                "severity": "info",
+                "title": "One reading so far — no rate to judge yet",
+                "detail": (
+                    "Fat loss is only visible as a trend. Weigh in two or three times a week on the same routine "
+                    "(waking, before food or drink) and this panel starts showing whether the weight coming off is "
+                    "fat or muscle, which is the only question that matters."
+                ),
+            })
         return out
 
     # Is the weight coming off as fat, or as muscle?

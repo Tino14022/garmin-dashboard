@@ -127,3 +127,31 @@ def test_already_at_target_stops_prescribing_a_deficit():
     assert v["fat_to_lose_kg"] <= 0
     assert v["findings"][0]["severity"] == "good"
     assert "already at target" in v["findings"][0]["title"].lower()
+
+
+# ---------------------------------------------- rate needs a real time span
+NEXT_DAY = {"date": "2026-08-16", "weight_kg": 98.35, "body_fat_pct": 20.3}
+
+
+def test_readings_a_day_apart_do_not_produce_a_rate():
+    """-0.55kg overnight extrapolates to -3.9%/week, which would fire a
+    too-fast warning off what is really just water."""
+    v = view([BASELINE, NEXT_DAY], today=date(2026, 8, 16))
+    assert v["actual"] is None
+    assert v["too_soon"]["days"] == 1
+    assert not any("too fast" in f["title"] for f in v["findings"])
+
+
+def test_a_short_gap_still_reports_the_raw_change_and_says_why_it_is_not_a_rate():
+    v = view([BASELINE, NEXT_DAY], today=date(2026, 8, 16))
+    assert v["too_soon"]["weight_change_kg"] == pytest.approx(-0.55, abs=0.01)
+    finding = next(f for f in v["findings"] if "too soon" in f["title"])
+    assert "water" in finding["detail"]
+
+
+def test_a_long_enough_gap_does_produce_a_rate():
+    later = {"date": "2026-08-29", "weight_kg": 97.6, "body_fat_pct": 18.9}
+    v = view([BASELINE, later], today=date(2026, 8, 29))
+    assert v["actual"] is not None
+    assert v["too_soon"] is None
+    assert v["actual"]["days"] == 14

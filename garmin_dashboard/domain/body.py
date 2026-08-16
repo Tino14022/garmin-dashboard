@@ -121,6 +121,7 @@ METRICS = [
     ("visceral_fat", "Visceral fat", "", _visceral, "Fat around the organs, the fat that carries real metabolic risk. Under 10 is where you want it."),
     ("subcutaneous_fat_pct", "Subcutaneous fat", "%", _subcutaneous, "Fat under the skin — the visible kind, and the less medically loaded kind."),
     ("bmr", "BMR", "kcal", None, "Calories burned at complete rest. The floor your intake should never sit under."),
+    ("scale_heart_rate", "Standing HR", "bpm", None, "Taken while you stand on the scale, so it runs well above your true resting heart rate — the overnight figure on the Analysis tab is the one to judge fitness by."),
     ("body_score", "Body score", "", None, "The scale's own roll-up of everything above."),
 ]
 

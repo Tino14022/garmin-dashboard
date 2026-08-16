@@ -14,5 +14,22 @@
     "subcutaneous_fat_pct": 15.3,
     "bmr": 2175,
     "body_score": 87
+  },
+  {
+    "date": "2026-08-16",
+    "time": "10:37",
+    "weight_kg": 98.35,
+    "bmi": 26.9,
+    "body_fat_pct": 20.3,
+    "muscle_mass_kg": 74.4,
+    "skeletal_muscle_kg": 38.1,
+    "water_pct": 50.0,
+    "protein_pct": 21.7,
+    "bone_mass_kg": 4.0,
+    "visceral_fat": 8,
+    "subcutaneous_fat_pct": 15.3,
+    "bmr": 2165,
+    "scale_heart_rate": 83,
+    "body_score": 87
   }
 ]
