@@ -238,5 +238,35 @@
     "protein_g": 34,
     "carbs_g": 60,
     "fat_g": 10
+  },
+  {
+    "date": "2026-08-16",
+    "meal": "lunch",
+    "description": "Mixed grilled pork and chicken (~275g)",
+    "grams": 275,
+    "calories": 569,
+    "protein_g": 78,
+    "carbs_g": 0,
+    "fat_g": 26
+  },
+  {
+    "date": "2026-08-16",
+    "meal": "lunch",
+    "description": "Baked potato (200g)",
+    "grams": 200,
+    "calories": 186,
+    "protein_g": 4,
+    "carbs_g": 42,
+    "fat_g": 0.2
+  },
+  {
+    "date": "2026-08-16",
+    "meal": "lunch",
+    "description": "Coca-Cola Zero (1 glass, ~250ml)",
+    "grams": 250,
+    "calories": 1,
+    "protein_g": 0,
+    "carbs_g": 0,
+    "fat_g": 0
   }
 ]
