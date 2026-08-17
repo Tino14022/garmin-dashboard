@@ -328,5 +328,35 @@
     "protein_g": 53,
     "carbs_g": 94,
     "fat_g": 26
+  },
+  {
+    "date": "2026-08-17",
+    "meal": "lunch",
+    "description": "Mashed potatoes, home lunch (~220g)",
+    "grams": 220,
+    "calories": 242,
+    "protein_g": 4,
+    "carbs_g": 35,
+    "fat_g": 9
+  },
+  {
+    "date": "2026-08-17",
+    "meal": "lunch",
+    "description": "Macedonian veal gulash (teleshko meat, onion, pepper, garlic, water), home lunch (~280g)",
+    "grams": 280,
+    "calories": 504,
+    "protein_g": 50,
+    "carbs_g": 17,
+    "fat_g": 28
+  },
+  {
+    "date": "2026-08-17",
+    "meal": "lunch",
+    "description": "Cucumber with Macedonian mixed/white cheese, home lunch (~140g)",
+    "grams": 140,
+    "calories": 121,
+    "protein_g": 6,
+    "carbs_g": 5,
+    "fat_g": 9
   }
 ]
