@@ -378,5 +378,15 @@
     "protein_g": 35,
     "carbs_g": 90,
     "fat_g": 11
+  },
+  {
+    "date": "2026-08-17",
+    "meal": "snack",
+    "description": "Rice UP! Ketchup brown rice chips, pre-run (20g, 0.6g fibre, 0.2g salt)",
+    "grams": 20,
+    "calories": 92,
+    "protein_g": 1.6,
+    "carbs_g": 13.6,
+    "fat_g": 3.4
   }
 ]
