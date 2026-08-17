@@ -19,5 +19,10 @@
     "alcohol_drinks": null,
     "cannabis_used": true,
     "notes": "third consecutive night"
+  },
+  {
+    "date": "2026-08-17",
+    "cigarettes_level": "usual",
+    "notes": "Coffee immediately before evening run; one cigarette ~3-4h before the run"
   }
 ]
