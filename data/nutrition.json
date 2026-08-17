@@ -358,5 +358,25 @@
     "protein_g": 6,
     "carbs_g": 5,
     "fat_g": 9
+  },
+  {
+    "date": "2026-08-17",
+    "meal": "snack",
+    "description": "Peach, post-run (1 medium)",
+    "grams": 150,
+    "calories": 59,
+    "protein_g": 1.4,
+    "carbs_g": 14,
+    "fat_g": 0.4
+  },
+  {
+    "date": "2026-08-17",
+    "meal": "snack",
+    "description": "Post-run smoothie (300ml milk, 2 tbsp honey, 2 small bananas, salt, chocolate protein scoop)",
+    "grams": null,
+    "calories": 573,
+    "protein_g": 35,
+    "carbs_g": 90,
+    "fat_g": 11
   }
 ]
