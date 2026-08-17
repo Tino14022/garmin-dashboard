@@ -268,5 +268,55 @@
     "protein_g": 0,
     "carbs_g": 0,
     "fat_g": 0
+  },
+  {
+    "date": "2026-08-17",
+    "meal": "breakfast",
+    "description": "Yogurt drink (200ml, ~3g fiber)",
+    "grams": 200,
+    "calories": 82,
+    "protein_g": 6.6,
+    "carbs_g": 8,
+    "fat_g": 1.8
+  },
+  {
+    "date": "2026-08-17",
+    "meal": "breakfast",
+    "description": "Bread (30g, ~0.9g fiber, 0.42g salt)",
+    "grams": 30,
+    "calories": 74,
+    "protein_g": 5.2,
+    "carbs_g": 9.3,
+    "fat_g": 0.8
+  },
+  {
+    "date": "2026-08-17",
+    "meal": "breakfast",
+    "description": "Plain yogurt, thicker/higher-fat (200g, per label 84kcal/100g)",
+    "grams": 200,
+    "calories": 168,
+    "protein_g": 12,
+    "carbs_g": 7.6,
+    "fat_g": 10
+  },
+  {
+    "date": "2026-08-17",
+    "meal": "breakfast",
+    "description": "Boiled egg (1 large)",
+    "grams": 55,
+    "calories": 78,
+    "protein_g": 6.3,
+    "carbs_g": 0.6,
+    "fat_g": 5.3
+  },
+  {
+    "date": "2026-08-17",
+    "meal": "breakfast",
+    "description": "Smoked ham (30g, 1.35g salt)",
+    "grams": 30,
+    "calories": 70,
+    "protein_g": 7.8,
+    "carbs_g": 0.3,
+    "fat_g": 4.2
   }
 ]
