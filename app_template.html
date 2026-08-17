@@ -1645,15 +1645,38 @@ const training = DATA.training || {sessions:[], muscle_scores:{}, streak_weeks:0
 
 // ---- Today's Workout checklist ----
 (function(){
-  const plan = DATA.workout_plan;
+  const today = DATA.todays_workout;
   const wrap = el('workoutPlanWrap');
-  if(!plan || !plan.exercises || !plan.exercises.length) return;
+  if(!wrap || !today || today.kind === 'none') return;
+
+  // Non-checklist days (run/rest/note) get a simple card, not the set-dot UI.
+  if(today.kind !== 'checklist'){
+    let body = '<div class="section"><h2>' + today.name + '</h2>';
+    if(today.kind === 'run'){
+      body += today.target_km
+        ? '<div class="desc">This week\'s ladder wants <b>' + today.target_km + ' km</b>. Pace it by feel.</div>'
+        : '<div class="desc">No fixed distance — easy, conversational effort.</div>';
+    } else if(today.kind === 'rest'){
+      body += '<div class="desc">Take it. Adaptation happens on the days off.</div>';
+    } else if(today.kind === 'note'){
+      body += '<div class="desc">' + today.note + '</div>';
+    }
+    body += '</div>';
+    wrap.innerHTML = body;
+    return;
+  }
+
+  const plan = today;
+  if(!plan.exercises || !plan.exercises.length) return;
 
   const storageKey = 'workoutProgress_' + plan.date;
   const finishedKey = storageKey + '_finished';
   let progress = {};
   try{ progress = JSON.parse(localStorage.getItem(storageKey) || '{}'); }catch(e){ progress = {}; }
   let finished = localStorage.getItem(finishedKey) === '1';
+
+  // "8-10" reads as "8-10 reps"; "90 sec" already says its own unit, so leave it alone.
+  function repsLabel(targetReps){ return /^[\d-]+$/.test(targetReps) ? targetReps + ' reps' : targetReps; }
 
   function save(){ try{ localStorage.setItem(storageKey, JSON.stringify(progress)); }catch(e){} }
   function totalDone(){ return plan.exercises.reduce((a,ex,i) => a + (progress[i] || 0), 0); }
@@ -1663,7 +1686,7 @@ const training = DATA.training || {sessions:[], muscle_scores:{}, streak_weeks:0
     const lines = ['Finished workout: ' + (plan.name || 'Today\'s Workout') + ' (' + plan.date + ')', ''];
     plan.exercises.forEach((ex, i) => {
       const doneCount = progress[i] || 0;
-      lines.push('- ' + ex.name + ': ' + doneCount + '/' + ex.target_sets + ' sets (' + ex.target_reps + ' reps)');
+      lines.push('- ' + ex.name + ': ' + doneCount + '/' + ex.target_sets + ' sets (' + repsLabel(ex.target_reps) + ')');
     });
     lines.push('', 'Paste this to your coach to log it — it\'ll sync with Garmin automatically once your watch data comes in.');
     return lines.join('\n');
@@ -1711,7 +1734,7 @@ const training = DATA.training || {sessions:[], muscle_scores:{}, streak_weeks:0
       const doneCount = progress[i] || 0;
       html += '<div class="workout-exercise">' +
         '<div class="workout-exercise-header"><span class="workout-exercise-name">' + ex.name + '</span>' +
-        '<span class="workout-exercise-target">' + ex.target_reps + ' reps</span></div>' +
+        '<span class="workout-exercise-target">' + repsLabel(ex.target_reps) + '</span></div>' +
         '<div class="set-dots">';
       for(let s=0; s<ex.target_sets; s++){
         html += '<div class="set-dot' + (s < doneCount ? ' done' : '') + '" data-ex="' + i + '" data-set="' + s + '">' + (s+1) + '</div>';

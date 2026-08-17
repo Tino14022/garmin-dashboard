@@ -43,6 +43,7 @@ from .domain.training import (
     build_weekly_mileage,
     split_easy_vs_workout,
 )
+from .domain.workout import resolve_todays_workout
 
 
 def build_payload(
@@ -94,6 +95,8 @@ def build_payload(
     workout_plan = store.load("workout_plan", None)
     if workout_plan and workout_plan.get("date") != iso(today):
         workout_plan = None  # only show a plan for today; stale plans just disappear
+
+    training_split = store.load("training_split", {})
 
     # Cutting raises the protein target rather than lowering it — protein is what
     # keeps the loss coming off as fat instead of muscle.
@@ -175,6 +178,7 @@ def build_payload(
         body_comp, nutrition_view, settings.goal, today, race_date=settings.race.date
     )
     payload["eating_budget"] = build_eating_budget(payload, today, settings.goal)
+    payload["todays_workout"] = resolve_todays_workout(payload, today, training_split)
     payload["insights"] = build_insights(payload, today)
 
     # Presentation modules. Each reads the assembled payload rather than the raw

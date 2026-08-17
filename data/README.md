@@ -29,7 +29,21 @@ The coach-assigned plan for today, rendered as an interactive checklist in the T
   ]
 }
 ```
-Only shown in the app when `date` matches the build date. Checklist progress lives in the browser's localStorage, not here — when the user finishes and pastes the summary back, log the result into `trainings.json` as an annotation (see above), using the `exercises` field to capture what was actually completed.
+Only shown in the app when `date` matches the build date. Checklist progress lives in the browser's localStorage, not here — when the user finishes and pastes the summary back, log the result into `trainings.json` as an annotation (see above), using the `exercises` field to capture what was actually completed. If today's date isn't in here, the Workout tab falls back to `training_split.json` below rather than showing nothing — so this file is only needed for a one-off override of what the standing split would otherwise show today.
+
+## training_split.json
+The standing weekly split — a fixed rotation, not something re-asked each morning. Single object.
+```json
+{
+  "schedule": {"0": "long_run", "1": "push", "2": "pull", "3": "legs", "4": "rest", "5": "light_run", "6": "bodyweight_circuit"},
+  "append_finisher_to": ["push", "pull", "legs"],
+  "templates": {
+    "push": {"name": "Push Day", "exercises": [{"name": "Incline Dumbbell Bench Press", "target_sets": 4, "target_reps": "10"}]},
+    "bodyweight_circuit": {"name": "Bodyweight Circuit", "note": "Freeform — no fixed reps agreed yet."}
+  }
+}
+```
+`schedule` keys are Python `date.weekday()` ints (Mon=0..Sun=6). Each `templates` entry is either a checklist (`exercises`, same shape as `workout_plan.json`) or a plain `note` for a day with no fixed reps yet. `append_finisher_to` names which template slots get the `abs_finisher` template's exercises tacked onto the end. Edit this by hand (or ask Claude to) when the split itself changes — it's not something the daily check-ins write to.
 
 ## nutrition.json
 ```json

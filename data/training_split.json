@@ -1,0 +1,63 @@
+{
+  "_comment": "Standing weekly split, agreed 2026-08-17. weekday keys are Python weekday() ints: Mon=0..Sun=6. A workout_plan.json entry for today overrides this. See data/README.md.",
+  "schedule": {
+    "0": "long_run",
+    "1": "push",
+    "2": "pull",
+    "3": "legs",
+    "4": "rest",
+    "5": "light_run",
+    "6": "bodyweight_circuit"
+  },
+  "append_finisher_to": ["push", "pull", "legs"],
+  "templates": {
+    "push": {
+      "name": "Push Day",
+      "exercises": [
+        {"name": "Incline Dumbbell Bench Press", "target_sets": 4, "target_reps": "10"},
+        {"name": "Seated Dumbbell Shoulder Press", "target_sets": 3, "target_reps": "10"},
+        {"name": "Dumbbell Bench Press", "target_sets": 3, "target_reps": "12"},
+        {"name": "Suspension Chest Fly", "target_sets": 3, "target_reps": "15"},
+        {"name": "Dumbbell Lateral Raise", "target_sets": 4, "target_reps": "15"},
+        {"name": "Triceps Press-down", "target_sets": 3, "target_reps": "12"},
+        {"name": "Cable Overhead Triceps Extension", "target_sets": 3, "target_reps": "12"}
+      ]
+    },
+    "pull": {
+      "name": "Pull Day",
+      "exercises": [
+        {"name": "Lat Pull-down", "target_sets": 4, "target_reps": "10"},
+        {"name": "Seated Cable Row", "target_sets": 3, "target_reps": "10"},
+        {"name": "Straight-arm Pull-down", "target_sets": 3, "target_reps": "12"},
+        {"name": "Incline Reverse Fly", "target_sets": 3, "target_reps": "15"},
+        {"name": "Dumbbell Shrug", "target_sets": 3, "target_reps": "15"},
+        {"name": "Static Back Extension", "target_sets": 3, "target_reps": "15"},
+        {"name": "Dumbbell Biceps Curl", "target_sets": 3, "target_reps": "12"},
+        {"name": "Hammer Curl", "target_sets": 3, "target_reps": "12"}
+      ]
+    },
+    "legs": {
+      "name": "Leg Day",
+      "exercises": [
+        {"name": "Goblet Squat", "target_sets": 4, "target_reps": "10"},
+        {"name": "Leg Extension", "target_sets": 3, "target_reps": "15"},
+        {"name": "Leg Curl", "target_sets": 3, "target_reps": "12"},
+        {"name": "Romanian Deadlift", "target_sets": 3, "target_reps": "12"},
+        {"name": "Seated Calf Raise", "target_sets": 4, "target_reps": "20"}
+      ]
+    },
+    "abs_finisher": {
+      "name": "Abs Finisher",
+      "exercises": [
+        {"name": "Hanging Leg Raise", "target_sets": 5, "target_reps": "15"},
+        {"name": "Plank", "target_sets": 5, "target_reps": "90 sec"},
+        {"name": "Side Bend (weighted)", "target_sets": 5, "target_reps": "15"},
+        {"name": "Cable Crunch", "target_sets": 5, "target_reps": "15"}
+      ]
+    },
+    "bodyweight_circuit": {
+      "name": "Bodyweight Circuit",
+      "note": "Abs, push-ups, pull-ups, chin-ups. No fixed reps agreed yet — tell Claude what you did and it'll get logged same as any other session."
+    }
+  }
+}
