@@ -83,5 +83,61 @@
       "hamstrings": 0.3,
       "calves": 0.5
     }
+  },
+  {
+    "date": "2026-08-18",
+    "type": "gym",
+    "subtype": "push",
+    "muscle_groups": {
+      "chest": 0.9,
+      "front_delts": 0.8,
+      "side_delts": 0.7,
+      "triceps": 0.9
+    },
+    "notes": "Push day — full workout completed",
+    "exercises": [
+      {
+        "name": "Incline DB Press",
+        "target_sets": 4,
+        "target_reps": "8-10",
+        "sets_completed": 4
+      },
+      {
+        "name": "Shoulder Press",
+        "target_sets": 3,
+        "target_reps": "8-10",
+        "sets_completed": 3
+      },
+      {
+        "name": "Flat DB Press / Cable Crossover",
+        "target_sets": 3,
+        "target_reps": "10-12",
+        "sets_completed": 3
+      },
+      {
+        "name": "Chest Flyes (machine)",
+        "target_sets": 3,
+        "target_reps": "12-15",
+        "sets_completed": 3
+      },
+      {
+        "name": "Lateral Raises",
+        "target_sets": 4,
+        "target_reps": "12-15",
+        "sets_completed": 4
+      },
+      {
+        "name": "Triceps Pushdown",
+        "target_sets": 3,
+        "target_reps": "10-12",
+        "sets_completed": 3
+      },
+      {
+        "name": "Triceps Overhead Extension",
+        "target_sets": 3,
+        "target_reps": "10-12",
+        "sets_completed": 3
+      }
+    ]
   }
 ]
