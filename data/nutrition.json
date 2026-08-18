@@ -488,15 +488,5 @@
     "protein_g": 35,
     "carbs_g": 60,
     "fat_g": 10
-  },
-  {
-    "date": "2026-08-18",
-    "meal": "snack",
-    "description": "Cinema popcorn, salted/buttered (medium, ~70g, estimated - correct me on size)",
-    "grams": 70,
-    "calories": 450,
-    "protein_g": 6,
-    "carbs_g": 50,
-    "fat_g": 24
   }
 ]
