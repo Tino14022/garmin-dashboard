@@ -478,5 +478,25 @@
     "protein_g": 25,
     "carbs_g": 47,
     "fat_g": 2
+  },
+  {
+    "date": "2026-08-18",
+    "meal": "snack",
+    "description": "Post-workout shake (300ml milk, protein powder, banana, honey, salt)",
+    "grams": null,
+    "calories": 480,
+    "protein_g": 35,
+    "carbs_g": 60,
+    "fat_g": 10
+  },
+  {
+    "date": "2026-08-18",
+    "meal": "snack",
+    "description": "Cinema popcorn, salted/buttered (medium, ~70g, estimated - correct me on size)",
+    "grams": 70,
+    "calories": 450,
+    "protein_g": 6,
+    "carbs_g": 50,
+    "fat_g": 24
   }
 ]
