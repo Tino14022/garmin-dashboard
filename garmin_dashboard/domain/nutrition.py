@@ -82,6 +82,7 @@ def build_nutrition_view(
     *,
     default_weight_kg: float,
     protein_g_per_kg: float,
+    excluded_dates: frozenset[date] = frozenset(),
 ) -> dict:
     latest_weight = default_weight_kg
     latest_bmr = None
@@ -106,7 +107,7 @@ def build_nutrition_view(
         if not d:
             continue
         dd = parse_iso(d)
-        if dd is None or dd < week_ago or dd > yesterday:
+        if dd is None or dd < week_ago or dd > yesterday or dd in excluded_dates:
             continue
         intake_by_date[d] = intake_by_date.get(d, 0) + (n.get("calories") or 0)
         protein_by_date[d] = protein_by_date.get(d, 0) + (n.get("protein_g") or 0)
@@ -115,7 +116,9 @@ def build_nutrition_view(
     in_window = [
         c
         for c in calorie_trend
-        if c.get("date") and week_ago <= date.fromisoformat(c["date"]) <= yesterday
+        if c.get("date")
+        and week_ago <= date.fromisoformat(c["date"]) <= yesterday
+        and date.fromisoformat(c["date"]) not in excluded_dates
     ]
     burn_by_date: dict[str, float] = {}
     active_by_date: dict[str, float] = {}

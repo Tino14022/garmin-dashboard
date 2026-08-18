@@ -107,6 +107,34 @@ def test_days_without_both_sides_are_not_compared():
     assert view["classification"] is None
 
 
+def test_excluded_dates_are_dropped_from_the_weekly_average():
+    """An outlier day (e.g. the day before a cut started) stays in the log but
+    can be left out of the rolling average — it should vanish from both the
+    intake side and the burn side, not just get its calories zeroed out."""
+    outlier = ANCHOR - timedelta(days=2)
+    days = [
+        {
+            "date": (ANCHOR - timedelta(days=n)).isoformat(),
+            "calories": 5000 if n == 2 else 2000,
+            "protein_g": 150,
+        }
+        for n in range(1, 4)
+    ]
+    burn = [
+        {"date": (ANCHOR - timedelta(days=n)).isoformat(), "total_kcal": 2500}
+        for n in range(1, 4)
+    ]
+    args = _nutrition_args(days, burn)
+
+    with_outlier = build_nutrition_view(**args)
+    assert with_outlier["week_avg_intake_kcal"] == 3000  # (2000+5000+2000)/3
+    assert with_outlier["week_days_compared"] == 3
+
+    without_outlier = build_nutrition_view(**args, excluded_dates=frozenset({outlier}))
+    assert without_outlier["week_avg_intake_kcal"] == 2000
+    assert without_outlier["week_days_compared"] == 2
+
+
 @pytest.mark.parametrize(
     "intake,protein,expected",
     [

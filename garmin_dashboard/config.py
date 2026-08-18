@@ -67,6 +67,10 @@ class Settings:
     timezone_name: str = "Europe/Warsaw"
     # First day of the week, as Python weekday numbers (Mon=0 .. Sun=6).
     week_starts_on: int = 0
+    # Days dropped from the nutrition rolling average — not deleted from the
+    # log, just excluded from "week_avg_*" so one outlier (a pre-cut blowout,
+    # a birthday) doesn't drag every day after it for the next week.
+    excluded_nutrition_dates: frozenset[date] = field(default_factory=frozenset)
 
     def tzinfo(self):
         try:
@@ -89,4 +93,7 @@ DEFAULT_SETTINGS = Settings(
         distance_km=21.1,
     ),
     athlete=AthleteConfig(height_cm=192, weight_kg=95),
+    # 2026-08-14: the day before the cut started, well above normal intake.
+    # Kept in the log, just left out of the rolling average.
+    excluded_nutrition_dates=frozenset({date(2026, 8, 14)}),
 )

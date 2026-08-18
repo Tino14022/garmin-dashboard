@@ -112,6 +112,7 @@ def build_payload(
         today,
         default_weight_kg=settings.athlete.weight_kg,
         protein_g_per_kg=protein_g_per_kg,
+        excluded_dates=settings.excluded_nutrition_dates,
     )
 
     race_plan = build_race_plan(
