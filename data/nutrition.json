@@ -428,5 +428,25 @@
     "protein_g": 6.6,
     "carbs_g": 8,
     "fat_g": 1.8
+  },
+  {
+    "date": "2026-08-18",
+    "meal": "lunch",
+    "description": "Chicken in curry sauce (300g) with rice (300g) - work canteen",
+    "grams": 600,
+    "calories": 840,
+    "protein_g": 53,
+    "carbs_g": 94,
+    "fat_g": 26
+  },
+  {
+    "date": "2026-08-18",
+    "meal": "lunch",
+    "description": "Lacta mini chocolate (1 bar, ~20g)",
+    "grams": 20,
+    "calories": 107,
+    "protein_g": 1.5,
+    "carbs_g": 12,
+    "fat_g": 6
   }
 ]
