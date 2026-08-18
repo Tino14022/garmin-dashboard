@@ -388,5 +388,45 @@
     "protein_g": 1.6,
     "carbs_g": 13.6,
     "fat_g": 3.4
+  },
+  {
+    "date": "2026-08-18",
+    "meal": "breakfast",
+    "description": "Black Forest ham (40g) + 2 eggs",
+    "grams": 40,
+    "calories": 250,
+    "protein_g": 22,
+    "carbs_g": 1.5,
+    "fat_g": 17
+  },
+  {
+    "date": "2026-08-18",
+    "meal": "breakfast",
+    "description": "Bread/grain product (58g)",
+    "grams": 58,
+    "calories": 144,
+    "protein_g": 10,
+    "carbs_g": 21.5,
+    "fat_g": 1.6
+  },
+  {
+    "date": "2026-08-18",
+    "meal": "breakfast",
+    "description": "Yogurt/cottage cheese (90g)",
+    "grams": 90,
+    "calories": 83,
+    "protein_g": 9.9,
+    "carbs_g": 2.7,
+    "fat_g": 3.6
+  },
+  {
+    "date": "2026-08-18",
+    "meal": "breakfast",
+    "description": "Sans green drink (200ml)",
+    "grams": 200,
+    "calories": 82,
+    "protein_g": 6.6,
+    "carbs_g": 8,
+    "fat_g": 1.8
   }
 ]
