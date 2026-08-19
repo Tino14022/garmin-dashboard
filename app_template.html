@@ -270,6 +270,11 @@ __RUNNING_TAB_STYLE__
   .placeholder .big{ font-size:2rem; margin-bottom:10px; }
   .placeholder p{ font-size:0.85rem; max-width:420px; margin:6px auto; color:var(--text-faint); }
 
+  /* ---- Opportunity cost (gambling tab) ---- */
+  .opportunity-visual{ display:flex; align-items:center; gap:18px; }
+  .opportunity-visual .emoji{ font-size:3.4rem; line-height:1; flex-shrink:0; }
+  .opportunity-visual .finding{ flex:1; margin-bottom:0; }
+
   /* ---- Build health ---- */
   .health-banner{
     display:none; border-radius:12px; padding:12px 16px; margin-bottom:16px;
@@ -2777,12 +2782,13 @@ function statTile(m){
   if(gv.opportunity_cost){
     const oc = gv.opportunity_cost;
     html += '<div class="section"><h2>What that money could have been</h2>' +
+      '<div class="opportunity-visual"><div class="emoji">' + oc.emoji + '</div>' +
       findingHtml({
         severity: 'warn', rank: 'bad',
         headline: gv.total_lost_den + ' ден gone',
         detail: 'That\'s about <b>' + oc.count + ' ' + (oc.count === 1 ? oc.item : oc.item_plural) +
           '</b> (~' + oc.price_den + ' ден each) you could have had instead.',
-      }) + '</div>';
+      }) + '</div></div>';
   }
 
   html += '<div class="section"><h2>Calendar</h2><div id="gamblingCalWrap"></div></div>';

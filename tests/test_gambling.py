@@ -93,6 +93,18 @@ def test_opportunity_cost_picks_the_priciest_affordable_item():
     assert oc["count"] == 1.1
 
 
+def test_opportunity_cost_carries_an_emoji_for_every_item():
+    """The page shows a picture of the item, not just its name — every entry
+    in the price list needs one, or that item would silently render blank."""
+    from garmin_dashboard.domain.gambling import OPPORTUNITY_ITEMS
+
+    for item in OPPORTUNITY_ITEMS:
+        assert item.get("emoji"), f"{item['name']} has no emoji"
+
+    oc = build_opportunity_cost(3000)
+    assert oc["emoji"] == "🧴"  # Whey Core protein tub
+
+
 def test_opportunity_cost_falls_back_to_the_cheapest_item_below_its_price():
     oc = build_opportunity_cost(40)
     assert oc["item"] == "coffee"

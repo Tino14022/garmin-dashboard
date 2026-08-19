@@ -9,16 +9,16 @@ from .formatting import parse_iso, week_start
 # recognises, not an abstract currency. Ordered cheapest to priciest so the
 # opportunity-cost pick can just take the last one the total affords.
 OPPORTUNITY_ITEMS: list[dict] = [
-    {"name": "coffee", "plural": "coffees", "price_den": 80},
-    {"name": "work canteen lunch", "plural": "work canteen lunches", "price_den": 210},
-    {"name": "movie ticket", "plural": "movie tickets", "price_den": 250},
-    {"name": "half marathon race entry", "plural": "half marathon race entries", "price_den": 2000},
-    {"name": "Whey Core protein tub", "plural": "tubs of Whey Core protein", "price_den": 2840},
-    {"name": "pair of running shoes", "plural": "pairs of running shoes", "price_den": 4500},
-    {"name": "weekend trip", "plural": "weekend trips", "price_den": 15000},
-    {"name": "month's rent", "plural": "months' rent", "price_den": 18000},
-    {"name": "flagship smartphone", "plural": "flagship smartphones", "price_den": 70000},
-    {"name": "used car", "plural": "used cars", "price_den": 150000},
+    {"name": "coffee", "plural": "coffees", "price_den": 80, "emoji": "☕"},
+    {"name": "work canteen lunch", "plural": "work canteen lunches", "price_den": 210, "emoji": "🍽️"},
+    {"name": "movie ticket", "plural": "movie tickets", "price_den": 250, "emoji": "🎬"},
+    {"name": "half marathon race entry", "plural": "half marathon race entries", "price_den": 2000, "emoji": "🏅"},
+    {"name": "Whey Core protein tub", "plural": "tubs of Whey Core protein", "price_den": 2840, "emoji": "🧴"},
+    {"name": "pair of running shoes", "plural": "pairs of running shoes", "price_den": 4500, "emoji": "👟"},
+    {"name": "weekend trip", "plural": "weekend trips", "price_den": 15000, "emoji": "🧳"},
+    {"name": "month's rent", "plural": "months' rent", "price_den": 18000, "emoji": "🏠"},
+    {"name": "flagship smartphone", "plural": "flagship smartphones", "price_den": 70000, "emoji": "📱"},
+    {"name": "used car", "plural": "used cars", "price_den": 150000, "emoji": "🚗"},
 ]
 
 
@@ -39,6 +39,7 @@ def build_opportunity_cost(total_den: float) -> dict | None:
         "item_plural": item["plural"],
         "count": round(count, 1) if count < 10 else round(count),
         "price_den": item["price_den"],
+        "emoji": item["emoji"],
     }
 
 
