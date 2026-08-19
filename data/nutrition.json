@@ -528,5 +528,25 @@
     "protein_g": 60,
     "carbs_g": 5,
     "fat_g": 25
+  },
+  {
+    "date": "2026-08-19",
+    "meal": "snack",
+    "description": "Banana (1 medium)",
+    "grams": 118,
+    "calories": 105,
+    "protein_g": 1,
+    "carbs_g": 27,
+    "fat_g": 0
+  },
+  {
+    "date": "2026-08-19",
+    "meal": "snack",
+    "description": "Peach (1 medium)",
+    "grams": 150,
+    "calories": 59,
+    "protein_g": 1.4,
+    "carbs_g": 14,
+    "fat_g": 0.4
   }
 ]
