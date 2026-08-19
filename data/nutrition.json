@@ -488,5 +488,15 @@
     "protein_g": 35,
     "carbs_g": 60,
     "fat_g": 10
+  },
+  {
+    "date": "2026-08-19",
+    "meal": "breakfast",
+    "description": "2 boiled eggs",
+    "grams": 100,
+    "calories": 140,
+    "protein_g": 12,
+    "carbs_g": 1,
+    "fat_g": 10
   }
 ]
