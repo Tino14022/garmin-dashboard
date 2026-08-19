@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 from datetime import date
+from pathlib import Path
 
 from garmin_dashboard.domain.gambling import build_gambling_view, build_opportunity_cost
+
+ICONS_DIR = Path(__file__).resolve().parent.parent / "icons" / "opportunity"
 
 TODAY = date(2026, 8, 19)  # a Wednesday
 
@@ -93,16 +96,25 @@ def test_opportunity_cost_picks_the_priciest_affordable_item():
     assert oc["count"] == 1.1
 
 
-def test_opportunity_cost_carries_an_emoji_for_every_item():
+def test_opportunity_cost_carries_an_image_for_every_item():
     """The page shows a picture of the item, not just its name — every entry
     in the price list needs one, or that item would silently render blank."""
     from garmin_dashboard.domain.gambling import OPPORTUNITY_ITEMS
 
     for item in OPPORTUNITY_ITEMS:
-        assert item.get("emoji"), f"{item['name']} has no emoji"
+        assert item.get("image"), f"{item['name']} has no image"
 
     oc = build_opportunity_cost(3000)
-    assert oc["emoji"] == "🧴"  # Whey Core protein tub
+    assert oc["image"] == "protein_tub.jpg"  # Whey Core protein tub
+
+
+def test_every_opportunity_image_file_actually_exists():
+    """A filename with no file behind it renders as a broken image on the page."""
+    from garmin_dashboard.domain.gambling import OPPORTUNITY_ITEMS
+
+    for item in OPPORTUNITY_ITEMS:
+        path = ICONS_DIR / item["image"]
+        assert path.is_file(), f"missing {path}"
 
 
 def test_opportunity_cost_falls_back_to_the_cheapest_item_below_its_price():
