@@ -17,6 +17,7 @@ from .domain.fuelling import (
     build_macro_plate,
     build_protein_distribution,
 )
+from .domain.gambling import build_gambling_view
 from .domain.goals import build_fat_loss_view
 from .domain.health import FetchLog
 from .domain.insights import build_insights
@@ -91,6 +92,7 @@ def build_payload(
     nutrition = store.load("nutrition", [])
     body_comp = store.load("body_comp", [])
     lifestyle = store.load("lifestyle", [])
+    gambling = store.load("gambling", [])
 
     workout_plan = store.load("workout_plan", None)
     if workout_plan and workout_plan.get("date") != iso(today):
@@ -168,6 +170,7 @@ def build_payload(
         "workout_plan": workout_plan,
         "race_plan": race_plan,
         "build_health": log.to_payload(),
+        "gambling": gambling,
     }
 
     # These read the assembled payload rather than the raw sources, so they see
@@ -179,6 +182,9 @@ def build_payload(
         body_comp, nutrition_view, settings.goal, today, race_date=settings.race.date
     )
     payload["eating_budget"] = build_eating_budget(payload, today, settings.goal)
+    payload["gambling_view"] = build_gambling_view(
+        gambling, today, week_starts_on=settings.week_starts_on
+    )
     payload["todays_workout"] = resolve_todays_workout(payload, today, training_split)
     payload["insights"] = build_insights(payload, today)
 

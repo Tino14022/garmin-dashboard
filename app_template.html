@@ -488,6 +488,7 @@ __RUNNING_TAB_STYLE__
   <button class="tabbtn" data-tab="sleep">😴 Sleep</button>
   <button class="tabbtn" data-tab="nutrition">🍽️ Nutrition</button>
   <button class="tabbtn" data-tab="body">⚖️ Body</button>
+  <button class="tabbtn" data-tab="gambling">🎰 Gambling</button>
 </div>
 
 <div class="health-banner" id="healthBanner"></div>
@@ -653,6 +654,11 @@ __RUNNING_TAB_CONTENT__
   <div id="bodyModules"></div>
 </div>
 
+<!-- ===================== GAMBLING TAB ===================== -->
+<div class="tab-panel" id="tab-gambling">
+  <div id="gamblingContent"></div>
+</div>
+
 <footer id="appFooter"></footer>
 
 <script>
@@ -689,7 +695,7 @@ tabButtons.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)
 
 const ICONS = {gym:'🏋️', run:'🏃', padel:'🏓', football:'⚽', hike:'🥾', tennis:'🎾', basketball:'🏀', bike:'🚴', swim:'🏊', walk:'🚶', yoga:'🧘', other:'✳️'};
 
-showTab(['overview','analysis','workout','training','running','sleep','nutrition','body'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview');
+showTab(['overview','analysis','workout','training','running','sleep','nutrition','body','gambling'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview');
 
 // ===================== BUILD HEALTH =====================
 // A build that lost some of its Garmin data still deploys — silently, before
@@ -1871,6 +1877,42 @@ function buildCalendar(sessions, nutritionByDate){
   return html;
 }
 
+function buildGamblingCalendar(byDate){
+  const today = new Date(DATA.generated_at + 'T00:00:00');
+  const start = new Date(today);
+  start.setDate(start.getDate() - 34);
+  const FIRST_DAY = ((DATA.week_starts_on == null ? 0 : DATA.week_starts_on) + 1) % 7;
+  while(start.getDay() !== FIRST_DAY) start.setDate(start.getDate() - 1);
+
+  const maxAmount = Math.max(1, ...Object.values(byDate));
+  const cells = [];
+  const cur = new Date(start);
+  const todayStr = DATA.generated_at;
+  while(cur <= today || cur.getDay() !== FIRST_DAY){
+    const iso = localIso(cur);
+    cells.push({ day: cur.getDate(), iso, isToday: iso === todayStr, amount: byDate[iso] });
+    cur.setDate(cur.getDate() + 1);
+    if(cur > today && cur.getDay() === FIRST_DAY) break;
+  }
+
+  let html = '<div class="cal-grid nutrition-grid">';
+  const DAY_LETTERS = ['S','M','T','W','T','F','S'];
+  for(let i = 0; i < 7; i++){ html += '<div class="cal-dow">' + DAY_LETTERS[(FIRST_DAY + i) % 7] + '</div>'; }
+  cells.forEach(c => {
+    let cls = 'cal-cell';
+    if(c.isToday) cls += ' today';
+    const style = c.amount
+      ? 'background:rgba(255,107,122,' + Math.min(0.55, 0.12 + c.amount/maxAmount*0.43).toFixed(2) + ');border-color:rgba(255,107,122,0.5);'
+      : '';
+    html += '<div class="' + cls + '" style="' + style + '"' + (c.amount ? ' title="' + c.amount + ' ден lost"' : '') + '>' +
+      '<span class="daynum">' + c.day + '</span>' +
+      (c.amount ? '<span class="cal-cal" style="color:var(--rank-bad)">-' + c.amount + '</span>' : '') +
+      '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
 function dailyNutritionTotals(nutrition){
   const byDate = {};
   nutrition.forEach(n => {
@@ -2399,6 +2441,25 @@ if(training.sessions.length){
     (DATA.body_comp && DATA.body_comp.length ? '' : ' — using the default weight since no Mi Scale reading is logged yet.') + '</div>' +
     '</div>';
 
+  // ---- Daily Energy Balance: Garmin's measured burn minus what got logged,
+  // one bar per day. Positive (above the line) is a deficit day; negative is
+  // a surplus day. Today is left out — its burn isn't final yet.
+  const trendByDate = {};
+  (DATA.calorie_trend || []).forEach(c => { if(c.date) trendByDate[c.date] = c; });
+  const intakeByDate = {};
+  nutrition.forEach(n => {
+    if(!n.date) return;
+    intakeByDate[n.date] = (intakeByDate[n.date] || 0) + (n.calories || 0);
+  });
+  const balanceDates = Object.keys(intakeByDate)
+    .filter(d => d !== DATA.generated_at && trendByDate[d] && trendByDate[d].total_kcal != null)
+    .sort();
+  if(balanceDates.length){
+    html += '<div class="section"><h2>Daily Energy Balance</h2>' +
+      '<div class="desc">Burned minus consumed, per day. Bars above the line are deficit days; below the line are surplus days.</div>' +
+      '<div class="chart-wrap"><canvas id="balanceChart"></canvas></div></div>';
+  }
+
   if(!nutrition.length){
     html += '<div class="placeholder"><div class="big">🍽️</div>' +
       '<p><b>No meals logged yet.</b></p>' +
@@ -2412,6 +2473,26 @@ if(training.sessions.length){
   html += '<div class="section"><h2>Food Log</h2><div id="foodTableWrap"></div></div>';
   el('nutritionContent').innerHTML = html;
   el('nutriCalWrap').innerHTML = buildCalendar([], dayTotals);
+
+  if(balanceDates.length){
+    new Chart(el('balanceChart'), {
+      type: 'bar',
+      data: {
+        labels: balanceDates.map(fmtDate),
+        datasets: [{
+          label: 'Burned − consumed (kcal)',
+          data: balanceDates.map(d => Math.round(trendByDate[d].total_kcal - intakeByDate[d])),
+          backgroundColor: balanceDates.map(d =>
+            (trendByDate[d].total_kcal - intakeByDate[d]) >= 0 ? rankColour('good') : rankColour('fair')),
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { grid: { color: '#1b212c' }, title: { display: true, text: 'kcal' } } }
+      }
+    });
+  }
 
   // Tap a day for the full picture. A calendar cell only has room for the
   // headline number; everything worth comparing against it lives here.
@@ -2665,6 +2746,58 @@ function statTile(m){
     '<div class="why">' + m.meaning + '</div>' +
     '</div>';
 }
+
+// ===================== GAMBLING TAB =====================
+(function(){
+  const wrap = el('gamblingContent');
+  if(!wrap) return;
+  const gv = DATA.gambling_view;
+
+  if(!gv){
+    wrap.innerHTML = '<div class="placeholder"><div class="big">🎰</div>' +
+      '<p><b>No losses logged yet.</b></p>' +
+      '<p>Tracking starts today (' + fmtDate(DATA.generated_at) + '). Tell me what you lost and I\'ll log it here — ' +
+      'the running total, and what it could have bought instead, both start counting from the first entry.</p></div>';
+    return;
+  }
+
+  let html = '<div class="section"><h2>Totals</h2>' +
+    '<div class="stat-grid">' +
+    '<div class="stat-tile"><div class="lbl">This week</div><div class="val" style="color:var(--rank-bad)">' +
+      gv.week_total_den + '<span class="u">ден</span></div></div>' +
+    '<div class="stat-tile"><div class="lbl">This month</div><div class="val" style="color:var(--rank-bad)">' +
+      gv.month_total_den + '<span class="u">ден</span></div></div>' +
+    '<div class="stat-tile"><div class="lbl">All time</div><div class="val" style="color:var(--rank-bad)">' +
+      gv.total_lost_den + '<span class="u">ден</span></div>' +
+      '<div class="why">Tracking since ' + fmtDate(gv.tracking_since) + ' · ' + gv.entry_count + ' entr' + (gv.entry_count===1?'y':'ies') + '</div></div>' +
+    '<div class="stat-tile"><div class="lbl">Worst day</div><div class="val">' + gv.worst_day.amount_den + '<span class="u">ден</span></div>' +
+      '<div class="why">' + fmtDate(gv.worst_day.date) + '</div></div>' +
+    '</div></div>';
+
+  if(gv.opportunity_cost){
+    const oc = gv.opportunity_cost;
+    html += '<div class="section"><h2>What that money could have been</h2>' +
+      findingHtml({
+        severity: 'warn', rank: 'bad',
+        headline: gv.total_lost_den + ' ден gone',
+        detail: 'That\'s about <b>' + oc.count + ' ' + (oc.count === 1 ? oc.item : oc.item_plural) +
+          '</b> (~' + oc.price_den + ' ден each) you could have had instead.',
+      }) + '</div>';
+  }
+
+  html += '<div class="section"><h2>Calendar</h2><div id="gamblingCalWrap"></div></div>';
+  html += '<div class="section"><h2>Log</h2><div id="gamblingTableWrap"></div></div>';
+  wrap.innerHTML = html;
+
+  el('gamblingCalWrap').innerHTML = buildGamblingCalendar(gv.by_date);
+
+  const entries = (DATA.gambling || []).slice().sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  el('gamblingTableWrap').innerHTML = '<div class="table-scroll"><table><thead><tr><th>Date</th><th>Note</th>' +
+    '<th style="text-align:right">Lost</th></tr></thead><tbody>' +
+    entries.map(e => '<tr><td>' + fmtDate(e.date) + '</td><td>' + (e.note || '-') + '</td>' +
+      '<td style="text-align:right;color:var(--rank-bad)">' + e.amount_den + ' ден</td></tr>').join('') +
+    '</tbody></table></div>';
+})();
 
 __RUNNING_TAB_SCRIPT__
 

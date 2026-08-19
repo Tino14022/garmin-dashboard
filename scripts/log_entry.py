@@ -7,6 +7,7 @@ sends one JSON object on stdin and this handles read, merge, validate and write.
 
     echo '{"date":"2026-08-16","weight_kg":98.35}' | python scripts/log_entry.py body_comp
     echo '{"date":"2026-08-16","name":"Pull Day","exercises":[]}' | python scripts/log_entry.py workout_plan
+    echo '{"date":"2026-08-19","amount_den":500,"note":"sports betting"}' | python scripts/log_entry.py gambling
 
 Same-date entries replace rather than duplicate, so re-running after a
 correction is safe.
@@ -53,6 +54,11 @@ ALLOWED = {
         "kind": "list",
         "required": {"date"},
         "fields": {"date", "cigarettes_level", "alcohol_drinks", "cannabis_used", "notes"},
+    },
+    "gambling": {
+        "kind": "list",
+        "required": {"date", "amount_den"},
+        "fields": {"date", "amount_den", "note"},
     },
 }
 

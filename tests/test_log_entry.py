@@ -156,6 +156,18 @@ def test_a_training_entry_without_a_type_is_rejected(tmp_path):
         run("trainings", {"date": "2026-08-16"}, tmp_path / "trainings.json")
 
 
+def test_gambling_allows_several_entries_per_day(tmp_path):
+    p = tmp_path / "gambling.json"
+    run("gambling", {"date": "2026-08-19", "amount_den": 200, "note": "poker"}, p)
+    run("gambling", {"date": "2026-08-19", "amount_den": 300, "note": "sports betting"}, p)
+    assert len(json.loads(p.read_text())) == 2
+
+
+def test_gambling_without_an_amount_is_rejected(tmp_path):
+    with pytest.raises(ValueError, match="missing required"):
+        run("gambling", {"date": "2026-08-19"}, tmp_path / "gambling.json")
+
+
 def test_non_ascii_notes_are_stored_readably(tmp_path):
     """Notes routinely contain em-dashes. Escaping them is valid JSON but makes
     every diff on these data files unreadable."""
