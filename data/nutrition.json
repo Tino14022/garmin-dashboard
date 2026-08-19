@@ -508,5 +508,15 @@
     "protein_g": 53,
     "carbs_g": 94,
     "fat_g": 26
+  },
+  {
+    "date": "2026-08-19",
+    "meal": "snack",
+    "description": "Protein bar (1.0g fibre, 0.09g salt, per label)",
+    "grams": null,
+    "calories": 150,
+    "protein_g": 12,
+    "carbs_g": 1.8,
+    "fat_g": 3.8
   }
 ]
