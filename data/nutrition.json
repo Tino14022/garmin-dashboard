@@ -558,5 +558,15 @@
     "protein_g": 33,
     "carbs_g": 42,
     "fat_g": 11
+  },
+  {
+    "date": "2026-08-19",
+    "meal": "dinner",
+    "description": "Mom's oven-baked dish, second half: chicken (300g), Greek yogurt 5%, rest of cottage cheese, 4 slices Edam cheese, little tomato sauce",
+    "grams": 320,
+    "calories": 505,
+    "protein_g": 60,
+    "carbs_g": 5,
+    "fat_g": 25
   }
 ]
