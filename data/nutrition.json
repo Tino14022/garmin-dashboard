@@ -548,5 +548,15 @@
     "protein_g": 1.4,
     "carbs_g": 14,
     "fat_g": 0.4
+  },
+  {
+    "date": "2026-08-19",
+    "meal": "snack",
+    "description": "Smoothie (300ml milk, banana, Whey Core protein powder scoop, no honey)",
+    "grams": null,
+    "calories": 425,
+    "protein_g": 34,
+    "carbs_g": 47,
+    "fat_g": 13
   }
 ]
