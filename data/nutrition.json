@@ -608,5 +608,15 @@
     "protein_g": 12.6,
     "carbs_g": 0.8,
     "fat_g": 9.6
+  },
+  {
+    "date": "2026-08-20",
+    "meal": "lunch",
+    "description": "Lasagne (500g) - work canteen",
+    "grams": 500,
+    "calories": 750,
+    "protein_g": 40,
+    "carbs_g": 60,
+    "fat_g": 40
   }
 ]
