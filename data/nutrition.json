@@ -568,5 +568,45 @@
     "protein_g": 60,
     "carbs_g": 5,
     "fat_g": 25
+  },
+  {
+    "date": "2026-08-20",
+    "meal": "breakfast",
+    "description": "Greek yogurt (200g, 0.36g salt)",
+    "grams": 200,
+    "calories": 168,
+    "protein_g": 12,
+    "carbs_g": 7.6,
+    "fat_g": 10
+  },
+  {
+    "date": "2026-08-20",
+    "meal": "breakfast",
+    "description": "Ham (30g, 1.35g salt)",
+    "grams": 30,
+    "calories": 70,
+    "protein_g": 7.8,
+    "carbs_g": 0.3,
+    "fat_g": 4.2
+  },
+  {
+    "date": "2026-08-20",
+    "meal": "breakfast",
+    "description": "Bread (57g, 0.80g salt)",
+    "grams": 57,
+    "calories": 142,
+    "protein_g": 10,
+    "carbs_g": 21.2,
+    "fat_g": 1.6
+  },
+  {
+    "date": "2026-08-20",
+    "meal": "breakfast",
+    "description": "2 boiled eggs (~100g, ~0.3g salt)",
+    "grams": 100,
+    "calories": 144,
+    "protein_g": 12.6,
+    "carbs_g": 0.8,
+    "fat_g": 9.6
   }
 ]
