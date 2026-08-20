@@ -2490,8 +2490,12 @@ if(training.sessions.length){
         datasets: [{
           label: 'Burned − consumed (kcal)',
           data: balanceDates.map(d => Math.round(trendByDate[d].total_kcal - intakeByDate[d])),
+          // Chart.js draws on a <canvas>, which can't resolve CSS var() the way
+          // DOM styles can — rankColour() returns 'var(--rank-good)' and canvas
+          // silently falls back to black. Every other chart here uses literal
+          // hex for this reason; matching that instead of rankColour().
           backgroundColor: balanceDates.map(d =>
-            (trendByDate[d].total_kcal - intakeByDate[d]) >= 0 ? rankColour('good') : rankColour('fair')),
+            (trendByDate[d].total_kcal - intakeByDate[d]) >= 0 ? '#3ddc97' : '#ff9f5a'),
         }]
       },
       options: {
