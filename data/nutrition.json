@@ -614,9 +614,9 @@
     "meal": "lunch",
     "description": "Lasagne (500g) - work canteen",
     "grams": 500,
-    "calories": 750,
+    "calories": 830,
     "protein_g": 40,
     "carbs_g": 60,
-    "fat_g": 40
+    "fat_g": 48
   }
 ]
