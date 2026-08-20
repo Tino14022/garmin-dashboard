@@ -618,5 +618,35 @@
     "protein_g": 40,
     "carbs_g": 60,
     "fat_g": 48
+  },
+  {
+    "date": "2026-08-20",
+    "meal": "lunch",
+    "description": "Pork thighs on electric grill, home lunch (280g)",
+    "grams": 280,
+    "calories": 616,
+    "protein_g": 76,
+    "carbs_g": 0,
+    "fat_g": 34
+  },
+  {
+    "date": "2026-08-20",
+    "meal": "lunch",
+    "description": "Sweet potato, air fryer, home lunch (200g)",
+    "grams": 200,
+    "calories": 180,
+    "protein_g": 4,
+    "carbs_g": 42,
+    "fat_g": 1
+  },
+  {
+    "date": "2026-08-20",
+    "meal": "lunch",
+    "description": "Cucumber with cottage cheese, home lunch (1 cucumber, 100g cottage cheese)",
+    "grams": 300,
+    "calories": 120,
+    "protein_g": 13,
+    "carbs_g": 10,
+    "fat_g": 4
   }
 ]
