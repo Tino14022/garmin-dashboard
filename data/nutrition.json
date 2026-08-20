@@ -648,5 +648,15 @@
     "protein_g": 13,
     "carbs_g": 10,
     "fat_g": 4
+  },
+  {
+    "date": "2026-08-20",
+    "meal": "snack",
+    "description": "Smoothie (300ml milk, 1 scoop Lidl Hellas protein powder, banana, 1 tbsp honey)",
+    "grams": null,
+    "calories": 450,
+    "protein_g": 33,
+    "carbs_g": 59,
+    "fat_g": 11
   }
 ]
