@@ -698,5 +698,15 @@
     "protein_g": 53,
     "carbs_g": 94,
     "fat_g": 26
+  },
+  {
+    "date": "2026-08-21",
+    "meal": "breakfast",
+    "description": "Balance yogurt (200ml)",
+    "grams": 200,
+    "calories": 82,
+    "protein_g": 6.6,
+    "carbs_g": 8,
+    "fat_g": 1.8
   }
 ]
