@@ -20,5 +20,9 @@
     "date": "2026-08-20",
     "amount_den": -500,
     "note": "won in cards"
+  },
+  {
+    "date": "2026-08-21",
+    "amount_den": 500
   }
 ]
