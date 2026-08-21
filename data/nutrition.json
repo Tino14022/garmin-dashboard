@@ -688,5 +688,15 @@
     "protein_g": 18,
     "carbs_g": 22,
     "fat_g": 15
+  },
+  {
+    "date": "2026-08-21",
+    "meal": "lunch",
+    "description": "Chicken in curry sauce (300g) with rice (300g) - work canteen",
+    "grams": 600,
+    "calories": 840,
+    "protein_g": 53,
+    "carbs_g": 94,
+    "fat_g": 26
   }
 ]
