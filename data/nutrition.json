@@ -708,5 +708,35 @@
     "protein_g": 6.6,
     "carbs_g": 8,
     "fat_g": 1.8
+  },
+  {
+    "date": "2026-08-21",
+    "meal": "dinner",
+    "description": "Pleskavica with kashkaval cheese (200g)",
+    "grams": 200,
+    "calories": 560,
+    "protein_g": 44,
+    "carbs_g": 2,
+    "fat_g": 42
+  },
+  {
+    "date": "2026-08-21",
+    "meal": "dinner",
+    "description": "Salad: cucumber with 30g cottage cheese (200g total)",
+    "grams": 200,
+    "calories": 53,
+    "protein_g": 5,
+    "carbs_g": 7,
+    "fat_g": 1.4
+  },
+  {
+    "date": "2026-08-21",
+    "meal": "dinner",
+    "description": "Sweet potato (180g)",
+    "grams": 180,
+    "calories": 162,
+    "protein_g": 3.6,
+    "carbs_g": 37.8,
+    "fat_g": 0.9
   }
 ]
