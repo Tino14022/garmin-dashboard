@@ -658,5 +658,25 @@
     "protein_g": 33,
     "carbs_g": 59,
     "fat_g": 11
+  },
+  {
+    "date": "2026-08-20",
+    "meal": "snack",
+    "description": "Watermelon (400g)",
+    "grams": 400,
+    "calories": 120,
+    "protein_g": 2.4,
+    "carbs_g": 30.4,
+    "fat_g": 0.6
+  },
+  {
+    "date": "2026-08-20",
+    "meal": "snack",
+    "description": "Boiled corn (1 ear, ~150g)",
+    "grams": 150,
+    "calories": 144,
+    "protein_g": 5.1,
+    "carbs_g": 31.5,
+    "fat_g": 2.25
   }
 ]
