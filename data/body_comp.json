@@ -116,5 +116,22 @@
     "bmr": 2137,
     "scale_heart_rate": 81,
     "body_score": 87
+  },
+  {
+    "date": "2026-08-23",
+    "time": "11:16",
+    "weight_kg": 95.55,
+    "bmi": 26.2,
+    "body_fat_pct": 19.5,
+    "muscle_mass_kg": 73.0,
+    "skeletal_muscle_kg": 37.4,
+    "water_pct": 50.6,
+    "protein_pct": 21.9,
+    "bone_mass_kg": 3.9,
+    "visceral_fat": 8,
+    "subcutaneous_fat_pct": 14.8,
+    "bmr": 2116,
+    "scale_heart_rate": 106,
+    "body_score": 87
   }
 ]
