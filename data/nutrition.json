@@ -738,5 +738,23 @@
     "protein_g": 3.6,
     "carbs_g": 37.8,
     "fat_g": 0.9
+  },
+  {
+    "date": "2026-08-22",
+    "meal": "lunch",
+    "description": "Boiled potato",
+    "calories": 110,
+    "protein_g": 2,
+    "carbs_g": 25,
+    "fat_g": 0
+  },
+  {
+    "date": "2026-08-22",
+    "meal": "snack",
+    "description": "Tea (unsweetened)",
+    "calories": 2,
+    "protein_g": 0,
+    "carbs_g": 0,
+    "fat_g": 0
   }
 ]
