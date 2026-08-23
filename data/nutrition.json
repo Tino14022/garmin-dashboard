@@ -742,11 +742,11 @@
   {
     "date": "2026-08-22",
     "meal": "lunch",
-    "description": "Boiled potato",
-    "calories": 110,
-    "protein_g": 2,
-    "carbs_g": 25,
-    "fat_g": 0
+    "description": "Boiled potato (4-5 normal sized)",
+    "calories": 630,
+    "protein_g": 14,
+    "carbs_g": 144,
+    "fat_g": 1
   },
   {
     "date": "2026-08-22",
@@ -760,10 +760,10 @@
   {
     "date": "2026-08-22",
     "meal": "snack",
-    "description": "Dvopek (dry rusk, a few pieces)",
-    "calories": 150,
-    "protein_g": 4,
-    "carbs_g": 30,
-    "fat_g": 1.5
+    "description": "Dvopek (dry rusk, 2-3 slices)",
+    "calories": 240,
+    "protein_g": 6,
+    "carbs_g": 47,
+    "fat_g": 3
   }
 ]
