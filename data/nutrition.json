@@ -740,6 +740,15 @@
     "fat_g": 0.9
   },
   {
+    "date": "2026-08-21",
+    "meal": "snack",
+    "description": "FH Protein Waffle (integral waffle, peanut butter, sugar-free cocoa cream, 30g whey protein, banana, mixed red fruit)",
+    "calories": 550,
+    "protein_g": 38,
+    "carbs_g": 59,
+    "fat_g": 18
+  },
+  {
     "date": "2026-08-22",
     "meal": "lunch",
     "description": "Boiled potato (4-5 normal sized)",
