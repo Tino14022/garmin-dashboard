@@ -756,5 +756,14 @@
     "protein_g": 0,
     "carbs_g": 0,
     "fat_g": 0
+  },
+  {
+    "date": "2026-08-22",
+    "meal": "snack",
+    "description": "Dvopek (dry rusk, a few pieces)",
+    "calories": 150,
+    "protein_g": 4,
+    "carbs_g": 30,
+    "fat_g": 1.5
   }
 ]
