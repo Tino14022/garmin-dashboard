@@ -774,5 +774,86 @@
     "protein_g": 6,
     "carbs_g": 47,
     "fat_g": 3
+  },
+  {
+    "date": "2026-08-23",
+    "meal": "breakfast",
+    "description": "Mekici (2) with cheese",
+    "calories": 650,
+    "protein_g": 18,
+    "carbs_g": 70,
+    "fat_g": 30
+  },
+  {
+    "date": "2026-08-23",
+    "meal": "breakfast",
+    "description": "Yogurt (glass, ~200ml)",
+    "calories": 82,
+    "protein_g": 6.6,
+    "carbs_g": 8,
+    "fat_g": 1.8
+  },
+  {
+    "date": "2026-08-23",
+    "meal": "lunch",
+    "description": "Turkey steak (~200g)",
+    "calories": 270,
+    "protein_g": 60,
+    "carbs_g": 0,
+    "fat_g": 4
+  },
+  {
+    "date": "2026-08-23",
+    "meal": "lunch",
+    "description": "2 eggs",
+    "calories": 144,
+    "protein_g": 12.6,
+    "carbs_g": 0.8,
+    "fat_g": 9.6
+  },
+  {
+    "date": "2026-08-23",
+    "meal": "lunch",
+    "description": "Mild/plain potato (~150g)",
+    "calories": 130,
+    "protein_g": 3,
+    "carbs_g": 30,
+    "fat_g": 0
+  },
+  {
+    "date": "2026-08-23",
+    "meal": "lunch",
+    "description": "Greek yogurt with cucumber",
+    "calories": 103,
+    "protein_g": 10.5,
+    "carbs_g": 5,
+    "fat_g": 3
+  },
+  {
+    "date": "2026-08-23",
+    "meal": "snack",
+    "description": "Protein torte (4 eggs, 2 scoops protein powder, Greek yogurt, dark chocolate)",
+    "calories": 786,
+    "protein_g": 84.7,
+    "carbs_g": 25.6,
+    "fat_g": 38.2
+  },
+  {
+    "date": "2026-08-23",
+    "meal": "dinner",
+    "description": "Soup (one plate)",
+    "calories": 180,
+    "protein_g": 8,
+    "carbs_g": 15,
+    "fat_g": 8
+  },
+  {
+    "date": "2026-08-23",
+    "meal": "snack",
+    "description": "Popcorn (one plate)",
+    "calories": 180,
+    "protein_g": 3,
+    "carbs_g": 20,
+    "fat_g": 10
   }
 ]
