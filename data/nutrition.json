@@ -873,5 +873,35 @@
     "protein_g": 53,
     "carbs_g": 94,
     "fat_g": 26
+  },
+  {
+    "date": "2026-08-24",
+    "meal": "dinner",
+    "description": "Rice (250g) cooked with chicken drumstick (пилешки копан), plus 250g of the chicken",
+    "grams": 500,
+    "calories": 913,
+    "protein_g": 53,
+    "carbs_g": 70,
+    "fat_g": 45
+  },
+  {
+    "date": "2026-08-24",
+    "meal": "dinner",
+    "description": "Cucumber with cottage cheese (200g total: 150g cucumber, 50g cottage cheese)",
+    "grams": 200,
+    "calories": 68,
+    "protein_g": 7,
+    "carbs_g": 7,
+    "fat_g": 2
+  },
+  {
+    "date": "2026-08-24",
+    "meal": "dinner",
+    "description": "Peach (1 medium)",
+    "grams": 150,
+    "calories": 59,
+    "protein_g": 1.4,
+    "carbs_g": 14,
+    "fat_g": 0.4
   }
 ]
