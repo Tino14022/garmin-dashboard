@@ -832,11 +832,11 @@
   {
     "date": "2026-08-23",
     "meal": "snack",
-    "description": "Protein torte (4 eggs, 2 scoops protein powder, Greek yogurt, dark chocolate)",
-    "calories": 786,
-    "protein_g": 84.7,
-    "carbs_g": 25.6,
-    "fat_g": 38.2
+    "description": "Protein torte (1 slice, ~1/8 of the full cake: 4 eggs, 2 scoops protein powder, Greek yogurt, dark chocolate)",
+    "calories": 98,
+    "protein_g": 10.6,
+    "carbs_g": 3.2,
+    "fat_g": 4.8
   },
   {
     "date": "2026-08-23",
