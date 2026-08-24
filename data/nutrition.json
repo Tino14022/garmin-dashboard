@@ -855,5 +855,23 @@
     "protein_g": 3,
     "carbs_g": 20,
     "fat_g": 10
+  },
+  {
+    "date": "2026-08-24",
+    "meal": "breakfast",
+    "description": "2 boiled eggs",
+    "calories": 144,
+    "protein_g": 12.6,
+    "carbs_g": 0.8,
+    "fat_g": 9.6
+  },
+  {
+    "date": "2026-08-24",
+    "meal": "lunch",
+    "description": "Chicken in curry sauce (300g) with rice (300g) - work canteen",
+    "calories": 840,
+    "protein_g": 53,
+    "carbs_g": 94,
+    "fat_g": 26
   }
 ]
