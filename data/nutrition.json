@@ -903,5 +903,85 @@
     "protein_g": 1.4,
     "carbs_g": 14,
     "fat_g": 0.4
+  },
+  {
+    "date": "2026-08-25",
+    "meal": "breakfast",
+    "description": "Cottage cheese (40-50g)",
+    "grams": 45,
+    "calories": 35,
+    "protein_g": 5.85,
+    "carbs_g": 1.58,
+    "fat_g": 0.55
+  },
+  {
+    "date": "2026-08-25",
+    "meal": "breakfast",
+    "description": "Ham (20g)",
+    "grams": 20,
+    "calories": 23.6,
+    "protein_g": 3.7,
+    "carbs_g": 0.4,
+    "fat_g": 0.8
+  },
+  {
+    "date": "2026-08-25",
+    "meal": "breakfast",
+    "description": "Cold cut (50g)",
+    "grams": 50,
+    "calories": 220,
+    "protein_g": 10.5,
+    "carbs_g": 0.46,
+    "fat_g": 19.5
+  },
+  {
+    "date": "2026-08-25",
+    "meal": "breakfast",
+    "description": "Yogurt (200ml)",
+    "grams": 200,
+    "calories": 108,
+    "protein_g": 6.2,
+    "carbs_g": 8.4,
+    "fat_g": 5.6
+  },
+  {
+    "date": "2026-08-25",
+    "meal": "breakfast",
+    "description": "Boiled eggs (4)",
+    "grams": 200,
+    "calories": 312,
+    "protein_g": 25.2,
+    "carbs_g": 2.4,
+    "fat_g": 21.2
+  },
+  {
+    "date": "2026-08-25",
+    "meal": "breakfast",
+    "description": "Bread (115g)",
+    "grams": 115,
+    "calories": 285,
+    "protein_g": 20,
+    "carbs_g": 42.5,
+    "fat_g": 3.1
+  },
+  {
+    "date": "2026-08-25",
+    "meal": "lunch",
+    "description": "Chicken in curry sauce (300g) with rice (300g) - work canteen, usual",
+    "grams": 600,
+    "calories": 840,
+    "protein_g": 53,
+    "carbs_g": 94,
+    "fat_g": 26
+  },
+  {
+    "date": "2026-08-25",
+    "meal": "lunch",
+    "description": "Grilled mushrooms (100g)",
+    "grams": 100,
+    "calories": 40,
+    "protein_g": 3.5,
+    "carbs_g": 3,
+    "fat_g": 1.5
   }
 ]
