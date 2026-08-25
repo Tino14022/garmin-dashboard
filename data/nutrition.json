@@ -983,5 +983,15 @@
     "protein_g": 3.5,
     "carbs_g": 3,
     "fat_g": 1.5
+  },
+  {
+    "date": "2026-08-25",
+    "meal": "dinner",
+    "description": "5 kebapi with Skopsko Smooth beer (0.5L)",
+    "grams": null,
+    "calories": 565,
+    "protein_g": 32,
+    "carbs_g": 19,
+    "fat_g": 25
   }
 ]
