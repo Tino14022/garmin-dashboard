@@ -993,5 +993,15 @@
     "protein_g": 32,
     "carbs_g": 19,
     "fat_g": 25
+  },
+  {
+    "date": "2026-08-25",
+    "meal": "snack",
+    "description": "Protein shake with water (300ml water, 1 scoop Lidl Hellas protein powder, banana)",
+    "grams": null,
+    "calories": 222,
+    "protein_g": 24,
+    "carbs_g": 29,
+    "fat_g": 3
   }
 ]
