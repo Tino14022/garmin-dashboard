@@ -162,6 +162,10 @@ __RUNNING_TAB_STYLE__
     aspect-ratio:1; background:var(--panel-2); border:1px solid var(--border); border-radius:8px;
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
     font-size:0.65rem; color:var(--text-faint); position:relative;
+    /* Grid tracks default to min-width:auto, i.e. they won't shrink below their
+       content's own width — without this, a wide number (e.g. "-3400") forces
+       the whole 7-column grid wider than a narrow phone screen and it clips. */
+    min-width:0; overflow:hidden;
   }
   .cal-cell.empty{ background:transparent; border:none; }
   .cal-cell .daynum{ position:absolute; top:3px; left:5px; font-size:0.6rem; color:var(--text-faint); }
@@ -180,7 +184,7 @@ __RUNNING_TAB_STYLE__
      shape of the day is legible at a glance, exact grams live in the tooltip. */
   .nutrition-grid{ max-width:560px; }
   .nutrition-grid .cal-cell{ aspect-ratio:auto; min-height:74px; padding:17px 6px 8px; gap:7px; }
-  .nutrition-grid .cal-cal{ font-weight:700; font-size:0.95rem; line-height:1; color:var(--text); }
+  .nutrition-grid .cal-cal{ font-weight:700; font-size:clamp(0.68rem,3vw,0.95rem); line-height:1; color:var(--text); }
   .macro-bar{ display:flex; width:100%; height:5px; gap:1.5px; }
   .macro-bar i{ display:block; height:100%; border-radius:2px; }
   .macro-bar .mp{ background:var(--blue); }
@@ -270,13 +274,21 @@ __RUNNING_TAB_STYLE__
   .placeholder .big{ font-size:2rem; margin-bottom:10px; }
   .placeholder p{ font-size:0.85rem; max-width:420px; margin:6px auto; color:var(--text-faint); }
 
-  /* ---- Opportunity cost (gambling tab) ---- */
-  .opportunity-visual{ display:flex; align-items:center; gap:18px; }
-  .opportunity-visual img{
-    width:110px; height:110px; object-fit:cover; border-radius:10px;
-    flex-shrink:0; border:1px solid var(--border);
+  /* ---- Opportunity cost (gambling tab): a spread of items, not just one ---- */
+  .opp-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; }
+  .opp-card{
+    background:var(--panel-2); border:1px solid var(--border); border-radius:12px;
+    overflow:hidden; display:flex; flex-direction:column;
   }
-  .opportunity-visual .finding{ flex:1; margin-bottom:0; }
+  .opp-card-image{ aspect-ratio:4/3; overflow:hidden; background:var(--panel); }
+  .opp-card-image img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .opp-card-body{ padding:10px 12px 12px; display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .opp-card-count{
+    font-size:1.15rem; font-weight:800; color:var(--rank-fair); line-height:1.15;
+    font-variant-numeric:tabular-nums; display:flex; flex-wrap:wrap; align-items:baseline; gap:5px;
+  }
+  .opp-card-unit{ font-size:0.76rem; font-weight:500; color:var(--text-dim); }
+  .opp-card-price{ font-size:0.72rem; color:var(--text-faint); font-variant-numeric:tabular-nums; }
 
   /* ---- Build health ---- */
   .health-banner{
@@ -1885,6 +1897,13 @@ function buildCalendar(sessions, nutritionByDate){
   return html;
 }
 
+// "-3400" doesn't fit a ~45px-wide calendar cell on a phone; "-3.4k" does.
+function fmtDenAbbrev(n){
+  const abs = Math.abs(n);
+  if(abs < 1000) return String(n);
+  const k = n / 1000;
+  return (Number.isInteger(k) ? k : k.toFixed(1)) + 'k';
+}
 function buildGamblingCalendar(byDate){
   const today = new Date(DATA.generated_at + 'T00:00:00');
   const start = new Date(today);
@@ -1914,7 +1933,7 @@ function buildGamblingCalendar(byDate){
       : '';
     html += '<div class="' + cls + '" style="' + style + '"' + (c.amount ? ' title="' + c.amount + ' ден lost"' : '') + '>' +
       '<span class="daynum">' + c.day + '</span>' +
-      (c.amount ? '<span class="cal-cal" style="color:var(--rank-bad)">-' + c.amount + '</span>' : '') +
+      (c.amount ? '<span class="cal-cal" style="color:var(--rank-bad)">-' + fmtDenAbbrev(c.amount) + '</span>' : '') +
       '</div>';
   });
   html += '</div>';
@@ -2786,16 +2805,18 @@ function statTile(m){
       '<div class="why">' + fmtDate(gv.worst_day.date) + '</div></div>' +
     '</div></div>';
 
-  if(gv.opportunity_cost){
-    const oc = gv.opportunity_cost;
+  if(gv.opportunity_costs && gv.opportunity_costs.length){
+    const cards = gv.opportunity_costs.map(oc =>
+      '<div class="opp-card">' +
+        '<div class="opp-card-image"><img src="icons/opportunity/' + oc.image + '" alt="' + oc.item + '" loading="lazy"></div>' +
+        '<div class="opp-card-body">' +
+          '<div class="opp-card-count">' + oc.count + '<span class="opp-card-unit">' + (oc.count === 1 ? oc.item : oc.item_plural) + '</span></div>' +
+          '<div class="opp-card-price">' + oc.price_den + ' ден each</div>' +
+        '</div></div>'
+    ).join('');
     html += '<div class="section"><h2>What that money could have been</h2>' +
-      '<div class="opportunity-visual"><img src="icons/opportunity/' + oc.image + '" alt="' + oc.item + '" loading="lazy">' +
-      findingHtml({
-        severity: 'warn', rank: 'bad',
-        headline: gv.total_lost_den + ' ден gone',
-        detail: 'That\'s about <b>' + oc.count + ' ' + (oc.count === 1 ? oc.item : oc.item_plural) +
-          '</b> (~' + oc.price_den + ' ден each) you could have had instead.',
-      }) + '</div></div>';
+      '<div class="desc">' + gv.total_lost_den + ' ден gone, priced in what you actually spend money on.</div>' +
+      '<div class="opp-grid">' + cards + '</div></div>';
   }
 
   html += '<div class="section"><h2>Calendar</h2><div id="gamblingCalWrap"></div></div>';

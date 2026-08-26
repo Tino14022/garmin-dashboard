@@ -45,6 +45,33 @@ def build_opportunity_cost(total_den: float) -> dict | None:
     }
 
 
+def build_opportunity_costs(total_den: float, *, n: int = 5) -> list[dict] | None:
+    """Up to n items spread across price points, priciest first.
+
+    A single item (build_opportunity_cost) says one thing; a spread makes the
+    total land from a few directions at once. Drops anything the total covers
+    less than a tenth of, so the list doesn't pad itself out with a fraction
+    too small to mean anything ("0.02 used cars" says nothing).
+    """
+    if total_den <= 0:
+        return None
+    qualifying = [i for i in OPPORTUNITY_ITEMS if total_den / i["price_den"] >= 0.1]
+    if not qualifying:
+        qualifying = [OPPORTUNITY_ITEMS[0]]
+    chosen = list(reversed(qualifying[-n:]))
+    out = []
+    for item in chosen:
+        count = total_den / item["price_den"]
+        out.append({
+            "item": item["name"],
+            "item_plural": item["plural"],
+            "count": round(count, 1) if count < 10 else round(count),
+            "price_den": item["price_den"],
+            "image": item["image"],
+        })
+    return out
+
+
 def build_gambling_view(
     entries: list[dict],
     today: date,
@@ -81,4 +108,5 @@ def build_gambling_view(
         "by_date": {d: round(v) for d, v in by_date.items()},
         "worst_day": {"date": worst_date, "amount_den": round(worst_amount)},
         "opportunity_cost": build_opportunity_cost(total_lost),
+        "opportunity_costs": build_opportunity_costs(total_lost),
     }

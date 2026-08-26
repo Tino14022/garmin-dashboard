@@ -4,7 +4,11 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 
-from garmin_dashboard.domain.gambling import build_gambling_view, build_opportunity_cost
+from garmin_dashboard.domain.gambling import (
+    build_gambling_view,
+    build_opportunity_cost,
+    build_opportunity_costs,
+)
 
 ICONS_DIR = Path(__file__).resolve().parent.parent / "icons" / "opportunity"
 
@@ -128,3 +132,37 @@ def test_opportunity_cost_rounds_large_counts_to_whole_numbers():
     assert oc["item"] == "used car"
     assert oc["count"] == 13
     assert isinstance(oc["count"], int)
+
+
+def test_opportunity_costs_list_is_absent_for_zero_or_negative():
+    assert build_opportunity_costs(0) is None
+    assert build_opportunity_costs(-50) is None
+
+
+def test_opportunity_costs_list_is_priciest_first():
+    costs = build_opportunity_costs(3000)
+    prices = [c["price_den"] for c in costs]
+    assert prices == sorted(prices, reverse=True)
+    assert len(costs) <= 5
+
+
+def test_opportunity_costs_list_drops_fractions_below_a_tenth():
+    # 3000 den is 0.043 of a 70000-den smartphone — too small to be worth showing.
+    costs = build_opportunity_costs(3000)
+    assert all(c["count"] >= 0.1 for c in costs)
+    assert "flagship smartphone" not in [c["item"] for c in costs]
+
+
+def test_opportunity_costs_list_falls_back_to_cheapest_item_for_tiny_totals():
+    # Nothing qualifies at the 0.1 bar for a 5-denar total; still returns something
+    # rather than an empty list, same spirit as the single-item fallback.
+    costs = build_opportunity_costs(5)
+    assert costs == [{
+        "item": "coffee", "item_plural": "coffees", "count": 0.1,
+        "price_den": 80, "image": "coffee.jpg",
+    }]
+
+
+def test_gambling_view_includes_the_five_item_spread():
+    v = build_gambling_view([{"date": "2026-08-19", "amount_den": 3000}], TODAY)
+    assert v["opportunity_costs"] == build_opportunity_costs(3000)
