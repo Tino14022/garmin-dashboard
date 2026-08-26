@@ -1057,11 +1057,11 @@
   {
     "date": "2026-08-26",
     "meal": "dinner",
-    "description": "Cucumber with Greek yogurt (~300g total)",
+    "description": "One cucumber (~200g) with Greek yogurt (~100g)",
     "grams": 300,
-    "calories": 149,
-    "protein_g": 10,
+    "calories": 114,
+    "protein_g": 7,
     "carbs_g": 11,
-    "fat_g": 8
+    "fat_g": 5
   }
 ]
