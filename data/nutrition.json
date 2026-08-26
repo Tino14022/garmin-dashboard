@@ -1063,5 +1063,15 @@
     "protein_g": 7,
     "carbs_g": 11,
     "fat_g": 5
+  },
+  {
+    "date": "2026-08-26",
+    "meal": "dinner",
+    "description": "Peach (1 small)",
+    "grams": 100,
+    "calories": 39,
+    "protein_g": 0.9,
+    "carbs_g": 9.5,
+    "fat_g": 0.25
   }
 ]
