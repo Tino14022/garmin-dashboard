@@ -1033,5 +1033,35 @@
     "protein_g": 6,
     "carbs_g": 7.6,
     "fat_g": 5
+  },
+  {
+    "date": "2026-08-26",
+    "meal": "dinner",
+    "description": "Chicken breast, oven (200g)",
+    "grams": 200,
+    "calories": 330,
+    "protein_g": 62,
+    "carbs_g": 0,
+    "fat_g": 7.2
+  },
+  {
+    "date": "2026-08-26",
+    "meal": "dinner",
+    "description": "Rice, oven-baked (150g)",
+    "grams": 150,
+    "calories": 225,
+    "protein_g": 4.5,
+    "carbs_g": 42,
+    "fat_g": 4.5
+  },
+  {
+    "date": "2026-08-26",
+    "meal": "dinner",
+    "description": "Cucumber with Greek yogurt (~300g total)",
+    "grams": 300,
+    "calories": 149,
+    "protein_g": 10,
+    "carbs_g": 11,
+    "fat_g": 8
   }
 ]
