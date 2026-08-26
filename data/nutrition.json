@@ -1023,5 +1023,15 @@
     "protein_g": 40,
     "carbs_g": 60,
     "fat_g": 48
+  },
+  {
+    "date": "2026-08-26",
+    "meal": "snack",
+    "description": "Bitolsko kiselo mleko / sour milk (180g, per label 55.2kcal/100g)",
+    "grams": 180,
+    "calories": 99,
+    "protein_g": 6,
+    "carbs_g": 7.6,
+    "fat_g": 5
   }
 ]
