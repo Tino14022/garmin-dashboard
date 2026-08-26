@@ -1003,5 +1003,25 @@
     "protein_g": 30,
     "carbs_g": 29,
     "fat_g": 3
+  },
+  {
+    "date": "2026-08-26",
+    "meal": "breakfast",
+    "description": "2 boiled eggs",
+    "grams": 100,
+    "calories": 144,
+    "protein_g": 12.6,
+    "carbs_g": 0.8,
+    "fat_g": 9.6
+  },
+  {
+    "date": "2026-08-26",
+    "meal": "lunch",
+    "description": "Lasagne (500g) - work canteen",
+    "grams": 500,
+    "calories": 830,
+    "protein_g": 40,
+    "carbs_g": 60,
+    "fat_g": 48
   }
 ]
