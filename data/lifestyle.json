@@ -33,5 +33,21 @@
   {
     "date": "2026-08-22",
     "notes": "Stomach virus: fever 38.7C, diarrhea ~10x, bedridden all day, ate almost nothing"
+  },
+  {
+    "date": "2026-08-27",
+    "vacation": true
+  },
+  {
+    "date": "2026-08-28",
+    "vacation": true
+  },
+  {
+    "date": "2026-08-29",
+    "vacation": true
+  },
+  {
+    "date": "2026-08-30",
+    "vacation": true
   }
 ]

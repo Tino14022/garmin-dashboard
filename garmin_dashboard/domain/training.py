@@ -112,6 +112,30 @@ def split_easy_vs_workout(runs: list[dict]) -> dict:
     }
 
 
+def _merge_same_day_same_type(activities: list[dict]) -> list[dict]:
+    """Fold same-day, same-type activities into one entry.
+
+    A single paddleboard outing sometimes syncs as several GPS segments
+    (a pause splits it into separate activities) — without this, that shows
+    up as three near-identical cards on the same day instead of one with the
+    combined duration. Different types on the same day (a run then a swim)
+    are untouched; only exact (date, type) repeats get folded together.
+    """
+    merged: dict[tuple, dict] = {}
+    order: list[tuple] = []
+    for a in activities:
+        key = (a["date"], a["type"])
+        if key not in merged:
+            merged[key] = dict(a)
+            order.append(key)
+        else:
+            merged[key]["duration_min"] += a["duration_min"]
+            earlier = a.get("hour")
+            if earlier is not None and (merged[key].get("hour") is None or earlier < merged[key]["hour"]):
+                merged[key]["hour"] = earlier
+    return [merged[k] for k in order]
+
+
 def build_training_view(
     runs: list[dict],
     other_activities: list[dict],
@@ -169,7 +193,7 @@ def build_training_view(
             }
         )
     matched_keys = set()
-    for o in other_activities:
+    for o in _merge_same_day_same_type(other_activities):
         key = (o["date"], o["type"])
         matched_keys.add(key)
         ann = annotations.get(key)

@@ -17,6 +17,8 @@ GARMIN_TYPE_MAP = {
     "swimming": "swim",
     "lap_swimming": "swim",
     "open_water_swimming": "swim",
+    "stand_up_paddleboarding": "sup",
+    "paddling": "sup",
 }
 
 RUNNING_TYPE_KEYS = {
@@ -43,6 +45,10 @@ NAME_TYPE_KEYWORDS = {
     "walk": "walk",
     "walking": "walk",
     "yoga": "yoga",
+    "paddleboard": "sup",
+    "paddleboarding": "sup",
+    "paddle boarding": "sup",
+    "sup": "sup",
 }
 
 EASY_LABELS = {"RECOVERY", "BASE", "AEROBIC_BASE", "MAINTAINING"}

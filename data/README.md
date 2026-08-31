@@ -84,7 +84,10 @@ Factors that measurably affect sleep/recovery but aren't training or food.
   "cigarettes_level": "usual",   // low (0-5) | usual (5-15) | alot (15-20/one pack) | extreme (more than a pack) | null
   "alcohol_drinks": 0,           // count, null if not mentioned that day
   "cannabis_used": false,        // true/false/null
+  "vacation": false,             // true if this day wasn't tracked because of travel/vacation
   "notes": null
 }
 ```
 One entry per day. Cigarettes default to "usual" going forward once the user gives a baseline — only log a different level when they mention a day was notably different. Don't fabricate entries for days never mentioned; leave the day absent rather than guessing.
+
+`vacation: true` marks a day as deliberately untracked rather than missing — the Nutrition tab's calendar shows a distinct beach icon for these days instead of reading as a logging gap.

@@ -185,6 +185,10 @@ __RUNNING_TAB_STYLE__
   .nutrition-grid{ max-width:560px; }
   .nutrition-grid .cal-cell{ aspect-ratio:auto; min-height:74px; padding:17px 6px 8px; gap:7px; }
   .nutrition-grid .cal-cal{ font-weight:700; font-size:clamp(0.68rem,3vw,0.95rem); line-height:1; color:var(--text); }
+  /* A day deliberately not tracked (vacation) should read differently from a
+     day that's just missing data — same "no calories logged" state otherwise. */
+  .cal-cell.vacation{ background:rgba(79,214,232,0.14); border-color:rgba(79,214,232,0.4); }
+  .cal-vacation{ font-size:1.15rem; line-height:1; }
   .macro-bar{ display:flex; width:100%; height:5px; gap:1.5px; }
   .macro-bar i{ display:block; height:100%; border-radius:2px; }
   .macro-bar .mp{ background:var(--blue); }
@@ -713,7 +717,7 @@ function showTab(name){
 }
 tabButtons.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
 
-const ICONS = {gym:'🏋️', run:'🏃', padel:'🏓', football:'⚽', hike:'🥾', tennis:'🎾', basketball:'🏀', bike:'🚴', swim:'🏊', walk:'🚶', yoga:'🧘', other:'✳️'};
+const ICONS = {gym:'🏋️', run:'🏃', padel:'🏓', football:'⚽', hike:'🥾', tennis:'🎾', basketball:'🏀', bike:'🚴', swim:'🏊', walk:'🚶', yoga:'🧘', sup:'🛶', other:'✳️'};
 
 showTab(['overview','analysis','workout','training','running','sleep','nutrition','body','gambling'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview');
 
@@ -1818,6 +1822,12 @@ function buildCalendar(sessions, nutritionByDate){
   const byDate = {};
   sessions.forEach(s => { (byDate[s.date] = byDate[s.date] || []).push(s.type); });
   const isNutrition = !!nutritionByDate;
+  // Days marked vacation in lifestyle.json get a distinct cell instead of
+  // reading as "no data logged" — a gap in tracking and a deliberate day off
+  // from tracking look the same otherwise.
+  const vacationDates = new Set(
+    (DATA.lifestyle || []).filter(l => l.vacation).map(l => l.date)
+  );
 
   const today = new Date(DATA.generated_at + 'T00:00:00');
   const start = new Date(today);
@@ -1832,7 +1842,7 @@ function buildCalendar(sessions, nutritionByDate){
   const todayStr = DATA.generated_at;
   while(cur <= today || cur.getDay() !== FIRST_DAY){
     const iso = localIso(cur);
-    let inner, active = false, title = '';
+    let inner, active = false, title = '', isVacationCell = false;
     if(isNutrition){
       const d = nutritionByDate[iso];
       if(d){
@@ -1850,6 +1860,10 @@ function buildCalendar(sessions, nutritionByDate){
           '</span>';
         title = Math.round(d.calories) + ' kcal · protein ' + Math.round(d.protein) +
           'g · carbs ' + Math.round(d.carbs) + 'g · fat ' + Math.round(d.fat) + 'g';
+      } else if(vacationDates.has(iso)){
+        inner = '<span class="cal-vacation">🏖️</span>';
+        title = 'Vacation — not tracked';
+        isVacationCell = true;
       } else {
         inner = '';
       }
@@ -1858,7 +1872,7 @@ function buildCalendar(sessions, nutritionByDate){
       inner = '<span class="icons">' + types.map(t => ICONS[t] || '✳️').join('') + '</span>';
       active = types.length > 0;
     }
-    cells.push({ day: cur.getDate(), iso, dow: cur.getDay(), isToday: iso === todayStr, inner, active, title });
+    cells.push({ day: cur.getDate(), iso, dow: cur.getDay(), isToday: iso === todayStr, inner, active, title, vacation: isVacationCell });
     cur.setDate(cur.getDate() + 1);
     if(cur > today && cur.getDay() === FIRST_DAY) break;
   }
@@ -1881,7 +1895,8 @@ function buildCalendar(sessions, nutritionByDate){
     if(c.active) cls += ' active';
     if(c.connectLeft) cls += ' connect-left';
     if(c.connectRight) cls += ' connect-right';
-    if(isNutrition && c.inner) cls += ' clickable';
+    if(c.vacation && isNutrition) cls += ' vacation';
+    if(isNutrition && c.inner && !c.vacation) cls += ' clickable';
     html += '<div class="' + cls + '" data-date="' + c.iso + '"' + (c.title ? ' title="' + c.title + '"' : '') +
       '><span class="daynum">' + c.day + '</span>' + c.inner + '</div>';
   });

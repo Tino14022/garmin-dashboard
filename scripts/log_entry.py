@@ -53,7 +53,7 @@ ALLOWED = {
     "lifestyle": {
         "kind": "list",
         "required": {"date"},
-        "fields": {"date", "cigarettes_level", "alcohol_drinks", "cannabis_used", "notes"},
+        "fields": {"date", "cigarettes_level", "alcohol_drinks", "cannabis_used", "notes", "vacation"},
     },
     "gambling": {
         "kind": "list",

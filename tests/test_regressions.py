@@ -42,3 +42,40 @@ def test_training_view_builds_with_no_presets_at_all():
     )
     assert len(view["sessions"]) == 1
     assert view["sessions"][0]["muscle_groups"] == {}
+
+
+def test_same_day_same_type_activities_merge_into_one_session():
+    """A paddleboard outing split into GPS segments should read as one
+    session with the combined duration, not three near-identical cards."""
+    day = ANCHOR.isoformat()
+    view = build_training_view(
+        [],
+        [
+            {"date": day, "hour": 13, "type": "sup", "duration_min": 16, "name": "SUP"},
+            {"date": day, "hour": 15, "type": "sup", "duration_min": 12, "name": "SUP"},
+            {"date": day, "hour": 17, "type": "sup", "duration_min": 24, "name": "SUP"},
+        ],
+        ANCHOR,
+        manual_sessions=[],
+        presets={},
+    )
+    assert len(view["sessions"]) == 1
+    session = view["sessions"][0]
+    assert session["duration_min"] == 52
+    assert session["hour"] == 13  # earliest of the three
+
+
+def test_different_types_same_day_stay_separate():
+    day = ANCHOR.isoformat()
+    view = build_training_view(
+        [],
+        [
+            {"date": day, "hour": 16, "type": "swim", "duration_min": 18, "name": "Swim"},
+            {"date": day, "hour": 21, "type": "sup", "duration_min": 24, "name": "SUP"},
+        ],
+        ANCHOR,
+        manual_sessions=[],
+        presets={},
+    )
+    assert len(view["sessions"]) == 2
+    assert {s["type"] for s in view["sessions"]} == {"swim", "sup"}
