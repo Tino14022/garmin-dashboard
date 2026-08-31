@@ -717,7 +717,7 @@ function showTab(name){
 }
 tabButtons.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
 
-const ICONS = {gym:'🏋️', run:'🏃', padel:'🏓', football:'⚽', hike:'🥾', tennis:'🎾', basketball:'🏀', bike:'🚴', swim:'🏊', walk:'🚶', yoga:'🧘', sup:'🛶', other:'✳️'};
+const ICONS = {gym:'🏋️', run:'🏃', padel:'🏓', football:'⚽', hike:'🥾', tennis:'🎾', basketball:'🏀', bike:'🚴', swim:'🏊', walk:'🚶', yoga:'🧘', sup:'🛶', volleyball:'🏐', other:'✳️'};
 
 showTab(['overview','analysis','workout','training','running','sleep','nutrition','body','gambling'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview');
 
