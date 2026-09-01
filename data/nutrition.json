@@ -1107,12 +1107,12 @@
   {
     "date": "2026-09-01",
     "meal": "snack",
-    "description": "Olimp Amino EAA Xplode, 1.5 scoops, pre-gym (estimated - exact nutrition panel not visible in photo)",
+    "description": "Olimp Amino EAA Xplode, 1.5 scoops, pre-gym (per label: 44kcal/6.1g protein per 12g portion)",
     "grams": 18,
-    "calories": 69,
-    "protein_g": 13.5,
-    "carbs_g": 0.75,
-    "fat_g": 0
+    "calories": 66,
+    "protein_g": 9,
+    "carbs_g": 0.3,
+    "fat_g": 0.3
   },
   {
     "date": "2026-09-01",
@@ -1147,11 +1147,11 @@
   {
     "date": "2026-09-01",
     "meal": "dinner",
-    "description": "Cucumber with Greek yogurt (135g total)",
+    "description": "Cucumber with Greek yogurt, mostly yogurt (~108g yogurt, ~27g cucumber)",
     "grams": 135,
-    "calories": 67,
-    "protein_g": 4.5,
+    "calories": 95,
+    "protein_g": 7,
     "carbs_g": 5,
-    "fat_g": 3.5
+    "fat_g": 5.4
   }
 ]
