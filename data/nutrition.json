@@ -1103,5 +1103,35 @@
     "protein_g": 53,
     "carbs_g": 94,
     "fat_g": 26
+  },
+  {
+    "date": "2026-09-01",
+    "meal": "snack",
+    "description": "Olimp Amino EAA Xplode, 1.5 scoops, pre-gym (estimated - exact nutrition panel not visible in photo)",
+    "grams": 18,
+    "calories": 69,
+    "protein_g": 13.5,
+    "carbs_g": 0.75,
+    "fat_g": 0
+  },
+  {
+    "date": "2026-09-01",
+    "meal": "snack",
+    "description": "Protein cookie, white chocolate/dark chocolate (50g, 1 cookie), after gym before padel (10g fibre, 2.1g sugars, 0.22g salt, per label)",
+    "grams": 50,
+    "calories": 217,
+    "protein_g": 11,
+    "carbs_g": 10,
+    "fat_g": 13
+  },
+  {
+    "date": "2026-09-01",
+    "meal": "snack",
+    "description": "Lidl still water (500ml), after padel",
+    "grams": 500,
+    "calories": 0,
+    "protein_g": 0,
+    "carbs_g": 0.5,
+    "fat_g": 0
   }
 ]
