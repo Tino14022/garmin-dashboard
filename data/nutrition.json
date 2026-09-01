@@ -1153,5 +1153,15 @@
     "protein_g": 7,
     "carbs_g": 5,
     "fat_g": 5.4
+  },
+  {
+    "date": "2026-09-01",
+    "meal": "dinner",
+    "description": "Pistachios, in-shell (100g in-shell, ~50g edible kernel after shelling)",
+    "grams": 50,
+    "calories": 281,
+    "protein_g": 10.3,
+    "carbs_g": 13.6,
+    "fat_g": 22.65
   }
 ]
