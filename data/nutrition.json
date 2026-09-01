@@ -1133,5 +1133,25 @@
     "protein_g": 0,
     "carbs_g": 0.5,
     "fat_g": 0
+  },
+  {
+    "date": "2026-09-01",
+    "meal": "dinner",
+    "description": "Tortilla flatbread with ham (100g), Edam (80g), 2 mushrooms, ketchup (15g), 1 egg, 50ml milk (420g total)",
+    "grams": 420,
+    "calories": 782,
+    "protein_g": 55,
+    "carbs_g": 55,
+    "fat_g": 38
+  },
+  {
+    "date": "2026-09-01",
+    "meal": "dinner",
+    "description": "Cucumber with Greek yogurt (135g total)",
+    "grams": 135,
+    "calories": 67,
+    "protein_g": 4.5,
+    "carbs_g": 5,
+    "fat_g": 3.5
   }
 ]
