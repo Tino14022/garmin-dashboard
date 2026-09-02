@@ -1251,5 +1251,14 @@
     "protein_g": 1.1,
     "carbs_g": 22.8,
     "fat_g": 0.3
+  },
+  {
+    "date": "2026-09-02",
+    "meal": "dinner",
+    "description": "Protein smoothie: milk (300g), Lidl Hellas protein powder (32g), Superior 14 protein powder (32g)",
+    "calories": 406,
+    "protein_g": 60.2,
+    "carbs_g": 15.3,
+    "fat_g": 11.6
   }
 ]
