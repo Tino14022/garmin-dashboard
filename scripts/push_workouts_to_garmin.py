@@ -188,7 +188,23 @@ def describe(session: dict, paces: dict) -> str:
 
 
 def connect():
+    """Cached token first, password only as a fallback.
+
+    Garmin rate-limits login attempts per IP hard enough to 429 a first try,
+    and a password login is pointless when a valid token is already sitting in
+    the tokenstore. Trying the token first means the normal case never touches
+    the login endpoint at all.
+    """
     from garminconnect import Garmin
+
+    if Path(TOKENSTORE).exists():
+        try:
+            client = Garmin()
+            client.login(TOKENSTORE)
+            print(f"Authenticated from cached token ({client.get_full_name()}).")
+            return client
+        except Exception as exc:  # noqa: BLE001 — any failure just means fall back
+            print(f"Cached token unusable ({type(exc).__name__}), falling back to password login.")
 
     email = os.environ.get("GARMIN_EMAIL") or input("Garmin email: ").strip()
     password = os.environ.get("GARMIN_PASSWORD") or getpass("Garmin password: ")
