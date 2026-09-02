@@ -1183,5 +1183,15 @@
     "protein_g": 2,
     "carbs_g": 41,
     "fat_g": 0.6
+  },
+  {
+    "date": "2026-09-02",
+    "meal": "lunch",
+    "description": "Пилешко во кари сос (chicken in curry sauce, 300g) + spiced potato (~200g, up to 210 den) + extra rice (~200g, 50 den) - LL Gourmet work canteen",
+    "grams": 700,
+    "calories": 910,
+    "protein_g": 54,
+    "carbs_g": 101,
+    "fat_g": 31
   }
 ]
