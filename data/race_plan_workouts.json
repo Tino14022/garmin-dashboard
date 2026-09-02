@@ -1,0 +1,195 @@
+{
+  "_comment": "Half-marathon build to 2026-10-04. Paces are [fast, slow] seconds per km. Distances in metres. Rest days are simply absent — nothing gets pushed for them. Edit this file and re-run scripts/push_workouts_to_garmin.py --push --replace after any plan change.",
+  "name_prefix": "HM26",
+  "paces": {
+    "easy": [385, 400],
+    "easy_light": [390, 405],
+    "long": [375, 390],
+    "tempo": [335, 345],
+    "rep_1k": [300, 310],
+    "rep_1k_light": [305, 315],
+    "rep_800": [295, 305],
+    "rep_400": [280, 290],
+    "race_pace": [350, 360],
+    "race_day": [375, 385]
+  },
+  "sessions": [
+    {
+      "date": "2026-09-02",
+      "name": "Intervals 6x400m",
+      "steps": [
+        {"kind": "warmup", "distance_m": 1500, "pace": "easy"},
+        {"kind": "repeat", "times": 6, "steps": [
+          {"kind": "run", "distance_m": 400, "pace": "rep_400"},
+          {"kind": "recover", "seconds": 90}
+        ]},
+        {"kind": "cooldown", "distance_m": 1000, "pace": "easy"}
+      ]
+    },
+    {
+      "date": "2026-09-03",
+      "name": "Easy 5km",
+      "steps": [{"kind": "run", "distance_m": 5000, "pace": "easy"}]
+    },
+    {
+      "date": "2026-09-05",
+      "name": "Tempo 2x2km",
+      "steps": [
+        {"kind": "warmup", "distance_m": 1500, "pace": "easy"},
+        {"kind": "run", "distance_m": 2000, "pace": "tempo"},
+        {"kind": "recover", "seconds": 90},
+        {"kind": "run", "distance_m": 2000, "pace": "tempo"},
+        {"kind": "cooldown", "distance_m": 1000, "pace": "easy"}
+      ]
+    },
+    {
+      "date": "2026-09-06",
+      "name": "Long run 10km",
+      "steps": [{"kind": "run", "distance_m": 10000, "pace": "long"}]
+    },
+
+    {
+      "date": "2026-09-07",
+      "name": "Easy 5km",
+      "steps": [{"kind": "run", "distance_m": 5000, "pace": "easy"}]
+    },
+    {
+      "date": "2026-09-09",
+      "name": "Intervals 5x800m",
+      "steps": [
+        {"kind": "warmup", "distance_m": 1500, "pace": "easy"},
+        {"kind": "repeat", "times": 5, "steps": [
+          {"kind": "run", "distance_m": 800, "pace": "rep_800"},
+          {"kind": "recover", "seconds": 120}
+        ]},
+        {"kind": "cooldown", "distance_m": 1000, "pace": "easy"}
+      ]
+    },
+    {
+      "date": "2026-09-10",
+      "name": "Easy 4km",
+      "steps": [{"kind": "run", "distance_m": 4000, "pace": "easy"}]
+    },
+    {
+      "date": "2026-09-11",
+      "name": "Tempo 2x2km",
+      "steps": [
+        {"kind": "warmup", "distance_m": 1500, "pace": "easy"},
+        {"kind": "run", "distance_m": 2000, "pace": "tempo"},
+        {"kind": "recover", "seconds": 90},
+        {"kind": "run", "distance_m": 2000, "pace": "tempo"},
+        {"kind": "cooldown", "distance_m": 1000, "pace": "easy"}
+      ]
+    },
+    {
+      "date": "2026-09-13",
+      "name": "Long run 12km",
+      "steps": [{"kind": "run", "distance_m": 12000, "pace": "long"}]
+    },
+
+    {
+      "date": "2026-09-15",
+      "name": "Easy 5km",
+      "steps": [{"kind": "run", "distance_m": 5000, "pace": "easy"}]
+    },
+    {
+      "date": "2026-09-16",
+      "name": "Intervals 5x1km",
+      "steps": [
+        {"kind": "warmup", "distance_m": 1500, "pace": "easy"},
+        {"kind": "repeat", "times": 5, "steps": [
+          {"kind": "run", "distance_m": 1000, "pace": "rep_1k"},
+          {"kind": "recover", "seconds": 120}
+        ]},
+        {"kind": "cooldown", "distance_m": 1500, "pace": "easy"}
+      ]
+    },
+    {
+      "date": "2026-09-17",
+      "name": "Easy 5km",
+      "steps": [{"kind": "run", "distance_m": 5000, "pace": "easy"}]
+    },
+    {
+      "date": "2026-09-19",
+      "name": "Tempo 2x2.5km",
+      "steps": [
+        {"kind": "warmup", "distance_m": 1500, "pace": "easy"},
+        {"kind": "run", "distance_m": 2500, "pace": "tempo"},
+        {"kind": "recover", "seconds": 90},
+        {"kind": "run", "distance_m": 2500, "pace": "tempo"},
+        {"kind": "cooldown", "distance_m": 1500, "pace": "easy"}
+      ]
+    },
+    {
+      "date": "2026-09-20",
+      "name": "Long run 14km (peak)",
+      "steps": [{"kind": "run", "distance_m": 14000, "pace": "long"}]
+    },
+
+    {
+      "date": "2026-09-22",
+      "name": "Easy 4km",
+      "steps": [{"kind": "run", "distance_m": 4000, "pace": "easy"}]
+    },
+    {
+      "date": "2026-09-23",
+      "name": "Intervals 4x1km",
+      "steps": [
+        {"kind": "warmup", "distance_m": 1000, "pace": "easy"},
+        {"kind": "repeat", "times": 4, "steps": [
+          {"kind": "run", "distance_m": 1000, "pace": "rep_1k"},
+          {"kind": "recover", "seconds": 120}
+        ]},
+        {"kind": "cooldown", "distance_m": 1000, "pace": "easy"}
+      ]
+    },
+    {
+      "date": "2026-09-25",
+      "name": "Tempo 2x1.5km",
+      "steps": [
+        {"kind": "warmup", "distance_m": 1000, "pace": "easy"},
+        {"kind": "run", "distance_m": 1500, "pace": "tempo"},
+        {"kind": "recover", "seconds": 90},
+        {"kind": "run", "distance_m": 1500, "pace": "tempo"},
+        {"kind": "cooldown", "distance_m": 1000, "pace": "easy"}
+      ]
+    },
+    {
+      "date": "2026-09-27",
+      "name": "Long run 8.4km",
+      "steps": [{"kind": "run", "distance_m": 8400, "pace": "long"}]
+    },
+
+    {
+      "date": "2026-09-29",
+      "name": "Easy 4km shakeout",
+      "steps": [{"kind": "run", "distance_m": 4000, "pace": "easy_light"}]
+    },
+    {
+      "date": "2026-09-30",
+      "name": "Intervals 3x1km",
+      "steps": [
+        {"kind": "warmup", "distance_m": 1000, "pace": "easy"},
+        {"kind": "repeat", "times": 3, "steps": [
+          {"kind": "run", "distance_m": 1000, "pace": "rep_1k_light"},
+          {"kind": "recover", "seconds": 120}
+        ]},
+        {"kind": "cooldown", "distance_m": 1000, "pace": "easy"}
+      ]
+    },
+    {
+      "date": "2026-10-02",
+      "name": "Race pace 4km",
+      "steps": [
+        {"kind": "warmup", "distance_m": 1000, "pace": "easy"},
+        {"kind": "run", "distance_m": 4000, "pace": "race_pace"},
+        {"kind": "cooldown", "distance_m": 1000, "pace": "easy"}
+      ]
+    },
+    {
+      "date": "2026-10-04",
+      "name": "RACE - Half Marathon",
+      "steps": [{"kind": "run", "distance_m": 21100, "pace": "race_day"}]
+    }
+  ]
+}

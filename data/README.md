@@ -45,6 +45,27 @@ The standing weekly split — a fixed rotation, not something re-asked each morn
 ```
 `schedule` keys are Python `date.weekday()` ints (Mon=0..Sun=6). Each `templates` entry is either a checklist (`exercises`, same shape as `workout_plan.json`) or a plain `note` for a day with no fixed reps yet. `append_finisher_to` names which template slots get the `abs_finisher` template's exercises tacked onto the end. Edit this by hand (or ask Claude to) when the split itself changes — it's not something the daily check-ins write to.
 
+## race_plan_workouts.json
+The structured running sessions for the half-marathon build, pushed to Garmin Connect by `scripts/push_workouts_to_garmin.py`. Not read by the dashboard build — this file exists to drive the watch.
+```json
+{
+  "name_prefix": "HM26",
+  "paces": {"easy": [385, 400], "tempo": [335, 345]},   // [fast, slow] seconds per km
+  "sessions": [
+    {"date": "2026-09-05", "name": "Tempo 2x2km", "steps": [
+      {"kind": "warmup", "distance_m": 1500, "pace": "easy"},
+      {"kind": "run", "distance_m": 2000, "pace": "tempo"},
+      {"kind": "recover", "seconds": 90},
+      {"kind": "repeat", "times": 5, "steps": [{"kind": "run", "distance_m": 800, "pace": "tempo"}]},
+      {"kind": "cooldown", "distance_m": 1000, "pace": "easy"}
+    ]}
+  ]
+}
+```
+Step kinds: `warmup`, `run`, `recover`, `cooldown` (each takes either `distance_m` or `seconds`, plus an optional `pace` key naming an entry in `paces`), and `repeat` (takes `times` and nested `steps`). Rest days are simply absent — nothing is pushed for them.
+
+Change the plan by editing this file, then re-run `python scripts/push_workouts_to_garmin.py --push --replace`, which deletes the previously-pushed workouts sharing `name_prefix` before recreating them. Run it without `--push` first for a dry run. Requires `pip install garminconnect` and your own Garmin login (env `GARMIN_EMAIL`/`GARMIN_PASSWORD` or an interactive prompt); the CI build neither needs nor runs this.
+
 ## nutrition.json
 ```json
 {
