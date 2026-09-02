@@ -1193,5 +1193,45 @@
     "protein_g": 52,
     "carbs_g": 81,
     "fat_g": 27.5
+  },
+  {
+    "date": "2026-09-02",
+    "meal": "lunch",
+    "description": "Grilled mushrooms, home lunch (80g)",
+    "grams": 80,
+    "calories": 32,
+    "protein_g": 2.8,
+    "carbs_g": 2.4,
+    "fat_g": 1.2
+  },
+  {
+    "date": "2026-09-02",
+    "meal": "lunch",
+    "description": "Chicken thigh/drumstick (пилешка бутка), home lunch (200g)",
+    "grams": 200,
+    "calories": 430,
+    "protein_g": 36,
+    "carbs_g": 0,
+    "fat_g": 30
+  },
+  {
+    "date": "2026-09-02",
+    "meal": "lunch",
+    "description": "Cucumber with Greek yogurt, 60% yogurt (100g total: 60g yogurt, 40g cucumber)",
+    "grams": 100,
+    "calories": 56,
+    "protein_g": 4,
+    "carbs_g": 4.4,
+    "fat_g": 3
+  },
+  {
+    "date": "2026-09-02",
+    "meal": "lunch",
+    "description": "Baked potato, home lunch (160g)",
+    "grams": 160,
+    "calories": 149,
+    "protein_g": 3.2,
+    "carbs_g": 33.6,
+    "fat_g": 0.16
   }
 ]
