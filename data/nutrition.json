@@ -1163,5 +1163,25 @@
     "protein_g": 10.3,
     "carbs_g": 13.6,
     "fat_g": 22.65
+  },
+  {
+    "date": "2026-09-02",
+    "meal": "breakfast",
+    "description": "Boiled eggs (180g)",
+    "grams": 180,
+    "calories": 259,
+    "protein_g": 23,
+    "carbs_g": 1.4,
+    "fat_g": 17.3
+  },
+  {
+    "date": "2026-09-02",
+    "meal": "breakfast",
+    "description": "Banana (1, large, 180g)",
+    "grams": 180,
+    "calories": 160,
+    "protein_g": 2,
+    "carbs_g": 41,
+    "fat_g": 0.6
   }
 ]
