@@ -168,6 +168,10 @@ __RUNNING_TAB_STYLE__
   .cal-nav-btn:hover{ border-color:var(--text-faint); }
   .cal-nav-btn:disabled{ opacity:0.35; cursor:default; }
   .cal-nav-btn:disabled:hover{ border-color:var(--border); }
+  .cal-month-summary{
+    text-align:center; font-size:0.76rem; color:var(--text-dim); margin:-4px 0 10px;
+    font-variant-numeric:tabular-nums;
+  }
   .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; max-width:420px; margin:0 auto; }
   .cal-dow{ text-align:center; font-size:0.7rem; color:var(--text-faint); padding-bottom:4px; }
   .cal-cell{
@@ -450,7 +454,22 @@ __RUNNING_TAB_STYLE__
   .cm-cell{ aspect-ratio:1; border-radius:2px; min-width:22px; }
   .cm-axis{ font-size:0.58rem; color:var(--text-faint); white-space:nowrap; }
 
-  /* ---- Expanders: food by day, sessions by workout ---- */
+  /* ---- Expanders: logs grouped by month, food by day, sessions by workout ---- */
+  details.month-log{ border-bottom:1px solid var(--border); }
+  details.month-log:last-child{ border-bottom:none; }
+  details.month-log > summary{
+    list-style:none; cursor:pointer; padding:12px 4px; display:flex; align-items:center;
+    justify-content:space-between; gap:10px; user-select:none; font-weight:700;
+  }
+  details.month-log > summary::-webkit-details-marker{ display:none; }
+  details.month-log > summary::before{
+    content:'▸'; color:var(--text-faint); font-size:0.7rem; transition:transform 0.15s; margin-right:10px;
+  }
+  details.month-log[open] > summary::before{ transform:rotate(90deg); }
+  details.month-log > summary:hover{ background:rgba(255,255,255,0.02); }
+  .month-label{ font-size:0.9rem; }
+  .month-meta{ font-size:0.72rem; font-weight:400; color:var(--text-faint); font-variant-numeric:tabular-nums; }
+  details.month-log > .table-scroll{ padding:0 4px 10px; }
   details.day, details.sess{ border-bottom:1px solid var(--border); }
   details.day:last-child, details.sess:last-child{ border-bottom:none; }
   details.day > summary, details.sess > summary{
@@ -711,6 +730,11 @@ function fmtDate(iso){
 }
 function localIso(d){
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+// A malformed date (e.g. a logging typo) must never win the "open by default"
+// slot in a month-grouped log just because it sorts first as a raw string.
+function isValidIsoDate(d){
+  return typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
 }
 
 // ---- Tabs ----
@@ -1838,6 +1862,23 @@ function fmtDenAbbrev(n){
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
+// Splits ISO dates (already sorted newest-first) into month buckets, newest
+// month first, each carrying its dates in the same newest-first order.
+function groupDatesByMonth(datesDesc){
+  const groups = [];
+  let cur = null;
+  datesDesc.forEach(d => {
+    const key = d.slice(0, 7); // YYYY-MM
+    if(!cur || cur.key !== key){
+      const [y, m] = key.split('-').map(Number);
+      cur = { key, label: MONTH_NAMES[m - 1] + ' ' + y, dates: [] };
+      groups.push(cur);
+    }
+    cur.dates.push(d);
+  });
+  return groups;
+}
+
 // A real calendar month (Monday-first), not a rolling N-day window — with
 // prev/next navigation. dayFn(iso) is called once per real day in the visible
 // month and returns {inner, title, active, clickable, cls}, all optional;
@@ -1884,6 +1925,10 @@ function renderMonthCalendar(containerId, dayFn, opts){
       '<button class="cal-nav-btn" data-dir="-1" aria-label="Previous month">‹</button>' +
       '<span class="cal-nav-label">' + MONTH_NAMES[m] + ' ' + y + '</span>' +
       '<button class="cal-nav-btn" data-dir="1" aria-label="Next month"' + (future ? ' disabled' : '') + '>›</button></div>';
+    if(opts.summarize){
+      const summary = opts.summarize(cells);
+      if(summary) html += '<div class="cal-month-summary">' + summary + '</div>';
+    }
     html += '<div class="cal-grid' + (opts.gridClass ? ' ' + opts.gridClass : '') + '">';
     const DAY_LETTERS = ['M','T','W','T','F','S','S'];
     for(let i = 0; i < 7; i++){ html += '<div class="cal-dow">' + DAY_LETTERS[i] + '</div>'; }
@@ -1923,11 +1968,29 @@ function renderMonthCalendar(containerId, dayFn, opts){
 
 function renderTrainingCalendar(containerId, sessions){
   const byDate = {};
-  sessions.forEach(s => { (byDate[s.date] = byDate[s.date] || []).push(s.type); });
+  const minutesByDate = {};
+  sessions.forEach(s => {
+    (byDate[s.date] = byDate[s.date] || []).push(s.type);
+    minutesByDate[s.date] = (minutesByDate[s.date] || 0) + (s.duration_min || 0);
+  });
   renderMonthCalendar(containerId, iso => {
     const types = byDate[iso] || [];
-    return { inner: '<span class="icons">' + types.map(t => ICONS[t] || '✳️').join('') + '</span>', active: types.length > 0 };
-  }, { connectActive: true });
+    return {
+      inner: '<span class="icons">' + types.map(t => ICONS[t] || '✳️').join('') + '</span>',
+      active: types.length > 0,
+      raw: types.length ? { sessions: types.length, minutes: minutesByDate[iso] || 0 } : null,
+    };
+  }, {
+    connectActive: true,
+    summarize: cells => {
+      const days = cells.filter(c => c && c.raw);
+      if(!days.length) return '';
+      const totalSessions = days.reduce((a, c) => a + c.raw.sessions, 0);
+      const totalMinutes = days.reduce((a, c) => a + c.raw.minutes, 0);
+      return days.length + ' active day' + (days.length===1?'':'s') + ' · ' + totalSessions + ' session' + (totalSessions===1?'':'s') +
+        ' · ' + totalMinutes + ' min this month';
+    },
+  });
 }
 
 function renderNutritionCalendar(containerId, nutritionByDate, onCellClick){
@@ -1962,13 +2025,25 @@ function renderNutritionCalendar(containerId, nutritionByDate, onCellClick){
         title: Math.round(d.calories) + ' kcal · protein ' + Math.round(d.protein) +
           'g · carbs ' + Math.round(d.carbs) + 'g · fat ' + Math.round(d.fat) + 'g',
         clickable: true,
+        raw: d.calories,
       };
     }
     if(vacationDates.has(iso)){
       return { inner: '<span class="cal-vacation">🏖️</span>', title: 'Vacation — not tracked', cls: 'vacation' };
     }
     return {};
-  }, { gridClass: 'nutrition-grid', footer, onCellClick });
+  }, {
+    gridClass: 'nutrition-grid',
+    footer,
+    onCellClick,
+    summarize: cells => {
+      const logged = cells.filter(c => c && c.raw != null);
+      if(!logged.length) return '';
+      const total = logged.reduce((a, c) => a + c.raw, 0);
+      return Math.round(total) + ' kcal total · ' + Math.round(total / logged.length) + ' kcal/day avg · ' +
+        logged.length + ' day' + (logged.length===1?'':'s') + ' logged this month';
+    },
+  });
 }
 
 function renderGamblingCalendar(containerId, byDate){
@@ -1984,8 +2059,17 @@ function renderGamblingCalendar(containerId, byDate){
       inner: '<span class="cal-cal" style="color:var(--rank-bad)">-' + fmtDenAbbrev(amount) + '</span>',
       title: amount + ' ден lost',
       style: 'background:rgba(255,107,122,' + opacity + ');border-color:rgba(255,107,122,0.5);',
+      raw: amount,
     };
-  }, { gridClass: 'nutrition-grid' });
+  }, {
+    gridClass: 'nutrition-grid',
+    summarize: cells => {
+      const lostDays = cells.filter(c => c && c.raw != null);
+      if(!lostDays.length) return '';
+      const total = lostDays.reduce((a, c) => a + c.raw, 0);
+      return total + ' ден lost this month · ' + lostDays.length + ' day' + (lostDays.length===1?'':'s');
+    },
+  });
 }
 
 function dailyNutritionTotals(nutrition){
@@ -2658,37 +2742,45 @@ if(training.sessions.length){
     });
   }
 
-  // Grouped by day rather than one flat list: a continuous stream of entries
+  // Grouped by day, days grouped by month: a continuous stream of entries
   // hides where one day ends and the next begins, which is the only boundary
-  // that matters when reading intake. Today opens by default.
+  // that matters when reading intake. Only the most recent month starts open
+  // — a year of logging shouldn't all be one giant expanded scroll.
   const MEAL_ORDER = {breakfast:0, lunch:1, dinner:2, snack:3};
   const byDay = {};
   nutrition.forEach(n => { (byDay[n.date] = byDay[n.date] || []).push(n); });
-  const days = Object.keys(byDay).sort().reverse();
+  const days = Object.keys(byDay).filter(isValidIsoDate).sort().reverse();
   const target = nv.protein_target_g;
 
-  el('foodTableWrap').innerHTML = days.map((d, idx) => {
-    const entries = byDay[d].slice().sort((a,b) =>
-      (MEAL_ORDER[a.meal] ?? 9) - (MEAL_ORDER[b.meal] ?? 9));
-    const t = dayTotals[d] || {calories:0, protein:0, carbs:0, fat:0};
-    const rows = entries.map(n =>
-      '<tr><td style="color:var(--text-faint);text-transform:capitalize">' + (n.meal||'-') + '</td>' +
-      '<td>' + n.description + '</td>' +
-      '<td style="text-align:right">' + (n.calories||'-') + '</td>' +
-      '<td style="text-align:right">' + (n.protein_g||0) + 'g</td>' +
-      '<td style="text-align:right">' + (n.carbs_g||0) + 'g</td>' +
-      '<td style="text-align:right">' + (n.fat_g||0) + 'g</td></tr>').join('');
-    return '<details class="day"' + (idx === 0 ? ' open' : '') + '><summary>' +
-      '<span class="day-date">' + fmtDate(d) + '</span>' +
-      '<span class="day-kcal">' + Math.round(t.calories) + ' kcal</span>' +
-      '<span class="day-macros">P' + Math.round(t.protein) + ' C' + Math.round(t.carbs) + ' F' + Math.round(t.fat) +
-        (target ? '<span class="day-vs' + (t.protein >= target ? ' hit' : '') + '">' +
-          Math.round(t.protein/target*100) + '% protein</span>' : '') + '</span>' +
-      '<span class="day-count">' + entries.length + ' item' + (entries.length===1?'':'s') + '</span>' +
-      '</summary><div class="table-scroll"><table><thead><tr><th>Meal</th><th>Description</th>' +
-      '<th style="text-align:right">Cal</th><th style="text-align:right">P</th>' +
-      '<th style="text-align:right">C</th><th style="text-align:right">F</th></tr></thead><tbody>' +
-      rows + '</tbody></table></div></details>';
+  el('foodTableWrap').innerHTML = groupDatesByMonth(days).map((group, gIdx) => {
+    const monthTotal = group.dates.reduce((a, d) => a + (dayTotals[d] ? dayTotals[d].calories : 0), 0);
+    const dayHtml = group.dates.map((d, idx) => {
+      const entries = byDay[d].slice().sort((a,b) =>
+        (MEAL_ORDER[a.meal] ?? 9) - (MEAL_ORDER[b.meal] ?? 9));
+      const t = dayTotals[d] || {calories:0, protein:0, carbs:0, fat:0};
+      const rows = entries.map(n =>
+        '<tr><td style="color:var(--text-faint);text-transform:capitalize">' + (n.meal||'-') + '</td>' +
+        '<td>' + n.description + '</td>' +
+        '<td style="text-align:right">' + (n.calories||'-') + '</td>' +
+        '<td style="text-align:right">' + (n.protein_g||0) + 'g</td>' +
+        '<td style="text-align:right">' + (n.carbs_g||0) + 'g</td>' +
+        '<td style="text-align:right">' + (n.fat_g||0) + 'g</td></tr>').join('');
+      return '<details class="day"' + (gIdx === 0 && idx === 0 ? ' open' : '') + '><summary>' +
+        '<span class="day-date">' + fmtDate(d) + '</span>' +
+        '<span class="day-kcal">' + Math.round(t.calories) + ' kcal</span>' +
+        '<span class="day-macros">P' + Math.round(t.protein) + ' C' + Math.round(t.carbs) + ' F' + Math.round(t.fat) +
+          (target ? '<span class="day-vs' + (t.protein >= target ? ' hit' : '') + '">' +
+            Math.round(t.protein/target*100) + '% protein</span>' : '') + '</span>' +
+        '<span class="day-count">' + entries.length + ' item' + (entries.length===1?'':'s') + '</span>' +
+        '</summary><div class="table-scroll"><table><thead><tr><th>Meal</th><th>Description</th>' +
+        '<th style="text-align:right">Cal</th><th style="text-align:right">P</th>' +
+        '<th style="text-align:right">C</th><th style="text-align:right">F</th></tr></thead><tbody>' +
+        rows + '</tbody></table></div></details>';
+    }).join('');
+    return '<details class="month-log"' + (gIdx === 0 ? ' open' : '') + '><summary>' +
+      '<span class="month-label">' + group.label + '</span>' +
+      '<span class="month-meta">' + Math.round(monthTotal) + ' kcal total · ' + group.dates.length + ' day' + (group.dates.length===1?'':'s') + '</span>' +
+      '</summary>' + dayHtml + '</details>';
   }).join('');
 })();
 
@@ -2876,12 +2968,30 @@ function statTile(m){
 
   renderGamblingCalendar('gamblingCalWrap', gv.by_date);
 
-  const entries = (DATA.gambling || []).slice().sort((a,b) => (b.date||'').localeCompare(a.date||''));
-  el('gamblingTableWrap').innerHTML = '<div class="table-scroll"><table><thead><tr><th>Date</th><th>Note</th>' +
-    '<th style="text-align:right">Lost</th></tr></thead><tbody>' +
-    entries.map(e => '<tr><td>' + fmtDate(e.date) + '</td><td>' + (e.note || '-') + '</td>' +
-      '<td style="text-align:right;color:var(--rank-bad)">' + e.amount_den + ' ден</td></tr>').join('') +
-    '</tbody></table></div>';
+  // Grouped by month, only the most recent month open — same reasoning as the
+  // Food Log: a long tracking history shouldn't render as one giant scroll.
+  const entries = (DATA.gambling || []).filter(e => isValidIsoDate(e.date)).sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  const monthGroups = [];
+  entries.forEach(e => {
+    const key = (e.date || '').slice(0, 7);
+    let group = monthGroups[monthGroups.length - 1];
+    if(!group || group.key !== key){
+      const [y, m] = key.split('-').map(Number);
+      group = { key, label: (m ? MONTH_NAMES[m - 1] + ' ' + y : 'Undated'), entries: [] };
+      monthGroups.push(group);
+    }
+    group.entries.push(e);
+  });
+  el('gamblingTableWrap').innerHTML = monthGroups.map((group, idx) => {
+    const total = group.entries.reduce((a, e) => a + (e.amount_den || 0), 0);
+    const rows = group.entries.map(e => '<tr><td>' + fmtDate(e.date) + '</td><td>' + (e.note || '-') + '</td>' +
+      '<td style="text-align:right;color:var(--rank-bad)">' + e.amount_den + ' ден</td></tr>').join('');
+    return '<details class="month-log"' + (idx === 0 ? ' open' : '') + '><summary>' +
+      '<span class="month-label">' + group.label + '</span>' +
+      '<span class="month-meta">' + total + ' ден · ' + group.entries.length + ' entr' + (group.entries.length===1?'y':'ies') + '</span>' +
+      '</summary><div class="table-scroll"><table><thead><tr><th>Date</th><th>Note</th>' +
+      '<th style="text-align:right">Lost</th></tr></thead><tbody>' + rows + '</tbody></table></div></details>';
+  }).join('');
 })();
 
 __RUNNING_TAB_SCRIPT__
