@@ -2858,7 +2858,8 @@ function statTile(m){
         '<div class="opp-card-image"><img src="icons/opportunity/' + oc.image + '" alt="' + oc.item + '" loading="lazy"></div>' +
         '<div class="opp-card-body">' +
           '<div class="opp-card-count">' + oc.count + '<span class="opp-card-unit">' + (oc.count === 1 ? oc.item : oc.item_plural) + '</span></div>' +
-          '<div class="opp-card-price">' + oc.price_den + ' ден each</div>' +
+          '<div class="opp-card-price">' + oc.price_den + ' ден each' +
+            (oc.leftover_den > 0 ? ' · ' + oc.leftover_den + ' ден left over' : '') + '</div>' +
         '</div></div>'
     ).join('');
     return '<div class="section"><h2>' + title + '</h2>' +

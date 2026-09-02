@@ -24,6 +24,24 @@ OPPORTUNITY_ITEMS: list[dict] = [
 ]
 
 
+def _whole_count(total_den: float, item: dict) -> dict:
+    """How many *whole* units of item the total buys, plus what's left over.
+
+    "3.9 running shoes" isn't purchasable — you bought 3 and have some left
+    over. Floor rather than round, so the leftover is never negative.
+    """
+    count = int(total_den // item["price_den"])
+    leftover = round(total_den - count * item["price_den"])
+    return {
+        "item": item["name"],
+        "item_plural": item["plural"],
+        "count": count,
+        "price_den": item["price_den"],
+        "image": item["image"],
+        "leftover_den": leftover,
+    }
+
+
 def build_opportunity_cost(total_den: float) -> dict | None:
     """Picks the priciest item the total loss could have fully bought.
 
@@ -35,14 +53,7 @@ def build_opportunity_cost(total_den: float) -> dict | None:
         return None
     affordable = [i for i in OPPORTUNITY_ITEMS if i["price_den"] <= total_den]
     item = affordable[-1] if affordable else OPPORTUNITY_ITEMS[0]
-    count = total_den / item["price_den"]
-    return {
-        "item": item["name"],
-        "item_plural": item["plural"],
-        "count": round(count, 1) if count < 10 else round(count),
-        "price_den": item["price_den"],
-        "image": item["image"],
-    }
+    return _whole_count(total_den, item)
 
 
 def build_opportunity_costs(total_den: float, *, n: int = 5) -> list[dict] | None:
@@ -52,6 +63,7 @@ def build_opportunity_costs(total_den: float, *, n: int = 5) -> list[dict] | Non
     total land from a few directions at once. Only items the total can buy a
     whole one of qualify — "0.4 months' rent" isn't a thing you could have
     bought, so it doesn't belong in a list about what you could have bought.
+    Counts are whole numbers with the leftover shown alongside, not decimals.
     """
     if total_den <= 0:
         return None
@@ -59,16 +71,7 @@ def build_opportunity_costs(total_den: float, *, n: int = 5) -> list[dict] | Non
     if not qualifying:
         return None
     chosen = list(reversed(qualifying[-n:]))
-    out = []
-    for item in chosen:
-        count = total_den / item["price_den"]
-        out.append({
-            "item": item["name"],
-            "item_plural": item["plural"],
-            "count": round(count, 1) if count < 10 else round(count),
-            "price_den": item["price_den"],
-            "image": item["image"],
-        })
+    out = [_whole_count(total_den, item) for item in chosen]
     return out
 
 

@@ -97,7 +97,8 @@ def test_opportunity_cost_picks_the_priciest_affordable_item():
     oc = build_opportunity_cost(3000)
     assert oc["item"] == "Whey Core protein tub"
     assert oc["price_den"] == 2840
-    assert oc["count"] == 1.1
+    assert oc["count"] == 1
+    assert oc["leftover_den"] == 160
 
 
 def test_opportunity_cost_carries_an_image_for_every_item():
@@ -122,16 +123,20 @@ def test_every_opportunity_image_file_actually_exists():
 
 
 def test_opportunity_cost_falls_back_to_the_cheapest_item_below_its_price():
+    # 40 den doesn't buy even one 80-den coffee, but the singular picker still
+    # names something rather than nothing — count reads 0, leftover the full amount.
     oc = build_opportunity_cost(40)
     assert oc["item"] == "coffee"
-    assert oc["count"] == 0.5
+    assert oc["count"] == 0
+    assert oc["leftover_den"] == 40
 
 
-def test_opportunity_cost_rounds_large_counts_to_whole_numbers():
+def test_opportunity_cost_counts_are_whole_with_a_leftover():
     oc = build_opportunity_cost(2_000_000)
     assert oc["item"] == "used car"
     assert oc["count"] == 13
     assert isinstance(oc["count"], int)
+    assert oc["leftover_den"] == 2_000_000 - 13 * 150_000
 
 
 def test_opportunity_costs_list_is_absent_for_zero_or_negative():
