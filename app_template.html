@@ -156,6 +156,18 @@ __RUNNING_TAB_STYLE__
   .sleep-tip-list li::marker{ color:var(--neon); }
 
   /* ---- Calendar ---- */
+  .cal-nav{
+    display:flex; align-items:center; justify-content:center; gap:16px;
+    margin:0 0 10px; max-width:420px; margin-left:auto; margin-right:auto;
+  }
+  .cal-nav-label{ font-size:0.85rem; font-weight:700; color:var(--text); min-width:9ch; text-align:center; }
+  .cal-nav-btn{
+    background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+    width:30px; height:30px; border-radius:8px; font-size:1rem; line-height:1; cursor:pointer;
+  }
+  .cal-nav-btn:hover{ border-color:var(--text-faint); }
+  .cal-nav-btn:disabled{ opacity:0.35; cursor:default; }
+  .cal-nav-btn:disabled:hover{ border-color:var(--border); }
   .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; max-width:420px; margin:0 auto; }
   .cal-dow{ text-align:center; font-size:0.7rem; color:var(--text-faint); padding-bottom:4px; }
   .cal-cell{
@@ -1816,102 +1828,6 @@ el('badgeGrid').innerHTML = gam.badges.map(b =>
   '<div class="bdesc">' + b.description + '</div></div>'
 ).join('');
 
-// Calendar: last 35 days, 5 weeks, Sun-start.
-// Pass nutritionByDate to render calorie/macro cells instead of activity icons.
-function buildCalendar(sessions, nutritionByDate){
-  const byDate = {};
-  sessions.forEach(s => { (byDate[s.date] = byDate[s.date] || []).push(s.type); });
-  const isNutrition = !!nutritionByDate;
-  // Days marked vacation in lifestyle.json get a distinct cell instead of
-  // reading as "no data logged" — a gap in tracking and a deliberate day off
-  // from tracking look the same otherwise.
-  const vacationDates = new Set(
-    (DATA.lifestyle || []).filter(l => l.vacation).map(l => l.date)
-  );
-
-  const today = new Date(DATA.generated_at + 'T00:00:00');
-  const start = new Date(today);
-  start.setDate(start.getDate() - 34);
-  // Python counts Mon=0..Sun=6, JS counts Sun=0..Sat=6, hence the shift.
-  const FIRST_DAY = ((DATA.week_starts_on == null ? 0 : DATA.week_starts_on) + 1) % 7;
-  while(start.getDay() !== FIRST_DAY) start.setDate(start.getDate() - 1);
-
-  // First pass: collect each cell's data (including whether it's an active training day).
-  const cells = [];
-  const cur = new Date(start);
-  const todayStr = DATA.generated_at;
-  while(cur <= today || cur.getDay() !== FIRST_DAY){
-    const iso = localIso(cur);
-    let inner, active = false, title = '', isVacationCell = false;
-    if(isNutrition){
-      const d = nutritionByDate[iso];
-      if(d){
-        // Bar segments are split by calories contributed, not grams — 1g of fat
-        // carries more than twice the energy of 1g of protein or carbs, so a
-        // gram-proportional bar would badly understate fat.
-        const p = d.protein * 4, c = d.carbs * 4, f = d.fat * 9;
-        const total = p + c + f;
-        const pct = v => total ? (v / total * 100).toFixed(1) : 0;
-        inner = '<span class="cal-cal">' + Math.round(d.calories) + '</span>' +
-          '<span class="macro-bar">' +
-            '<i class="mp" style="width:' + pct(p) + '%"></i>' +
-            '<i class="mc" style="width:' + pct(c) + '%"></i>' +
-            '<i class="mf" style="width:' + pct(f) + '%"></i>' +
-          '</span>';
-        title = Math.round(d.calories) + ' kcal · protein ' + Math.round(d.protein) +
-          'g · carbs ' + Math.round(d.carbs) + 'g · fat ' + Math.round(d.fat) + 'g';
-      } else if(vacationDates.has(iso)){
-        inner = '<span class="cal-vacation">🏖️</span>';
-        title = 'Vacation — not tracked';
-        isVacationCell = true;
-      } else {
-        inner = '';
-      }
-    } else {
-      const types = byDate[iso] || [];
-      inner = '<span class="icons">' + types.map(t => ICONS[t] || '✳️').join('') + '</span>';
-      active = types.length > 0;
-    }
-    cells.push({ day: cur.getDate(), iso, dow: cur.getDay(), isToday: iso === todayStr, inner, active, title, vacation: isVacationCell });
-    cur.setDate(cur.getDate() + 1);
-    if(cur > today && cur.getDay() === FIRST_DAY) break;
-  }
-
-  // Second pass: flag horizontal runs of active days so adjacent cells in the same
-  // calendar row can be rendered as one connected green block instead of separate tiles.
-  cells.forEach((c, i) => {
-    c.connectLeft = c.active && c.dow !== FIRST_DAY && i > 0 && cells[i - 1].active;
-  });
-  cells.forEach((c, i) => {
-    c.connectRight = i < cells.length - 1 && cells[i + 1].connectLeft;
-  });
-
-  let html = '<div class="cal-grid' + (isNutrition ? ' nutrition-grid' : '') + '">';
-  const DAY_LETTERS = ['S','M','T','W','T','F','S'];
-  for(let i = 0; i < 7; i++){ html += '<div class="cal-dow">' + DAY_LETTERS[(FIRST_DAY + i) % 7] + '</div>'; }
-  cells.forEach(c => {
-    let cls = 'cal-cell';
-    if(c.isToday) cls += ' today';
-    if(c.active) cls += ' active';
-    if(c.connectLeft) cls += ' connect-left';
-    if(c.connectRight) cls += ' connect-right';
-    if(c.vacation && isNutrition) cls += ' vacation';
-    if(isNutrition && c.inner && !c.vacation) cls += ' clickable';
-    html += '<div class="' + cls + '" data-date="' + c.iso + '"' + (c.title ? ' title="' + c.title + '"' : '') +
-      '><span class="daynum">' + c.day + '</span>' + c.inner + '</div>';
-  });
-  html += '</div>';
-  if(isNutrition){
-    html += '<div class="macro-legend">' +
-      '<span><i class="mp" style="background:var(--blue)"></i>Protein</span>' +
-      '<span><i class="mc" style="background:var(--orange)"></i>Carbs</span>' +
-      '<span><i class="mf" style="background:var(--yellow)"></i>Fat</span>' +
-      '<span style="color:var(--text-faint)">Bar width = share of that day\'s calories</span>' +
-      '</div>';
-  }
-  return html;
-}
-
 // "-3400" doesn't fit a ~45px-wide calendar cell on a phone; "-3.4k" does.
 function fmtDenAbbrev(n){
   const abs = Math.abs(n);
@@ -1919,40 +1835,157 @@ function fmtDenAbbrev(n){
   const k = n / 1000;
   return (Number.isInteger(k) ? k : k.toFixed(1)) + 'k';
 }
-function buildGamblingCalendar(byDate){
-  const today = new Date(DATA.generated_at + 'T00:00:00');
-  const start = new Date(today);
-  start.setDate(start.getDate() - 34);
-  const FIRST_DAY = ((DATA.week_starts_on == null ? 0 : DATA.week_starts_on) + 1) % 7;
-  while(start.getDay() !== FIRST_DAY) start.setDate(start.getDate() - 1);
 
-  const maxAmount = Math.max(1, ...Object.values(byDate));
-  const cells = [];
-  const cur = new Date(start);
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// A real calendar month (Monday-first), not a rolling N-day window — with
+// prev/next navigation. dayFn(iso) is called once per real day in the visible
+// month and returns {inner, title, active, clickable, cls}, all optional;
+// days outside the month render as blank padding cells. opts.connectActive
+// draws adjacent active days in a row as one joined block (used by the
+// training calendar); opts.onCellClick and opts.gridClass are passed through;
+// opts.footer is extra HTML appended after the grid (e.g. the macro legend).
+function renderMonthCalendar(containerId, dayFn, opts){
+  opts = opts || {};
+  const wrap = el(containerId);
+  if(!wrap) return;
+  const anchor = new Date(DATA.generated_at + 'T00:00:00');
+  let y = anchor.getFullYear(), m = anchor.getMonth();
   const todayStr = DATA.generated_at;
-  while(cur <= today || cur.getDay() !== FIRST_DAY){
-    const iso = localIso(cur);
-    cells.push({ day: cur.getDate(), iso, isToday: iso === todayStr, amount: byDate[iso] });
-    cur.setDate(cur.getDate() + 1);
-    if(cur > today && cur.getDay() === FIRST_DAY) break;
-  }
 
-  let html = '<div class="cal-grid nutrition-grid">';
-  const DAY_LETTERS = ['S','M','T','W','T','F','S'];
-  for(let i = 0; i < 7; i++){ html += '<div class="cal-dow">' + DAY_LETTERS[(FIRST_DAY + i) % 7] + '</div>'; }
-  cells.forEach(c => {
-    let cls = 'cal-cell';
-    if(c.isToday) cls += ' today';
-    const style = c.amount
-      ? 'background:rgba(255,107,122,' + Math.min(0.55, 0.12 + c.amount/maxAmount*0.43).toFixed(2) + ');border-color:rgba(255,107,122,0.5);'
-      : '';
-    html += '<div class="' + cls + '" style="' + style + '"' + (c.amount ? ' title="' + c.amount + ' ден lost"' : '') + '>' +
-      '<span class="daynum">' + c.day + '</span>' +
-      (c.amount ? '<span class="cal-cal" style="color:var(--rank-bad)">-' + fmtDenAbbrev(c.amount) + '</span>' : '') +
-      '</div>';
-  });
-  html += '</div>';
-  return html;
+  function draw(){
+    const first = new Date(y, m, 1);
+    const startPad = (first.getDay() + 6) % 7; // Mon=0 offset, regardless of locale
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    const totalCells = Math.ceil((startPad + daysInMonth) / 7) * 7;
+
+    const cells = [];
+    for(let i = 0; i < totalCells; i++){
+      const dayNum = i - startPad + 1;
+      if(dayNum < 1 || dayNum > daysInMonth){ cells.push(null); continue; }
+      const iso = localIso(new Date(y, m, dayNum));
+      const data = dayFn(iso) || {};
+      cells.push({ dayNum, iso, dow: i % 7, ...data });
+    }
+
+    if(opts.connectActive){
+      cells.forEach((c, i) => {
+        if(!c) return;
+        c.connectLeft = c.active && c.dow !== 0 && i > 0 && cells[i - 1] && cells[i - 1].active;
+      });
+      cells.forEach((c, i) => {
+        if(!c) return;
+        c.connectRight = i < cells.length - 1 && cells[i + 1] && cells[i + 1].connectLeft;
+      });
+    }
+
+    const future = y > anchor.getFullYear() || (y === anchor.getFullYear() && m > anchor.getMonth());
+    let html = '<div class="cal-nav">' +
+      '<button class="cal-nav-btn" data-dir="-1" aria-label="Previous month">‹</button>' +
+      '<span class="cal-nav-label">' + MONTH_NAMES[m] + ' ' + y + '</span>' +
+      '<button class="cal-nav-btn" data-dir="1" aria-label="Next month"' + (future ? ' disabled' : '') + '>›</button></div>';
+    html += '<div class="cal-grid' + (opts.gridClass ? ' ' + opts.gridClass : '') + '">';
+    const DAY_LETTERS = ['M','T','W','T','F','S','S'];
+    for(let i = 0; i < 7; i++){ html += '<div class="cal-dow">' + DAY_LETTERS[i] + '</div>'; }
+    cells.forEach(c => {
+      if(!c){ html += '<div class="cal-cell empty"></div>'; return; }
+      let cls = 'cal-cell';
+      if(c.iso === todayStr) cls += ' today';
+      if(c.active) cls += ' active';
+      if(c.connectLeft) cls += ' connect-left';
+      if(c.connectRight) cls += ' connect-right';
+      if(c.cls) cls += ' ' + c.cls;
+      if(c.clickable) cls += ' clickable';
+      html += '<div class="' + cls + '" data-date="' + c.iso + '"' +
+        (c.title ? ' title="' + c.title + '"' : '') + (c.style ? ' style="' + c.style + '"' : '') +
+        '><span class="daynum">' + c.dayNum + '</span>' + (c.inner || '') + '</div>';
+    });
+    html += '</div>';
+    if(opts.footer) html += opts.footer;
+    wrap.innerHTML = html;
+
+    wrap.querySelectorAll('.cal-nav-btn').forEach(b => {
+      if(b.disabled) return;
+      b.addEventListener('click', () => {
+        m += parseInt(b.dataset.dir, 10);
+        if(m < 0){ m = 11; y--; } else if(m > 11){ m = 0; y++; }
+        draw();
+      });
+    });
+    if(opts.onCellClick){
+      wrap.querySelectorAll('.cal-cell.clickable').forEach(cell => {
+        cell.addEventListener('click', () => opts.onCellClick(cell, cell.dataset.date));
+      });
+    }
+  }
+  draw();
+}
+
+function renderTrainingCalendar(containerId, sessions){
+  const byDate = {};
+  sessions.forEach(s => { (byDate[s.date] = byDate[s.date] || []).push(s.type); });
+  renderMonthCalendar(containerId, iso => {
+    const types = byDate[iso] || [];
+    return { inner: '<span class="icons">' + types.map(t => ICONS[t] || '✳️').join('') + '</span>', active: types.length > 0 };
+  }, { connectActive: true });
+}
+
+function renderNutritionCalendar(containerId, nutritionByDate, onCellClick){
+  // Days marked vacation in lifestyle.json get a distinct cell instead of
+  // reading as "no data logged" — a gap in tracking and a deliberate day off
+  // from tracking look the same otherwise.
+  const vacationDates = new Set(
+    (DATA.lifestyle || []).filter(l => l.vacation).map(l => l.date)
+  );
+  const footer = '<div class="macro-legend">' +
+    '<span><i class="mp" style="background:var(--blue)"></i>Protein</span>' +
+    '<span><i class="mc" style="background:var(--orange)"></i>Carbs</span>' +
+    '<span><i class="mf" style="background:var(--yellow)"></i>Fat</span>' +
+    '<span style="color:var(--text-faint)">Bar width = share of that day\'s calories</span>' +
+    '</div>';
+  renderMonthCalendar(containerId, iso => {
+    const d = nutritionByDate[iso];
+    if(d){
+      // Bar segments are split by calories contributed, not grams — 1g of fat
+      // carries more than twice the energy of 1g of protein or carbs, so a
+      // gram-proportional bar would badly understate fat.
+      const p = d.protein * 4, c = d.carbs * 4, f = d.fat * 9;
+      const total = p + c + f;
+      const pct = v => total ? (v / total * 100).toFixed(1) : 0;
+      return {
+        inner: '<span class="cal-cal">' + Math.round(d.calories) + '</span>' +
+          '<span class="macro-bar">' +
+            '<i class="mp" style="width:' + pct(p) + '%"></i>' +
+            '<i class="mc" style="width:' + pct(c) + '%"></i>' +
+            '<i class="mf" style="width:' + pct(f) + '%"></i>' +
+          '</span>',
+        title: Math.round(d.calories) + ' kcal · protein ' + Math.round(d.protein) +
+          'g · carbs ' + Math.round(d.carbs) + 'g · fat ' + Math.round(d.fat) + 'g',
+        clickable: true,
+      };
+    }
+    if(vacationDates.has(iso)){
+      return { inner: '<span class="cal-vacation">🏖️</span>', title: 'Vacation — not tracked', cls: 'vacation' };
+    }
+    return {};
+  }, { gridClass: 'nutrition-grid', footer, onCellClick });
+}
+
+function renderGamblingCalendar(containerId, byDate){
+  // Intensity normalizes against the all-time worst day, not just what's
+  // visible in the current month, so a loss reads the same color regardless
+  // of which month you're paging through.
+  const maxAmount = Math.max(1, ...Object.values(byDate));
+  renderMonthCalendar(containerId, iso => {
+    const amount = byDate[iso];
+    if(!amount) return {};
+    const opacity = Math.min(0.55, 0.12 + amount / maxAmount * 0.43).toFixed(2);
+    return {
+      inner: '<span class="cal-cal" style="color:var(--rank-bad)">-' + fmtDenAbbrev(amount) + '</span>',
+      title: amount + ' ден lost',
+      style: 'background:rgba(255,107,122,' + opacity + ');border-color:rgba(255,107,122,0.5);',
+    };
+  }, { gridClass: 'nutrition-grid' });
 }
 
 function dailyNutritionTotals(nutrition){
@@ -1966,9 +1999,11 @@ function dailyNutritionTotals(nutrition){
   });
   return byDate;
 }
-el('calWrap').innerHTML = training.sessions.length || (DATA.recent_runs||[]).length
-  ? buildCalendar(training.sessions)
-  : '<div class="empty">No sessions logged yet — tell me about a workout and I\'ll add it.</div>';
+if(training.sessions.length || (DATA.recent_runs||[]).length){
+  renderTrainingCalendar('calWrap', training.sessions);
+} else {
+  el('calWrap').innerHTML = '<div class="empty">No sessions logged yet — tell me about a workout and I\'ll add it.</div>';
+}
 
 // Muscle heatmap coloring: 0 = fully recovered (green, safe to train),
 // 1 = just trained / still sore (red, avoid training it again yet).
@@ -2514,7 +2549,13 @@ if(training.sessions.length){
   html += '<div class="section"><h2>Daily Nutrition</h2><div class="desc">Calories and macros per day. <b>Tap any day</b> for the full breakdown — eaten, burned, the difference, and where the macros landed.</div><div id="nutriCalWrap"></div><div id="nutriDayDetail"></div></div>';
   html += '<div class="section"><h2>Food Log</h2><div id="foodTableWrap"></div></div>';
   el('nutritionContent').innerHTML = html;
-  el('nutriCalWrap').innerHTML = buildCalendar([], dayTotals);
+  renderNutritionCalendar('nutriCalWrap', dayTotals, (cell) => {
+    const already = cell.classList.contains('selected');
+    el('nutriCalWrap').querySelectorAll('.cal-cell.selected').forEach(c => c.classList.remove('selected'));
+    if(already){ el('nutriDayDetail').innerHTML = ''; return; }
+    cell.classList.add('selected');
+    showDay(cell.dataset.date);
+  });
 
   if(balanceDates.length){
     new Chart(el('balanceChart'), {
@@ -2616,16 +2657,6 @@ if(training.sessions.length){
       document.querySelectorAll('#nutriCalWrap .cal-cell.selected').forEach(c => c.classList.remove('selected'));
     });
   }
-
-  el('nutriCalWrap').querySelectorAll('.cal-cell.clickable').forEach(cell => {
-    cell.addEventListener('click', () => {
-      const already = cell.classList.contains('selected');
-      el('nutriCalWrap').querySelectorAll('.cal-cell.selected').forEach(c => c.classList.remove('selected'));
-      if(already){ el('nutriDayDetail').innerHTML = ''; return; }
-      cell.classList.add('selected');
-      showDay(cell.dataset.date);
-    });
-  });
 
   // Grouped by day rather than one flat list: a continuous stream of entries
   // hides where one day ends and the next begins, which is the only boundary
@@ -2820,8 +2851,9 @@ function statTile(m){
       '<div class="why">' + fmtDate(gv.worst_day.date) + '</div></div>' +
     '</div></div>';
 
-  if(gv.opportunity_costs && gv.opportunity_costs.length){
-    const cards = gv.opportunity_costs.map(oc =>
+  function oppCostSection(title, totalDen, costs){
+    if(!costs || !costs.length) return '';
+    const cards = costs.map(oc =>
       '<div class="opp-card">' +
         '<div class="opp-card-image"><img src="icons/opportunity/' + oc.image + '" alt="' + oc.item + '" loading="lazy"></div>' +
         '<div class="opp-card-body">' +
@@ -2829,16 +2861,19 @@ function statTile(m){
           '<div class="opp-card-price">' + oc.price_den + ' ден each</div>' +
         '</div></div>'
     ).join('');
-    html += '<div class="section"><h2>What that money could have been</h2>' +
-      '<div class="desc">' + gv.total_lost_den + ' ден gone, priced in what you actually spend money on.</div>' +
+    return '<div class="section"><h2>' + title + '</h2>' +
+      '<div class="desc">' + totalDen + ' ден gone, priced in what you actually spend money on.</div>' +
       '<div class="opp-grid">' + cards + '</div></div>';
   }
+  html += oppCostSection('This week — what that could have been', gv.week_total_den, gv.opportunity_costs_week);
+  html += oppCostSection('This month — what that could have been', gv.month_total_den, gv.opportunity_costs_month);
+  html += oppCostSection('All time — what that could have been', gv.total_lost_den, gv.opportunity_costs);
 
   html += '<div class="section"><h2>Calendar</h2><div id="gamblingCalWrap"></div></div>';
   html += '<div class="section"><h2>Log</h2><div id="gamblingTableWrap"></div></div>';
   wrap.innerHTML = html;
 
-  el('gamblingCalWrap').innerHTML = buildGamblingCalendar(gv.by_date);
+  renderGamblingCalendar('gamblingCalWrap', gv.by_date);
 
   const entries = (DATA.gambling || []).slice().sort((a,b) => (b.date||'').localeCompare(a.date||''));
   el('gamblingTableWrap').innerHTML = '<div class="table-scroll"><table><thead><tr><th>Date</th><th>Note</th>' +

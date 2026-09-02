@@ -146,23 +146,33 @@ def test_opportunity_costs_list_is_priciest_first():
     assert len(costs) <= 5
 
 
-def test_opportunity_costs_list_drops_fractions_below_a_tenth():
-    # 3000 den is 0.043 of a 70000-den smartphone — too small to be worth showing.
+def test_opportunity_costs_list_only_includes_fully_affordable_items():
+    # 3000 den doesn't buy a whole 4500-den pair of shoes, so it's excluded —
+    # every item shown must be something you could have fully bought.
     costs = build_opportunity_costs(3000)
-    assert all(c["count"] >= 0.1 for c in costs)
+    assert all(c["count"] >= 1 for c in costs)
+    assert "pair of running shoes" not in [c["item"] for c in costs]
     assert "flagship smartphone" not in [c["item"] for c in costs]
 
 
-def test_opportunity_costs_list_falls_back_to_cheapest_item_for_tiny_totals():
-    # Nothing qualifies at the 0.1 bar for a 5-denar total; still returns something
-    # rather than an empty list, same spirit as the single-item fallback.
-    costs = build_opportunity_costs(5)
-    assert costs == [{
-        "item": "coffee", "item_plural": "coffees", "count": 0.1,
-        "price_den": 80, "image": "coffee.jpg",
-    }]
+def test_opportunity_costs_list_is_absent_when_nothing_is_fully_affordable():
+    # 5 den doesn't even buy one 80-den coffee — nothing to show, not a fraction.
+    assert build_opportunity_costs(5) is None
 
 
 def test_gambling_view_includes_the_five_item_spread():
     v = build_gambling_view([{"date": "2026-08-19", "amount_den": 3000}], TODAY)
     assert v["opportunity_costs"] == build_opportunity_costs(3000)
+
+
+def test_gambling_view_includes_week_and_month_opportunity_costs():
+    v = build_gambling_view(
+        [
+            {"date": "2026-08-17", "amount_den": 100},  # this Monday, in-week
+            {"date": "2026-08-01", "amount_den": 3000},  # this month, out of week
+        ],
+        TODAY,
+        week_starts_on=0,
+    )
+    assert v["opportunity_costs_week"] == build_opportunity_costs(v["week_total_den"])
+    assert v["opportunity_costs_month"] == build_opportunity_costs(v["month_total_den"])
