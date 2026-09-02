@@ -1233,5 +1233,23 @@
     "protein_g": 3.2,
     "carbs_g": 33.6,
     "fat_g": 0.16
+  },
+  {
+    "date": "2026-09-02",
+    "meal": "snack",
+    "description": "Chocolate protein spread, pre-run (40g)",
+    "calories": 204,
+    "protein_g": 7.2,
+    "carbs_g": 15.6,
+    "fat_g": 12.5
+  },
+  {
+    "date": "2026-09-02",
+    "meal": "snack",
+    "description": "Banana, pre-run (101g peeled)",
+    "calories": 90,
+    "protein_g": 1.1,
+    "carbs_g": 22.8,
+    "fat_g": 0.3
   }
 ]
