@@ -1339,5 +1339,14 @@
     "protein_g": 1,
     "carbs_g": 28.9,
     "fat_g": 0.3
+  },
+  {
+    "date": "2026-09-03",
+    "meal": "dinner",
+    "description": "Classic burger, post-run (wholegrain bun, 180g beef patty, pickles, ketchup, wedge fries)",
+    "calories": 693,
+    "protein_g": 47,
+    "carbs_g": 70,
+    "fat_g": 25
   }
 ]
