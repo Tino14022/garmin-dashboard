@@ -1860,6 +1860,23 @@ function fmtDenAbbrev(n){
   return (Number.isInteger(k) ? k : k.toFixed(1)) + 'k';
 }
 
+// Wins are logged as negative amount_den (they net against losses); shown
+// as a bare number that reads as confusing at best ("-2500 ден" for a win)
+// and as a straight-up sign error at worst. Every place a gambling amount
+// renders should go through this instead of touching amount_den directly.
+function gamblingAmount(n, abbrev){
+  const isWin = n < 0;
+  const abs = Math.abs(n);
+  const shown = abbrev ? fmtDenAbbrev(abs) : abs;
+  const amountText = (isWin ? '+' : '-') + shown;
+  return {
+    isWin,
+    color: isWin ? 'var(--neon)' : 'var(--rank-bad)',
+    amountText, // signed number only, e.g. "+2500" — for callers styling the "ден" unit separately
+    text: amountText + ' ден',
+  };
+}
+
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 // Splits ISO dates (already sorted newest-first) into month buckets, newest
@@ -2047,27 +2064,35 @@ function renderNutritionCalendar(containerId, nutritionByDate, onCellClick){
 }
 
 function renderGamblingCalendar(containerId, byDate){
-  // Intensity normalizes against the all-time worst day, not just what's
-  // visible in the current month, so a loss reads the same color regardless
-  // of which month you're paging through.
-  const maxAmount = Math.max(1, ...Object.values(byDate));
+  // Intensity normalizes against the all-time worst loss and biggest win, not
+  // just what's visible in the current month, so a day reads the same color
+  // regardless of which month you're paging through.
+  const amounts = Object.values(byDate);
+  const maxLoss = Math.max(1, ...amounts.filter(a => a > 0));
+  const maxWin = Math.max(1, ...amounts.filter(a => a < 0).map(a => -a));
   renderMonthCalendar(containerId, iso => {
     const amount = byDate[iso];
     if(!amount) return {};
-    const opacity = Math.min(0.55, 0.12 + amount / maxAmount * 0.43).toFixed(2);
+    const g = gamblingAmount(amount, true);
+    const magnitude = g.isWin ? -amount : amount;
+    const scale = g.isWin ? maxWin : maxLoss;
+    const opacity = Math.min(0.55, 0.12 + magnitude / scale * 0.43).toFixed(2);
+    const rgb = g.isWin ? '61,220,151' : '255,107,122';
     return {
-      inner: '<span class="cal-cal" style="color:var(--rank-bad)">-' + fmtDenAbbrev(amount) + '</span>',
-      title: amount + ' ден lost',
-      style: 'background:rgba(255,107,122,' + opacity + ');border-color:rgba(255,107,122,0.5);',
+      inner: '<span class="cal-cal" style="color:' + g.color + '">' + g.text + '</span>',
+      title: gamblingAmount(amount).text + (g.isWin ? '' : ' lost'),
+      style: 'background:rgba(' + rgb + ',' + opacity + ');border-color:rgba(' + rgb + ',0.5);',
       raw: amount,
     };
   }, {
     gridClass: 'nutrition-grid',
     summarize: cells => {
-      const lostDays = cells.filter(c => c && c.raw != null);
-      if(!lostDays.length) return '';
-      const total = lostDays.reduce((a, c) => a + c.raw, 0);
-      return total + ' ден lost this month · ' + lostDays.length + ' day' + (lostDays.length===1?'':'s');
+      const activeDays = cells.filter(c => c && c.raw != null);
+      if(!activeDays.length) return '';
+      const total = activeDays.reduce((a, c) => a + c.raw, 0);
+      const t = gamblingAmount(total);
+      return '<span style="color:' + t.color + '">' + t.text + '</span> net this month · ' +
+        activeDays.length + ' day' + (activeDays.length===1?'':'s');
     },
   });
 }
@@ -2930,16 +2955,20 @@ function statTile(m){
     return;
   }
 
+  const weekFmt = gamblingAmount(gv.week_total_den);
+  const monthFmt = gamblingAmount(gv.month_total_den);
+  const allTimeFmt = gamblingAmount(gv.total_lost_den);
+  const worstFmt = gamblingAmount(gv.worst_day.amount_den);
   let html = '<div class="section"><h2>Totals</h2>' +
     '<div class="stat-grid">' +
-    '<div class="stat-tile"><div class="lbl">This week</div><div class="val" style="color:var(--rank-bad)">' +
-      gv.week_total_den + '<span class="u">ден</span></div></div>' +
-    '<div class="stat-tile"><div class="lbl">This month</div><div class="val" style="color:var(--rank-bad)">' +
-      gv.month_total_den + '<span class="u">ден</span></div></div>' +
-    '<div class="stat-tile"><div class="lbl">All time</div><div class="val" style="color:var(--rank-bad)">' +
-      gv.total_lost_den + '<span class="u">ден</span></div>' +
+    '<div class="stat-tile"><div class="lbl">This week</div><div class="val" style="color:' + weekFmt.color + '">' +
+      weekFmt.amountText + '<span class="u">ден</span></div></div>' +
+    '<div class="stat-tile"><div class="lbl">This month</div><div class="val" style="color:' + monthFmt.color + '">' +
+      monthFmt.amountText + '<span class="u">ден</span></div></div>' +
+    '<div class="stat-tile"><div class="lbl">All time</div><div class="val" style="color:' + allTimeFmt.color + '">' +
+      allTimeFmt.amountText + '<span class="u">ден</span></div>' +
       '<div class="why">Tracking since ' + fmtDate(gv.tracking_since) + ' · ' + gv.entry_count + ' entr' + (gv.entry_count===1?'y':'ies') + '</div></div>' +
-    '<div class="stat-tile"><div class="lbl">Worst day</div><div class="val">' + gv.worst_day.amount_den + '<span class="u">ден</span></div>' +
+    '<div class="stat-tile"><div class="lbl">Worst day</div><div class="val" style="color:' + worstFmt.color + '">' + worstFmt.amountText + '<span class="u">ден</span></div>' +
       '<div class="why">' + fmtDate(gv.worst_day.date) + '</div></div>' +
     '</div></div>';
 
@@ -2984,13 +3013,18 @@ function statTile(m){
   });
   el('gamblingTableWrap').innerHTML = monthGroups.map((group, idx) => {
     const total = group.entries.reduce((a, e) => a + (e.amount_den || 0), 0);
-    const rows = group.entries.map(e => '<tr><td>' + fmtDate(e.date) + '</td><td>' + (e.note || '-') + '</td>' +
-      '<td style="text-align:right;color:var(--rank-bad)">' + e.amount_den + ' ден</td></tr>').join('');
+    const totalFmt = gamblingAmount(total);
+    const rows = group.entries.map(e => {
+      const a = gamblingAmount(e.amount_den || 0);
+      return '<tr><td>' + fmtDate(e.date) + '</td><td>' + (e.note || '-') + '</td>' +
+        '<td style="text-align:right;color:' + a.color + '">' + a.text + '</td></tr>';
+    }).join('');
     return '<details class="month-log"' + (idx === 0 ? ' open' : '') + '><summary>' +
       '<span class="month-label">' + group.label + '</span>' +
-      '<span class="month-meta">' + total + ' ден · ' + group.entries.length + ' entr' + (group.entries.length===1?'y':'ies') + '</span>' +
+      '<span class="month-meta"><span style="color:' + totalFmt.color + '">' + totalFmt.text + '</span> net · ' +
+        group.entries.length + ' entr' + (group.entries.length===1?'y':'ies') + '</span>' +
       '</summary><div class="table-scroll"><table><thead><tr><th>Date</th><th>Note</th>' +
-      '<th style="text-align:right">Lost</th></tr></thead><tbody>' + rows + '</tbody></table></div></details>';
+      '<th style="text-align:right">Amount</th></tr></thead><tbody>' + rows + '</tbody></table></div></details>';
   }).join('');
 })();
 
