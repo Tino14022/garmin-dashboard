@@ -1330,5 +1330,14 @@
     "protein_g": 0.1,
     "carbs_g": 0.9,
     "fat_g": 0.05
+  },
+  {
+    "date": "2026-09-03",
+    "meal": "snack",
+    "description": "Banana pre-run (90g peeled) with half tbsp honey",
+    "calories": 112,
+    "protein_g": 1,
+    "carbs_g": 28.9,
+    "fat_g": 0.3
   }
 ]
