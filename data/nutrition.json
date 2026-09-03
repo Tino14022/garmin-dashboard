@@ -1290,5 +1290,45 @@
     "protein_g": 40,
     "carbs_g": 60,
     "fat_g": 48
+  },
+  {
+    "date": "2026-09-03",
+    "meal": "lunch",
+    "description": "Pork pleshka/shoulder, home lunch (150g)",
+    "grams": 150,
+    "calories": 375,
+    "protein_g": 37.5,
+    "carbs_g": 0,
+    "fat_g": 25.5
+  },
+  {
+    "date": "2026-09-03",
+    "meal": "lunch",
+    "description": "Kupus mandza - cabbage stewed with oil, salt, pepper (420g)",
+    "grams": 420,
+    "calories": 252,
+    "protein_g": 4.2,
+    "carbs_g": 21,
+    "fat_g": 16.8
+  },
+  {
+    "date": "2026-09-03",
+    "meal": "lunch",
+    "description": "Sourdough bread (40g)",
+    "grams": 40,
+    "calories": 108,
+    "protein_g": 3.6,
+    "carbs_g": 20.8,
+    "fat_g": 0.4
+  },
+  {
+    "date": "2026-09-03",
+    "meal": "lunch",
+    "description": "Pickles (46g)",
+    "grams": 46,
+    "calories": 5,
+    "protein_g": 0.1,
+    "carbs_g": 0.9,
+    "fat_g": 0.05
   }
 ]
