@@ -1398,5 +1398,15 @@
     "protein_g": 2.4,
     "carbs_g": 60,
     "fat_g": 0.5
+  },
+  {
+    "date": "2026-09-05",
+    "meal": "snack",
+    "description": "Beer (1L)",
+    "grams": 1000,
+    "calories": 430,
+    "protein_g": 5,
+    "carbs_g": 36,
+    "fat_g": 0
   }
 ]
