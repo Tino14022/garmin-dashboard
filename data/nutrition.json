@@ -1388,5 +1388,15 @@
     "protein_g": 5.6,
     "carbs_g": 38.4,
     "fat_g": 6.4
+  },
+  {
+    "date": "2026-09-04",
+    "meal": "snack",
+    "description": "Grapes (330g)",
+    "grams": 330,
+    "calories": 228,
+    "protein_g": 2.4,
+    "carbs_g": 60,
+    "fat_g": 0.5
   }
 ]
