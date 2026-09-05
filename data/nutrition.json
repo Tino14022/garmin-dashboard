@@ -1408,5 +1408,85 @@
     "protein_g": 5,
     "carbs_g": 36,
     "fat_g": 0
+  },
+  {
+    "date": "2026-09-05",
+    "meal": "breakfast",
+    "description": "Focaccia bread (112g)",
+    "grams": 112,
+    "calories": 325,
+    "protein_g": 7.8,
+    "carbs_g": 54,
+    "fat_g": 9
+  },
+  {
+    "date": "2026-09-05",
+    "meal": "breakfast",
+    "description": "Boiled egg (48g)",
+    "grams": 48,
+    "calories": 69,
+    "protein_g": 6,
+    "carbs_g": 0.4,
+    "fat_g": 4.6
+  },
+  {
+    "date": "2026-09-05",
+    "meal": "breakfast",
+    "description": "Philadelphia Original cream cheese (50g)",
+    "grams": 50,
+    "calories": 127,
+    "protein_g": 2.8,
+    "carbs_g": 2,
+    "fat_g": 12
+  },
+  {
+    "date": "2026-09-05",
+    "meal": "breakfast",
+    "description": "Kulen, spicy cured sausage (32g)",
+    "grams": 32,
+    "calories": 144,
+    "protein_g": 6.4,
+    "carbs_g": 0.6,
+    "fat_g": 12.8
+  },
+  {
+    "date": "2026-09-05",
+    "meal": "breakfast",
+    "description": "Ham (54g)",
+    "grams": 54,
+    "calories": 126,
+    "protein_g": 14,
+    "carbs_g": 0.5,
+    "fat_g": 7.6
+  },
+  {
+    "date": "2026-09-05",
+    "meal": "breakfast",
+    "description": "Edam cheese (30g)",
+    "grams": 30,
+    "calories": 94,
+    "protein_g": 7.8,
+    "carbs_g": 0,
+    "fat_g": 7.2
+  },
+  {
+    "date": "2026-09-05",
+    "meal": "breakfast",
+    "description": "Pickles (43g)",
+    "grams": 43,
+    "calories": 5,
+    "protein_g": 0.1,
+    "carbs_g": 0.9,
+    "fat_g": 0.04
+  },
+  {
+    "date": "2026-09-05",
+    "meal": "breakfast",
+    "description": "Balance Plus yogurt drink (300ml)",
+    "grams": 300,
+    "calories": 123,
+    "protein_g": 9.9,
+    "carbs_g": 12,
+    "fat_g": 2.7
   }
 ]
